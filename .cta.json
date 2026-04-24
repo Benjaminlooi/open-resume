@@ -1,5 +1,5 @@
 {
-  "projectName": "resume-builder",
+  "projectName": "open-resume",
   "mode": "file-router",
   "typescript": true,
   "packageManager": "npm",
