@@ -66,9 +66,9 @@ function RouteComponent() {
 					>
 						{/* Left sidebar - Section list */}
 						<ResizablePanel
-							defaultSize="25%"
+							defaultSize="20%"
 							minSize="15%"
-							maxSize="35%"
+							maxSize="30%"
 							className="bg-secondary-background"
 						>
 							<div className="flex h-full flex-col overflow-y-auto p-6">
@@ -83,7 +83,7 @@ function RouteComponent() {
 
 						{/* Left sidebar - Editor form */}
 						<ResizablePanel
-							defaultSize="25%"
+							defaultSize="30%"
 							minSize="20%"
 							maxSize="40%"
 							className="bg-secondary-background border-l-2 border-r-2 border-border"
