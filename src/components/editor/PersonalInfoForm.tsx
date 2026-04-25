@@ -1,6 +1,6 @@
 import { useStore } from "@tanstack/react-store";
-import { resumeStore, updatePersonalInfo } from "#/lib/resume-store";
 import { Input } from "#/components/ui/input";
+import { resumeStore, updatePersonalInfo } from "#/lib/resume-store";
 
 export default function PersonalInfoForm() {
 	const personalInfo = useStore(resumeStore, (state) => state.personalInfo);

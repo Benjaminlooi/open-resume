@@ -1,10 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useStore } from "@tanstack/react-store";
+import CertificationsForm from "#/components/editor/CertificationsForm";
 import DemoTemplate from "#/components/editor/DemoTemplate";
 import EditorHeader from "#/components/editor/EditorHeader";
 import EducationForm from "#/components/editor/EducationForm";
 import ExperienceForm from "#/components/editor/ExperienceForm";
+import LanguagesForm from "#/components/editor/LanguagesForm";
 import PersonalInfoForm from "#/components/editor/PersonalInfoForm";
+import ProjectsForm from "#/components/editor/ProjectsForm";
 import SectionList from "#/components/editor/SectionList";
 import SkillsForm from "#/components/editor/SkillsForm";
 import {
@@ -31,6 +34,12 @@ function RouteComponent() {
 				return <EducationForm />;
 			case "skills":
 				return <SkillsForm />;
+			case "projects":
+				return <ProjectsForm />;
+			case "certifications":
+				return <CertificationsForm />;
+			case "languages":
+				return <LanguagesForm />;
 			default:
 				return (
 					<div className="text-center text-muted-foreground mt-10">
@@ -50,6 +59,12 @@ function RouteComponent() {
 				return "Education";
 			case "skills":
 				return "Skills";
+			case "projects":
+				return "Projects";
+			case "certifications":
+				return "Certifications";
+			case "languages":
+				return "Languages";
 			default:
 				return "Edit Section";
 		}

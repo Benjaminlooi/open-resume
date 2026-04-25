@@ -1,32 +1,33 @@
-import React, { useState } from "react";
-import { useStore } from "@tanstack/react-store";
+import type { DragEndEvent } from "@dnd-kit/core";
 import {
-	DndContext,
 	closestCenter,
+	DndContext,
 	KeyboardSensor,
 	PointerSensor,
 	useSensor,
 	useSensors,
 } from "@dnd-kit/core";
-import type { DragEndEvent } from "@dnd-kit/core";
 import {
 	SortableContext,
 	sortableKeyboardCoordinates,
-	verticalListSortingStrategy,
 	useSortable,
+	verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { useStore } from "@tanstack/react-store";
+import { ChevronDown, ChevronUp, GripVertical, Trash2 } from "lucide-react";
+import type React from "react";
+import { useState } from "react";
+import { Button } from "#/components/ui/button";
+import { Input } from "#/components/ui/input";
+import { Textarea } from "#/components/ui/textarea";
 import {
-	resumeStore,
-	updateExperience,
 	addExperience,
 	deleteExperience,
 	reorderExperience,
+	resumeStore,
+	updateExperience,
 } from "#/lib/resume-store";
-import { Input } from "#/components/ui/input";
-import { Textarea } from "#/components/ui/textarea";
-import { Button } from "#/components/ui/button";
-import { GripVertical, Trash2, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "#/lib/utils";
 
 function ExperienceItem({ id }: { id: string }) {

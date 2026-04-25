@@ -16,7 +16,8 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { useStore } from "@tanstack/react-store";
 import { ChevronDown, ChevronUp, GripVertical, Trash2 } from "lucide-react";
-import React, { useState } from "react";
+import type React from "react";
+import { useState } from "react";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
 import { Textarea } from "#/components/ui/textarea";

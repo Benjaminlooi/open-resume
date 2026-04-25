@@ -20,19 +20,18 @@ import type React from "react";
 import { useState } from "react";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
-import { Textarea } from "#/components/ui/textarea";
 import {
-	addSkillGroup,
-	deleteSkillGroup,
-	reorderSkills,
+	addLanguage,
+	deleteLanguage,
+	reorderLanguages,
 	resumeStore,
-	updateSkillGroup,
+	updateLanguage,
 } from "#/lib/resume-store";
 
-function SkillItem({ id }: { id: string }) {
+function LanguageItem({ id }: { id: string }) {
 	const [isExpanded, setIsExpanded] = useState(false);
-	const skill = useStore(resumeStore, (state) =>
-		state.skills.find((s) => s.id === id),
+	const lang = useStore(resumeStore, (state) =>
+		(state.languages || []).find((l) => l.id === id),
 	);
 
 	const { attributes, listeners, setNodeRef, transform, transition } =
@@ -43,13 +42,11 @@ function SkillItem({ id }: { id: string }) {
 		transition,
 	};
 
-	if (!skill) return null;
+	if (!lang) return null;
 
-	const handleChange = (
-		e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-	) => {
+	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const { name, value } = e.target;
-		updateSkillGroup(id, { [name]: value });
+		updateLanguage(id, { [name]: value });
 	};
 
 	return (
@@ -74,10 +71,10 @@ function SkillItem({ id }: { id: string }) {
 					</button>
 					<div className="flex flex-col gap-1 truncate pr-4">
 						<span className="font-bold text-sm truncate">
-							{skill.category || "Untitled Category"}
+							{lang.language || "Untitled Language"}
 						</span>
 						<span className="text-xs text-muted-foreground truncate">
-							{skill.items || "No skills listed"}
+							{lang.proficiency || "Proficiency"}
 						</span>
 					</div>
 				</div>
@@ -88,7 +85,7 @@ function SkillItem({ id }: { id: string }) {
 						className="h-8 w-8 bg-white"
 						onClick={(e) => {
 							e.stopPropagation();
-							deleteSkillGroup(id);
+							deleteLanguage(id);
 						}}
 					>
 						<Trash2 className="size-4 text-red-500" />
@@ -99,26 +96,29 @@ function SkillItem({ id }: { id: string }) {
 
 			{isExpanded && (
 				<div className="p-4 space-y-4 border-t-2 border-border bg-white">
-					<div className="space-y-2">
-						<label className="text-sm font-medium leading-none">Category</label>
-						<Input
-							name="category"
-							value={skill.category}
-							onChange={handleChange}
-							placeholder="Languages, Frameworks, etc."
-						/>
-					</div>
-					<div className="space-y-2">
-						<label className="text-sm font-medium leading-none">
-							Skills (comma separated)
-						</label>
-						<Textarea
-							name="items"
-							value={skill.items}
-							onChange={handleChange}
-							placeholder="JavaScript, TypeScript, React..."
-							className="min-h-[80px]"
-						/>
+					<div className="grid grid-cols-2 gap-4">
+						<div className="space-y-2">
+							<label className="text-sm font-medium leading-none">
+								Language
+							</label>
+							<Input
+								name="language"
+								value={lang.language}
+								onChange={handleChange}
+								placeholder="e.g. English, Spanish"
+							/>
+						</div>
+						<div className="space-y-2">
+							<label className="text-sm font-medium leading-none">
+								Proficiency
+							</label>
+							<Input
+								name="proficiency"
+								value={lang.proficiency}
+								onChange={handleChange}
+								placeholder="e.g. Native, Fluent, Beginner"
+							/>
+						</div>
 					</div>
 				</div>
 			)}
@@ -126,8 +126,8 @@ function SkillItem({ id }: { id: string }) {
 	);
 }
 
-export default function SkillsForm() {
-	const skills = useStore(resumeStore, (state) => state.skills);
+export default function LanguagesForm() {
+	const languages = useStore(resumeStore, (state) => state.languages || []);
 
 	const sensors = useSensors(
 		useSensor(PointerSensor, {
@@ -144,24 +144,24 @@ export default function SkillsForm() {
 		const { active, over } = event;
 
 		if (over && active.id !== over.id) {
-			const oldIndex = skills.findIndex((item) => item.id === active.id);
-			const newIndex = skills.findIndex((item) => item.id === over.id);
-			reorderSkills(oldIndex, newIndex);
+			const oldIndex = languages.findIndex((item) => item.id === active.id);
+			const newIndex = languages.findIndex((item) => item.id === over.id);
+			reorderLanguages(oldIndex, newIndex);
 		}
 	}
 
 	const handleAdd = () => {
-		addSkillGroup({
-			id: `skill-${Date.now()}`,
-			category: "",
-			items: "",
+		addLanguage({
+			id: `lang-${Date.now()}`,
+			language: "",
+			proficiency: "",
 		});
 	};
 
 	return (
 		<div className="space-y-4">
 			<p className="text-sm text-muted-foreground">
-				Manage your skills here. Group them by category.
+				Manage your languages here. Click an item to edit its details.
 			</p>
 			<DndContext
 				sensors={sensors}
@@ -169,18 +169,18 @@ export default function SkillsForm() {
 				onDragEnd={handleDragEnd}
 			>
 				<SortableContext
-					items={skills.map((s) => s.id)}
+					items={languages.map((e) => e.id)}
 					strategy={verticalListSortingStrategy}
 				>
 					<div className="flex flex-col gap-3">
-						{skills.map((skill) => (
-							<SkillItem key={skill.id} id={skill.id} />
+						{languages.map((lang) => (
+							<LanguageItem key={lang.id} id={lang.id} />
 						))}
 					</div>
 				</SortableContext>
 			</DndContext>
 			<Button variant="neutral" className="w-full mt-2" onClick={handleAdd}>
-				+ Add Skill Group
+				+ Add Language
 			</Button>
 		</div>
 	);

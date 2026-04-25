@@ -1,9 +1,12 @@
 import { Store } from "@tanstack/store";
 import type {
-	Resume,
-	PersonalInfo,
-	Experience,
+	Certification,
 	Education,
+	Experience,
+	Language,
+	PersonalInfo,
+	Project,
+	Resume,
 	SkillGroup,
 } from "./resume-schema";
 
@@ -11,6 +14,15 @@ import type {
 type EditorState = Resume & {
 	activeSection: string;
 };
+
+export const AVAILABLE_SECTIONS = [
+	{ id: "experience", name: "Experience" },
+	{ id: "education", name: "Education" },
+	{ id: "skills", name: "Skills" },
+	{ id: "projects", name: "Projects" },
+	{ id: "certifications", name: "Certifications" },
+	{ id: "languages", name: "Languages" },
+];
 
 const initialResume: EditorState = {
 	activeSection: "personalInfo",
@@ -83,6 +95,9 @@ const initialResume: EditorState = {
 			items: "Git, Docker, AWS, CI/CD, Jest",
 		},
 	],
+	projects: [],
+	certifications: [],
+	languages: [],
 };
 
 export const resumeStore = new Store<EditorState>(initialResume);
@@ -230,5 +245,133 @@ export const reorderSkills = (startIndex: number, endIndex: number) => {
 		const [removed] = result.splice(startIndex, 1);
 		result.splice(endIndex, 0, removed);
 		return { ...state, skills: result };
+	});
+};
+
+// --- Section Management ---
+export const addSection = (id: string, name: string) => {
+	resumeStore.setState((state) => {
+		if (state.sections.find((s) => s.id === id)) return state;
+		return {
+			...state,
+			sections: [...state.sections, { id, name, visible: true }],
+			activeSection: id,
+		};
+	});
+};
+
+export const removeSection = (id: string) => {
+	resumeStore.setState((state) => {
+		const newSections = state.sections.filter((s) => s.id !== id);
+		return {
+			...state,
+			sections: newSections,
+			activeSection:
+				state.activeSection === id ? "personalInfo" : state.activeSection,
+		};
+	});
+};
+
+// --- Projects ---
+export const addProject = (item: Project) => {
+	resumeStore.setState((state) => ({
+		...state,
+		projects: [...(state.projects || []), item],
+	}));
+};
+
+export const updateProject = (id: string, updatedItem: Partial<Project>) => {
+	resumeStore.setState((state) => ({
+		...state,
+		projects: (state.projects || []).map((item) =>
+			item.id === id ? { ...item, ...updatedItem } : item,
+		),
+	}));
+};
+
+export const deleteProject = (id: string) => {
+	resumeStore.setState((state) => ({
+		...state,
+		projects: (state.projects || []).filter((item) => item.id !== id),
+	}));
+};
+
+export const reorderProjects = (startIndex: number, endIndex: number) => {
+	resumeStore.setState((state) => {
+		const result = Array.from(state.projects || []);
+		const [removed] = result.splice(startIndex, 1);
+		result.splice(endIndex, 0, removed);
+		return { ...state, projects: result };
+	});
+};
+
+// --- Certifications ---
+export const addCertification = (item: Certification) => {
+	resumeStore.setState((state) => ({
+		...state,
+		certifications: [...(state.certifications || []), item],
+	}));
+};
+
+export const updateCertification = (
+	id: string,
+	updatedItem: Partial<Certification>,
+) => {
+	resumeStore.setState((state) => ({
+		...state,
+		certifications: (state.certifications || []).map((item) =>
+			item.id === id ? { ...item, ...updatedItem } : item,
+		),
+	}));
+};
+
+export const deleteCertification = (id: string) => {
+	resumeStore.setState((state) => ({
+		...state,
+		certifications: (state.certifications || []).filter(
+			(item) => item.id !== id,
+		),
+	}));
+};
+
+export const reorderCertifications = (startIndex: number, endIndex: number) => {
+	resumeStore.setState((state) => {
+		const result = Array.from(state.certifications || []);
+		const [removed] = result.splice(startIndex, 1);
+		result.splice(endIndex, 0, removed);
+		return { ...state, certifications: result };
+	});
+};
+
+// --- Languages ---
+export const addLanguage = (item: Language) => {
+	resumeStore.setState((state) => ({
+		...state,
+		languages: [...(state.languages || []), item],
+	}));
+};
+
+export const updateLanguage = (id: string, updatedItem: Partial<Language>) => {
+	resumeStore.setState((state) => ({
+		...state,
+		languages: (state.languages || []).map((item) =>
+			item.id === id ? { ...item, ...updatedItem } : item,
+		),
+	}));
+};
+
+export const deleteLanguage = (id: string) => {
+	resumeStore.setState((state) => ({
+		...state,
+		languages: (state.languages || []).filter((item) => item.id !== id),
+	}));
+};
+
+export const reorderLanguages = (startIndex: number, endIndex: number) => {
+	resumeStore.setState((state) => {
+		const result = Array.from(state.languages || []);
+		const [removed] = result.splice(startIndex, 1);
+		result.splice(endIndex, 0, removed);
+		return { ...state, languages: result };
 	});
 };

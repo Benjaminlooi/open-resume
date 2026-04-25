@@ -20,19 +20,18 @@ import type React from "react";
 import { useState } from "react";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
-import { Textarea } from "#/components/ui/textarea";
 import {
-	addSkillGroup,
-	deleteSkillGroup,
-	reorderSkills,
+	addCertification,
+	deleteCertification,
+	reorderCertifications,
 	resumeStore,
-	updateSkillGroup,
+	updateCertification,
 } from "#/lib/resume-store";
 
-function SkillItem({ id }: { id: string }) {
+function CertificationItem({ id }: { id: string }) {
 	const [isExpanded, setIsExpanded] = useState(false);
-	const skill = useStore(resumeStore, (state) =>
-		state.skills.find((s) => s.id === id),
+	const cert = useStore(resumeStore, (state) =>
+		(state.certifications || []).find((c) => c.id === id),
 	);
 
 	const { attributes, listeners, setNodeRef, transform, transition } =
@@ -43,13 +42,11 @@ function SkillItem({ id }: { id: string }) {
 		transition,
 	};
 
-	if (!skill) return null;
+	if (!cert) return null;
 
-	const handleChange = (
-		e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-	) => {
+	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const { name, value } = e.target;
-		updateSkillGroup(id, { [name]: value });
+		updateCertification(id, { [name]: value });
 	};
 
 	return (
@@ -74,10 +71,10 @@ function SkillItem({ id }: { id: string }) {
 					</button>
 					<div className="flex flex-col gap-1 truncate pr-4">
 						<span className="font-bold text-sm truncate">
-							{skill.category || "Untitled Category"}
+							{cert.name || "Untitled Certification"}
 						</span>
 						<span className="text-xs text-muted-foreground truncate">
-							{skill.items || "No skills listed"}
+							{cert.issuer || "Issuer"}
 						</span>
 					</div>
 				</div>
@@ -88,7 +85,7 @@ function SkillItem({ id }: { id: string }) {
 						className="h-8 w-8 bg-white"
 						onClick={(e) => {
 							e.stopPropagation();
-							deleteSkillGroup(id);
+							deleteCertification(id);
 						}}
 					>
 						<Trash2 className="size-4 text-red-500" />
@@ -99,26 +96,34 @@ function SkillItem({ id }: { id: string }) {
 
 			{isExpanded && (
 				<div className="p-4 space-y-4 border-t-2 border-border bg-white">
-					<div className="space-y-2">
-						<label className="text-sm font-medium leading-none">Category</label>
-						<Input
-							name="category"
-							value={skill.category}
-							onChange={handleChange}
-							placeholder="Languages, Frameworks, etc."
-						/>
-					</div>
-					<div className="space-y-2">
-						<label className="text-sm font-medium leading-none">
-							Skills (comma separated)
-						</label>
-						<Textarea
-							name="items"
-							value={skill.items}
-							onChange={handleChange}
-							placeholder="JavaScript, TypeScript, React..."
-							className="min-h-[80px]"
-						/>
+					<div className="grid grid-cols-2 gap-4">
+						<div className="space-y-2">
+							<label className="text-sm font-medium leading-none">Name</label>
+							<Input
+								name="name"
+								value={cert.name}
+								onChange={handleChange}
+								placeholder="Certification Name"
+							/>
+						</div>
+						<div className="space-y-2">
+							<label className="text-sm font-medium leading-none">Issuer</label>
+							<Input
+								name="issuer"
+								value={cert.issuer}
+								onChange={handleChange}
+								placeholder="Issuing Organization"
+							/>
+						</div>
+						<div className="space-y-2 col-span-2">
+							<label className="text-sm font-medium leading-none">Date</label>
+							<Input
+								name="date"
+								value={cert.date}
+								onChange={handleChange}
+								placeholder="Issue Date"
+							/>
+						</div>
 					</div>
 				</div>
 			)}
@@ -126,8 +131,11 @@ function SkillItem({ id }: { id: string }) {
 	);
 }
 
-export default function SkillsForm() {
-	const skills = useStore(resumeStore, (state) => state.skills);
+export default function CertificationsForm() {
+	const certifications = useStore(
+		resumeStore,
+		(state) => state.certifications || [],
+	);
 
 	const sensors = useSensors(
 		useSensor(PointerSensor, {
@@ -144,24 +152,27 @@ export default function SkillsForm() {
 		const { active, over } = event;
 
 		if (over && active.id !== over.id) {
-			const oldIndex = skills.findIndex((item) => item.id === active.id);
-			const newIndex = skills.findIndex((item) => item.id === over.id);
-			reorderSkills(oldIndex, newIndex);
+			const oldIndex = certifications.findIndex(
+				(item) => item.id === active.id,
+			);
+			const newIndex = certifications.findIndex((item) => item.id === over.id);
+			reorderCertifications(oldIndex, newIndex);
 		}
 	}
 
 	const handleAdd = () => {
-		addSkillGroup({
-			id: `skill-${Date.now()}`,
-			category: "",
-			items: "",
+		addCertification({
+			id: `cert-${Date.now()}`,
+			name: "",
+			issuer: "",
+			date: "",
 		});
 	};
 
 	return (
 		<div className="space-y-4">
 			<p className="text-sm text-muted-foreground">
-				Manage your skills here. Group them by category.
+				Manage your certifications here. Click an item to edit its details.
 			</p>
 			<DndContext
 				sensors={sensors}
@@ -169,18 +180,18 @@ export default function SkillsForm() {
 				onDragEnd={handleDragEnd}
 			>
 				<SortableContext
-					items={skills.map((s) => s.id)}
+					items={certifications.map((e) => e.id)}
 					strategy={verticalListSortingStrategy}
 				>
 					<div className="flex flex-col gap-3">
-						{skills.map((skill) => (
-							<SkillItem key={skill.id} id={skill.id} />
+						{certifications.map((cert) => (
+							<CertificationItem key={cert.id} id={cert.id} />
 						))}
 					</div>
 				</SortableContext>
 			</DndContext>
 			<Button variant="neutral" className="w-full mt-2" onClick={handleAdd}>
-				+ Add Skill Group
+				+ Add Certification
 			</Button>
 		</div>
 	);

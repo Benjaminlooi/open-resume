@@ -51,12 +51,42 @@ export const skillsSchema = z.object({
 
 export type SkillGroup = z.infer<typeof skillsSchema>;
 
+export const projectSchema = z.object({
+	id: z.string(),
+	name: z.string(),
+	url: z.string(),
+	date: z.string(),
+	bullets: z.array(z.string()),
+});
+
+export type Project = z.infer<typeof projectSchema>;
+
+export const certificationSchema = z.object({
+	id: z.string(),
+	name: z.string(),
+	issuer: z.string(),
+	date: z.string(),
+});
+
+export type Certification = z.infer<typeof certificationSchema>;
+
+export const languageSchema = z.object({
+	id: z.string(),
+	language: z.string(),
+	proficiency: z.string(),
+});
+
+export type Language = z.infer<typeof languageSchema>;
+
 export const resumeSchema = z.object({
 	personalInfo: personalInfoSchema,
 	sections: z.array(sectionSchema),
 	experience: z.array(experienceSchema),
 	education: z.array(educationSchema),
 	skills: z.array(skillsSchema),
+	projects: z.array(projectSchema).optional().default([]),
+	certifications: z.array(certificationSchema).optional().default([]),
+	languages: z.array(languageSchema).optional().default([]),
 });
 
 export type Resume = z.infer<typeof resumeSchema>;

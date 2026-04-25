@@ -15,9 +15,12 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useStore } from "@tanstack/react-store";
-import { Eye, EyeOff, GripVertical, User } from "lucide-react";
+import { Eye, EyeOff, GripVertical, Trash2, User } from "lucide-react";
 import React from "react";
 import {
+	AVAILABLE_SECTIONS,
+	addSection,
+	removeSection,
 	reorderSections,
 	resumeStore,
 	setActiveSection,
@@ -63,16 +66,28 @@ function SortableItem(props: {
 				</button>
 				<span className="font-medium text-sm select-none">{props.name}</span>
 			</div>
-			<button
-				type="button"
-				onClick={(e) => {
-					e.stopPropagation();
-					toggleSectionVisibility(props.id);
-				}}
-				className="text-muted-foreground hover:text-foreground"
-			>
-				{props.visible ? <Eye size={16} /> : <EyeOff size={16} />}
-			</button>
+			<div className="flex items-center gap-2">
+				<button
+					type="button"
+					onClick={(e) => {
+						e.stopPropagation();
+						toggleSectionVisibility(props.id);
+					}}
+					className="text-muted-foreground hover:text-foreground"
+				>
+					{props.visible ? <Eye size={16} /> : <EyeOff size={16} />}
+				</button>
+				<button
+					type="button"
+					onClick={(e) => {
+						e.stopPropagation();
+						removeSection(props.id);
+					}}
+					className="text-muted-foreground hover:text-destructive transition-colors"
+				>
+					<Trash2 size={16} />
+				</button>
+			</div>
 		</div>
 	);
 }
@@ -101,6 +116,10 @@ export default function SectionList() {
 			reorderSections(oldIndex, newIndex);
 		}
 	}
+
+	const availableToAdd = AVAILABLE_SECTIONS.filter(
+		(s) => !sections.find((active) => active.id === s.id),
+	);
 
 	return (
 		<div className="w-full flex flex-col gap-6">
@@ -152,6 +171,32 @@ export default function SectionList() {
 						</div>
 					</SortableContext>
 				</DndContext>
+				{availableToAdd.length > 0 && (
+					<div className="mt-4">
+						<select
+							className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+							onChange={(e) => {
+								if (e.target.value) {
+									const section = availableToAdd.find(
+										(s) => s.id === e.target.value,
+									);
+									if (section) addSection(section.id, section.name);
+									e.target.value = "";
+								}
+							}}
+							defaultValue=""
+						>
+							<option value="" disabled>
+								+ Add Section
+							</option>
+							{availableToAdd.map((s) => (
+								<option key={s.id} value={s.id}>
+									{s.name}
+								</option>
+							))}
+						</select>
+					</div>
+				)}
 			</div>
 		</div>
 	);

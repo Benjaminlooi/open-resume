@@ -7,6 +7,12 @@ export default function DemoTemplate() {
 	const experience = useStore(resumeStore, (state) => state.experience);
 	const education = useStore(resumeStore, (state) => state.education);
 	const skills = useStore(resumeStore, (state) => state.skills);
+	const projects = useStore(resumeStore, (state) => state.projects || []);
+	const certifications = useStore(
+		resumeStore,
+		(state) => state.certifications || [],
+	);
+	const languages = useStore(resumeStore, (state) => state.languages || []);
 
 	const renderSection = (id: string) => {
 		switch (id) {
@@ -87,6 +93,88 @@ export default function DemoTemplate() {
 									<strong className="text-black">{item.category}:</strong>{" "}
 									{item.items}
 								</p>
+							))}
+						</div>
+					</section>
+				);
+			case "projects":
+				if (projects.length === 0) return null;
+				return (
+					<section key={id}>
+						<h2 className="text-xl font-bold uppercase border-b border-black/20 mb-3 pb-1 text-black/90">
+							Projects
+						</h2>
+						<div className="flex flex-col gap-4">
+							{projects.map((item) => (
+								<div key={item.id}>
+									<div className="flex justify-between items-baseline mb-1">
+										<h3 className="font-bold text-lg">{item.name}</h3>
+										<span className="text-sm font-medium text-black/80">
+											{item.date}
+										</span>
+									</div>
+									<div className="mb-2 text-black/80">
+										{item.url && (
+											<a href={item.url} className="text-sm italic underline">
+												{item.url}
+											</a>
+										)}
+									</div>
+									{item.bullets && item.bullets.length > 0 && (
+										<ul className="list-disc list-outside ml-4 mt-2 space-y-1 text-sm text-black/80">
+											{item.bullets.map((bullet, idx) => (
+												<li key={idx}>{bullet}</li>
+											))}
+										</ul>
+									)}
+								</div>
+							))}
+						</div>
+					</section>
+				);
+			case "certifications":
+				if (certifications.length === 0) return null;
+				return (
+					<section key={id}>
+						<h2 className="text-xl font-bold uppercase border-b border-black/20 mb-3 pb-1 text-black/90">
+							Certifications
+						</h2>
+						<div className="flex flex-col gap-3">
+							{certifications.map((item) => (
+								<div
+									key={item.id}
+									className="flex justify-between items-baseline"
+								>
+									<div>
+										<span className="font-bold text-md">{item.name}</span>
+										{item.issuer && (
+											<span className="text-sm italic text-black/80">
+												{" "}
+												- {item.issuer}
+											</span>
+										)}
+									</div>
+									<span className="text-sm font-medium text-black/80">
+										{item.date}
+									</span>
+								</div>
+							))}
+						</div>
+					</section>
+				);
+			case "languages":
+				if (languages.length === 0) return null;
+				return (
+					<section key={id}>
+						<h2 className="text-xl font-bold uppercase border-b border-black/20 mb-3 pb-1 text-black/90">
+							Languages
+						</h2>
+						<div className="flex flex-wrap gap-4 text-sm text-black/80">
+							{languages.map((item) => (
+								<div key={item.id}>
+									<strong className="text-black">{item.language}</strong>
+									{item.proficiency && `: ${item.proficiency}`}
+								</div>
 							))}
 						</div>
 					</section>
