@@ -1,12 +1,9 @@
-import { Link } from "@tanstack/react-router";
-import { Github, Moon } from "lucide-react";
+import { Moon } from "lucide-react";
 import { useState } from "react";
-import ResumeAssistantButton from "./ResumeAssistantButton";
-import ThemeToggle from "./ThemeToggle";
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
 
-export default function Header() {
+export default function EditorHeader() {
 	const [resumeName, setResumeName] = useState("test resume");
 
 	return (
