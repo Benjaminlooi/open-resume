@@ -207,7 +207,7 @@ export default function ExperienceForm() {
 			startDate: "",
 			endDate: "",
 			location: "",
-			bullets: [],
+			description: "",
 		});
 	};
 

@@ -129,16 +129,13 @@ function ProjectItem({ id }: { id: string }) {
 							/>
 						</div>
 					</div>
-					<div className="space-y-2">
+					<div className="space-y-2 col-span-2">
 						<label className="text-sm font-medium leading-none">
-							Description (one bullet per line)
+							Description
 						</label>
-						<Textarea
-							name="bullets"
-							value={project.bullets.join("\n")}
-							onChange={handleChange}
-							placeholder="Built a feature..."
-							className="min-h-[120px]"
+						<RichTextEditor
+							value={project.description || ""}
+							onChange={(val) => updateProject(id, { description: val })}
 						/>
 					</div>
 				</div>

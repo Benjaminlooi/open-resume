@@ -56,7 +56,7 @@ export const projectSchema = z.object({
 	name: z.string(),
 	url: z.string(),
 	date: z.string(),
-	bullets: z.array(z.string()),
+	description: z.string().optional(),
 });
 
 export type Project = z.infer<typeof projectSchema>;

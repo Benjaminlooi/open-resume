@@ -49,13 +49,8 @@ const initialResume: EditorState = {
 			startDate: "Jan 2022",
 			endDate: "Present",
 			location: "San Francisco, CA",
-			bullets: [
-				"Led development of a high-performance React application serving 1M+ MAU.",
-				"Architected and implemented a microservices backend using Node.js and Go.",
-				"Mentored a team of 5 junior developers, improving code review turnaround by 30%.",
-				"Spearheaded the migration from a monolithic architecture to containerized microservices, reducing deployment time by 40%.",
-				"Implemented comprehensive CI/CD pipelines using GitHub Actions, increasing release frequency from bi-weekly to daily.",
-			],
+			description:
+				"<ul><li>Led development of a high-performance React application serving 1M+ MAU.</li><li>Architected and implemented a microservices backend using Node.js and Go.</li><li>Mentored a team of 5 junior developers, improving code review turnaround by 30%.</li><li>Spearheaded the migration from a monolithic architecture to containerized microservices, reducing deployment time by 40%.</li><li>Implemented comprehensive CI/CD pipelines using GitHub Actions, increasing release frequency from bi-weekly to daily.</li></ul>",
 		},
 		{
 			id: "exp-2",
@@ -64,12 +59,8 @@ const initialResume: EditorState = {
 			startDate: "Jun 2019",
 			endDate: "Dec 2021",
 			location: "Seattle, WA",
-			bullets: [
-				"Developed RESTful APIs handling 50k requests per minute.",
-				"Optimized database queries, reducing average response time by 40%.",
-				"Collaborated with design and product teams to deliver 10+ major features.",
-				"Introduced automated end-to-end testing with Cypress, improving test coverage to 85%.",
-			],
+			description:
+				"<ul><li>Developed RESTful APIs handling 50k requests per minute.</li><li>Optimized database queries, reducing average response time by 40%.</li><li>Collaborated with design and product teams to deliver 10+ major features.</li><li>Introduced automated end-to-end testing with Cypress, improving test coverage to 85%.</li></ul>",
 		},
 		{
 			id: "exp-3",
@@ -78,11 +69,8 @@ const initialResume: EditorState = {
 			startDate: "Jan 2018",
 			endDate: "May 2019",
 			location: "Austin, TX",
-			bullets: [
-				"Assisted in the development of the company's flagship mobile application using React Native.",
-				"Integrated third-party APIs for payment processing and user authentication.",
-				"Participated in daily stand-ups and agile sprint planning sessions.",
-			],
+			description:
+				"<ul><li>Assisted in the development of the company's flagship mobile application using React Native.</li><li>Integrated third-party APIs for payment processing and user authentication.</li><li>Participated in daily stand-ups and agile sprint planning sessions.</li></ul>",
 		},
 		{
 			id: "exp-4",
@@ -91,10 +79,8 @@ const initialResume: EditorState = {
 			startDate: "May 2017",
 			endDate: "Aug 2017",
 			location: "New York, NY",
-			bullets: [
-				"Developed internal tools for data analysis using Python and Pandas.",
-				"Created documentation for legacy systems to aid in future migrations.",
-			],
+			description:
+				"<ul><li>Developed internal tools for data analysis using Python and Pandas.</li><li>Created documentation for legacy systems to aid in future migrations.</li></ul>",
 		},
 	],
 	education: [
@@ -106,10 +92,8 @@ const initialResume: EditorState = {
 			endDate: "May 2021",
 			location: "San Francisco, CA",
 			gpa: "3.9/4.0",
-			bullets: [
-				"Specialized in distributed systems and cloud computing.",
-				"Thesis: Evaluating consistency models in edge databases.",
-			],
+			description:
+				"<ul><li>Specialized in distributed systems and cloud computing.</li><li>Thesis: Evaluating consistency models in edge databases.</li></ul>",
 		},
 		{
 			id: "edu-2",
@@ -119,10 +103,8 @@ const initialResume: EditorState = {
 			endDate: "May 2019",
 			location: "New York, NY",
 			gpa: "3.8/4.0",
-			bullets: [
-				"Minor in Mathematics.",
-				"President of the Computer Science Society.",
-			],
+			description:
+				"<ul><li>Minor in Mathematics.</li><li>President of the Computer Science Society.</li></ul>",
 		},
 	],
 	skills: [
@@ -153,29 +135,23 @@ const initialResume: EditorState = {
 			name: "Open Source E-commerce Platform",
 			date: "2023",
 			url: "github.com/johndoe/ecommerce",
-			bullets: [
-				"Created a fully functional e-commerce platform using Next.js and Stripe.",
-				"Achieved over 1,000 stars on GitHub and 50+ active contributors.",
-			],
+			description:
+				"<ul><li>Created a fully functional e-commerce platform using Next.js and Stripe.</li><li>Achieved over 1,000 stars on GitHub and 50+ active contributors.</li></ul>",
 		},
 		{
 			id: "proj-2",
 			name: "Real-time Chat Application",
 			date: "2021",
 			url: "github.com/johndoe/chat-app",
-			bullets: [
-				"Built a scalable chat application utilizing WebSockets and Redis.",
-				"Implemented end-to-end encryption for secure messaging.",
-			],
+			description:
+				"<ul><li>Built a scalable chat application utilizing WebSockets and Redis.</li><li>Implemented end-to-end encryption for secure messaging.</li></ul>",
 		},
 		{
 			id: "proj-3",
 			name: "Personal Finance Tracker",
 			date: "2020",
-			bullets: [
-				"Developed a mobile-first web app to track expenses and budget goals.",
-				"Integrated Plaid API for real-time bank transaction sync.",
-			],
+			description:
+				"<ul><li>Developed a mobile-first web app to track expenses and budget goals.</li><li>Integrated Plaid API for real-time bank transaction sync.</li></ul>",
 		},
 	],
 	certifications: [
@@ -211,7 +187,31 @@ const getInitialState = (): EditorState => {
 		const saved = localStorage.getItem("resume-builder-state");
 		if (saved) {
 			try {
-				return JSON.parse(saved) as EditorState;
+				const parsed = JSON.parse(saved) as any;
+
+				// Legacy migration: convert bullets string[] to description HTML
+				const migrateBullets = (items: any[]) => {
+					return (
+						items?.map((item) => {
+							if (item.bullets && Array.isArray(item.bullets)) {
+								const html = `<ul>${item.bullets
+									.map((b: string) => `<li>${b}</li>`)
+									.join("")}</ul>`;
+								const { bullets, ...rest } = item;
+								return { ...rest, description: html };
+							}
+							return item;
+						}) || []
+					);
+				};
+
+				if (parsed.experience)
+					parsed.experience = migrateBullets(parsed.experience);
+				if (parsed.education)
+					parsed.education = migrateBullets(parsed.education);
+				if (parsed.projects) parsed.projects = migrateBullets(parsed.projects);
+
+				return parsed as EditorState;
 			} catch (e) {
 				console.error("Failed to parse saved resume state", e);
 			}
@@ -224,7 +224,10 @@ export const resumeStore = new Store<EditorState>(getInitialState());
 
 if (typeof window !== "undefined") {
 	resumeStore.subscribe(() => {
-		localStorage.setItem("resume-builder-state", JSON.stringify(resumeStore.state));
+		localStorage.setItem(
+			"resume-builder-state",
+			JSON.stringify(resumeStore.state),
+		);
 	});
 }
 

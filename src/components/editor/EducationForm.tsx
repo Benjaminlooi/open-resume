@@ -220,7 +220,7 @@ export default function EducationForm() {
 			endDate: "",
 			location: "",
 			gpa: "",
-			bullets: [],
+			description: "",
 		});
 	};
 

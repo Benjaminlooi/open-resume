@@ -35,11 +35,12 @@ export default function DemoTemplate() {
 										<span className="text-md italic">{item.company}</span>
 										<span className="text-sm">{item.location}</span>
 									</div>
-									<ul className="list-disc list-outside ml-4 space-y-1 text-sm text-black/80">
-										{item.bullets.map((bullet, idx) => (
-											<li key={idx}>{bullet}</li>
-										))}
-									</ul>
+									{item.description && (
+										<div
+											className="prose prose-sm max-w-none text-black/80 mt-1 prose-p:my-1 prose-ul:my-1 prose-li:my-0 prose-ul:list-disc prose-ul:list-outside prose-ul:ml-4"
+											dangerouslySetInnerHTML={{ __html: item.description }}
+										/>
+									)}
 								</div>
 							))}
 						</div>
@@ -69,12 +70,11 @@ export default function DemoTemplate() {
 											{item.gpa && ` | GPA: ${item.gpa}`}
 										</span>
 									</div>
-									{item.bullets && item.bullets.length > 0 && (
-										<ul className="list-disc list-outside ml-4 mt-2 space-y-1 text-sm text-black/80">
-											{item.bullets.map((bullet, idx) => (
-												<li key={idx}>{bullet}</li>
-											))}
-										</ul>
+									{item.description && (
+										<div
+											className="prose prose-sm max-w-none text-black/80 mt-2 prose-p:my-1 prose-ul:my-1 prose-li:my-0 prose-ul:list-disc prose-ul:list-outside prose-ul:ml-4"
+											dangerouslySetInnerHTML={{ __html: item.description }}
+										/>
 									)}
 								</div>
 							))}
@@ -120,12 +120,11 @@ export default function DemoTemplate() {
 											</a>
 										)}
 									</div>
-									{item.bullets && item.bullets.length > 0 && (
-										<ul className="list-disc list-outside ml-4 mt-2 space-y-1 text-sm text-black/80">
-											{item.bullets.map((bullet, idx) => (
-												<li key={idx}>{bullet}</li>
-											))}
-										</ul>
+									{item.description && (
+										<div
+											className="prose prose-sm max-w-none text-black/80 mt-2 prose-p:my-1 prose-ul:my-1 prose-li:my-0 prose-ul:list-disc prose-ul:list-outside prose-ul:ml-4"
+											dangerouslySetInnerHTML={{ __html: item.description }}
+										/>
 									)}
 								</div>
 							))}
