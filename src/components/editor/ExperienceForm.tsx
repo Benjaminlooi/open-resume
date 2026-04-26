@@ -15,12 +15,13 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useStore } from "@tanstack/react-store";
-import { ChevronDown, ChevronUp, GripVertical, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, GripVertical, Trash2, Loader2 } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
-import { Textarea } from "#/components/ui/textarea";
+import { RichTextEditor } from "#/components/ui/rich-text-editor";
+import { generateExperienceBullets } from "#/lib/ai";
 import {
 	addExperience,
 	deleteExperience,
@@ -28,10 +29,10 @@ import {
 	resumeStore,
 	updateExperience,
 } from "#/lib/resume-store";
-import { cn } from "#/lib/utils";
 
 function ExperienceItem({ id }: { id: string }) {
 	const [isExpanded, setIsExpanded] = useState(false);
+	const [isGenerating, setIsGenerating] = useState(false);
 	const exp = useStore(resumeStore, (state) =>
 		state.experience.find((e) => e.id === id),
 	);
@@ -47,13 +48,24 @@ function ExperienceItem({ id }: { id: string }) {
 	if (!exp) return null;
 
 	const handleChange = (
-		e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+		e: React.ChangeEvent<HTMLInputElement>,
 	) => {
 		const { name, value } = e.target;
-		if (name === "bullets") {
-			updateExperience(id, { bullets: value.split("\n") });
-		} else {
-			updateExperience(id, { [name]: value });
+		updateExperience(id, { [name]: value });
+	};
+
+	const handleGenerateBullets = async () => {
+		setIsGenerating(true);
+		try {
+			const newBullets = await generateExperienceBullets(
+				exp.role || "",
+				exp.company || ""
+			);
+			const currentDesc = exp.description || "";
+			const merged = currentDesc ? currentDesc + newBullets : newBullets;
+			updateExperience(id, { description: merged });
+		} finally {
+			setIsGenerating(false);
 		}
 	};
 
@@ -158,15 +170,24 @@ function ExperienceItem({ id }: { id: string }) {
 						/>
 					</div>
 					<div className="space-y-2">
-						<label className="text-sm font-medium leading-none">
-							Description (one bullet per line)
-						</label>
-						<Textarea
-							name="bullets"
-							value={exp.bullets.join("\n")}
-							onChange={handleChange}
-							placeholder="Developed key features..."
-							className="min-h-[120px]"
+						<div className="flex items-center justify-between">
+							<label className="text-sm font-medium leading-none">
+								Description
+							</label>
+							<Button
+								variant="neutral"
+								size="sm"
+								onClick={handleGenerateBullets}
+								disabled={isGenerating}
+								className="h-8"
+							>
+								{isGenerating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+								Generate with AI
+							</Button>
+						</div>
+						<RichTextEditor
+							value={exp.description || ""}
+							onChange={(val) => updateExperience(id, { description: val })}
 						/>
 					</div>
 				</div>

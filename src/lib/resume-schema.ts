@@ -25,7 +25,8 @@ export const experienceSchema = z.object({
 	startDate: z.string(),
 	endDate: z.string(),
 	location: z.string(),
-	bullets: z.array(z.string()),
+	bullets: z.array(z.string()).optional(),
+	description: z.string().optional(),
 });
 
 export type Experience = z.infer<typeof experienceSchema>;
