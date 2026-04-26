@@ -77,3 +77,13 @@
     @apply font-heading;
   }
 }
+
+@media print {
+  @page {
+    size: A4;
+    margin: 0;
+  }
+  body {
+    @apply bg-white;
+  }
+}

@@ -18,7 +18,7 @@ export default function DemoTemplate() {
 		switch (id) {
 			case "experience":
 				return (
-					<section key={id}>
+					<section key={id} className="break-inside-avoid">
 						<h2 className="text-xl font-bold uppercase border-b border-black/20 mb-3 pb-1 text-black/90">
 							Experience
 						</h2>
@@ -47,7 +47,7 @@ export default function DemoTemplate() {
 				);
 			case "education":
 				return (
-					<section key={id}>
+					<section key={id} className="break-inside-avoid">
 						<h2 className="text-xl font-bold uppercase border-b border-black/20 mb-3 pb-1 text-black/90">
 							Education
 						</h2>
@@ -83,7 +83,7 @@ export default function DemoTemplate() {
 				);
 			case "skills":
 				return (
-					<section key={id}>
+					<section key={id} className="break-inside-avoid">
 						<h2 className="text-xl font-bold uppercase border-b border-black/20 mb-3 pb-1 text-black/90">
 							Skills
 						</h2>
@@ -100,7 +100,7 @@ export default function DemoTemplate() {
 			case "projects":
 				if (projects.length === 0) return null;
 				return (
-					<section key={id}>
+					<section key={id} className="break-inside-avoid">
 						<h2 className="text-xl font-bold uppercase border-b border-black/20 mb-3 pb-1 text-black/90">
 							Projects
 						</h2>
@@ -135,7 +135,7 @@ export default function DemoTemplate() {
 			case "certifications":
 				if (certifications.length === 0) return null;
 				return (
-					<section key={id}>
+					<section key={id} className="break-inside-avoid">
 						<h2 className="text-xl font-bold uppercase border-b border-black/20 mb-3 pb-1 text-black/90">
 							Certifications
 						</h2>
@@ -165,7 +165,7 @@ export default function DemoTemplate() {
 			case "languages":
 				if (languages.length === 0) return null;
 				return (
-					<section key={id}>
+					<section key={id} className="break-inside-avoid">
 						<h2 className="text-xl font-bold uppercase border-b border-black/20 mb-3 pb-1 text-black/90">
 							Languages
 						</h2>
@@ -185,7 +185,7 @@ export default function DemoTemplate() {
 	};
 
 	return (
-		<div className="flex flex-col gap-6 p-8 h-full bg-white text-black font-sans">
+		<div className="flex flex-col gap-6 p-8 min-h-full bg-white text-black font-sans">
 			<header className="border-b-2 border-black pb-4">
 				<h1 className="text-4xl font-bold uppercase tracking-tight">
 					{personalInfo.fullName || "Your Name"}

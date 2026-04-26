@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useStore } from "@tanstack/react-store";
 import CertificationsForm from "#/components/editor/CertificationsForm";
 import DemoTemplate from "#/components/editor/DemoTemplate";
+import ResumePreview from "#/components/editor/ResumePreview";
 import EditorHeader from "#/components/editor/EditorHeader";
 import EducationForm from "#/components/editor/EducationForm";
 import ExperienceForm from "#/components/editor/ExperienceForm";
@@ -72,8 +73,10 @@ function RouteComponent() {
 
 	return (
 		<>
-			<EditorHeader />
-			<main className="flex h-screen w-full flex-col overflow-hidden pt-[70px]">
+			<div className="print:hidden">
+				<EditorHeader />
+			</div>
+			<main className="flex h-screen w-full flex-col overflow-hidden pt-[70px] print:hidden">
 				<div className="flex-1 overflow-hidden p-4 md:p-6 lg:p-8">
 					<ResizablePanelGroup
 						direction="horizontal"
@@ -115,15 +118,14 @@ function RouteComponent() {
 
 						{/* Right main area - Resume preview */}
 						<ResizablePanel defaultSize="50%" className="bg-main">
-							<div className="flex h-full items-start justify-center p-6 overflow-auto">
-								<div className="aspect-[210/297] w-full max-w-[794px] shrink-0 rounded-sm bg-white border-2 border-border shadow-shadow overflow-hidden text-left">
-									<DemoTemplate />
-								</div>
-							</div>
+							<ResumePreview />
 						</ResizablePanel>
 					</ResizablePanelGroup>
 				</div>
 			</main>
+			<div className="hidden print:block w-[210mm] bg-white">
+				<DemoTemplate />
+			</div>
 		</>
 	);
 }
