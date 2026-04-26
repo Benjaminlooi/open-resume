@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import {
 	resumeStore,
 	updatePersonalInfo,
@@ -329,6 +329,70 @@ describe("resumeStore", () => {
 			const state = resumeStore.state;
 			expect(state.languages![0].id).toBe(initialOrder[1]);
 			expect(state.languages![1].id).toBe(initialOrder[0]);
+		});
+	});
+
+	describe("complex logic: legacy migration and side-effects", () => {
+		let originalWindow: any;
+		let originalLocalStorage: any;
+
+		beforeEach(() => {
+			originalWindow = globalThis.window;
+			originalLocalStorage = (globalThis as any).localStorage;
+			const mockStorage = {
+				getItem: vi.fn(),
+				setItem: vi.fn(),
+				removeItem: vi.fn(),
+				clear: vi.fn(),
+				length: 0,
+				key: vi.fn(),
+			};
+			globalThis.window = {
+				localStorage: mockStorage,
+			} as any;
+			(globalThis as any).localStorage = mockStorage;
+		});
+
+		afterEach(() => {
+			globalThis.window = originalWindow;
+			(globalThis as any).localStorage = originalLocalStorage;
+			vi.restoreAllMocks();
+		});
+
+		it("migrates legacy bullets to description HTML on initialization", async () => {
+			const legacyState = {
+				experience: [
+					{
+						id: "exp-1",
+						bullets: ["Fixed a bug", "Wrote a test"],
+					},
+				],
+			};
+			(globalThis.window.localStorage.getItem as any).mockReturnValue(
+				JSON.stringify(legacyState),
+			);
+
+			vi.resetModules();
+			const { resumeStore } = await import("./resume-store");
+
+			expect(resumeStore.state.experience[0].description).toBe(
+				"<ul><li>Fixed a bug</li><li>Wrote a test</li></ul>",
+			);
+			expect((resumeStore.state.experience[0] as any).bullets).toBeUndefined();
+		});
+
+		it("saves state to localStorage on store update", async () => {
+			vi.resetModules();
+			const { updatePersonalInfo } = await import("./resume-store");
+
+			(globalThis.window.localStorage.setItem as any).mockClear();
+
+			updatePersonalInfo("fullName", "Morty Smith");
+
+			expect(globalThis.window.localStorage.setItem).toHaveBeenCalledWith(
+				"resume-builder-state",
+				expect.stringContaining("Morty Smith"),
+			);
 		});
 	});
 });
