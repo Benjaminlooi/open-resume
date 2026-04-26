@@ -38,9 +38,10 @@ export default function ResumePreview() {
 	return (
 		<div
 			ref={containerRef}
-			className="w-full flex h-full justify-center items-start overflow-auto p-6"
+			className="print:p-0 print:overflow-visible w-full flex h-full justify-center items-start overflow-auto p-6"
 		>
 			<div
+				className="resume-print-container"
 				style={{
 					width: `${794 * scale}px`,
 					height: unscaledHeight === "auto" ? "auto" : unscaledHeight * scale,
@@ -48,7 +49,7 @@ export default function ResumePreview() {
 				}}
 			>
 				<div
-					className="origin-top-left absolute top-0 left-0"
+					className="origin-top-left absolute top-0 left-0 resume-print-container"
 					style={{
 						transform: `scale(${scale})`,
 						width: "794px",
@@ -56,7 +57,7 @@ export default function ResumePreview() {
 				>
 					<div
 						ref={contentRef}
-						className="w-[210mm] min-h-[297mm] shrink-0 rounded-sm bg-white border-2 border-border shadow-shadow text-left"
+						className="w-[210mm] min-h-[297mm] shrink-0 rounded-sm bg-white border-2 border-border shadow-shadow text-left resume-print-container"
 					>
 						<DemoTemplate />
 					</div>

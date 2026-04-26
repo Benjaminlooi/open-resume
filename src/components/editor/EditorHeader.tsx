@@ -1,4 +1,4 @@
-import { Moon } from "lucide-react";
+import { Moon, Download } from "lucide-react";
 import { useState } from "react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -6,8 +6,12 @@ import { Input } from "../ui/input";
 export default function EditorHeader() {
 	const [resumeName, setResumeName] = useState("test resume");
 
+	const handleDownloadPdf = () => {
+		window.print();
+	};
+
 	return (
-		<header className="sticky top-0 z-50 border-b border-[var(--line)] bg-[var(--header-bg)] px-4 backdrop-blur-lg">
+		<header className="print:hidden sticky top-0 z-50 border-b border-[var(--line)] bg-[var(--header-bg)] px-4 backdrop-blur-lg">
 			<nav className="fixed left-0 top-0 z-20 mx-auto flex h-[70px] w-full items-center border-b-4 border-border bg-secondary-background px-5">
 				<div className="mx-auto flex w-[1300px] text-foreground max-w-full items-center justify-between">
 					<div className="flex items-center xl:gap-10 gap-10">
@@ -70,6 +74,10 @@ export default function EditorHeader() {
 							</p>
 						</div> */}
 						<div className="flex items-center justify-end gap-4">
+							<Button onClick={handleDownloadPdf} className="gap-2">
+								<Download className="size-4" />
+								<span className="hidden sm:inline">Download PDF</span>
+							</Button>
 							<Button>
 								<p className="font-semibold sm:inline hidden">3.2k</p>
 								<svg

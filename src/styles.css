@@ -86,4 +86,20 @@
   body {
     @apply bg-white;
   }
+  .print\:hidden {
+    display: none !important;
+  }
+  .resume-print-container {
+    transform: none !important;
+    width: 210mm !important;
+    min-height: 297mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+  * {
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+  }
 }
