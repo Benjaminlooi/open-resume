@@ -206,7 +206,27 @@ const initialResume: EditorState = {
 	],
 };
 
-export const resumeStore = new Store<EditorState>(initialResume);
+const getInitialState = (): EditorState => {
+	if (typeof window !== "undefined") {
+		const saved = localStorage.getItem("resume-builder-state");
+		if (saved) {
+			try {
+				return JSON.parse(saved) as EditorState;
+			} catch (e) {
+				console.error("Failed to parse saved resume state", e);
+			}
+		}
+	}
+	return initialResume;
+};
+
+export const resumeStore = new Store<EditorState>(getInitialState());
+
+if (typeof window !== "undefined") {
+	resumeStore.subscribe(() => {
+		localStorage.setItem("resume-builder-state", JSON.stringify(resumeStore.state));
+	});
+}
 
 export const setActiveSection = (id: string) => {
 	resumeStore.setState((state) => ({
