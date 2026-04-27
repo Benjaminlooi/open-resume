@@ -40,7 +40,11 @@ export function RichTextEditor({
 	// Keep editor content in sync if value changes externally (e.g. DND reorder)
 	useEffect(() => {
 		if (editor && value !== editor.getHTML()) {
-			editor.commands.setContent(value);
+			// Only update if the editor is NOT focused to prevent cursor jumping
+			// while typing lists, which can temporarily desync HTML strings.
+			if (!editor.isFocused) {
+				editor.commands.setContent(value);
+			}
 		}
 	}, [editor, value]);
 

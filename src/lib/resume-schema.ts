@@ -40,6 +40,7 @@ export const educationSchema = z.object({
 	location: z.string(),
 	gpa: z.string().optional(),
 	bullets: z.array(z.string()).optional(),
+	description: z.string().optional(),
 });
 
 export type Education = z.infer<typeof educationSchema>;
