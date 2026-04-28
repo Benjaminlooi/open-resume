@@ -43,13 +43,40 @@ export default function ResumeCard({ resumeIndex, onDelete }: ResumeCardProps) {
 			const rotateX = percentY * -15;
 			const rotateY = percentX * 15;
 
-			// Smooth magnetic effect: offset slightly from the cursor
-			// and use a bit of transform to center the magnetic pull
-			const x = e.clientX + 20;
-			const y = e.clientY - 198; // Half the height (396/2) to center it vertically relative to mouse
+			const popoverWidth = 280;
+			const popoverHeight = 396;
+			const margin = 20;
+			const scale = 1.5; // Matches the scale applied in transform
+
+			// Base position: offset slightly to the right of cursor and centered vertically
+			let x = e.clientX + margin;
+			let y = e.clientY - popoverHeight / 2;
+
+			// Account for CSS transform scale expanding the element from its center
+			const overflowX = (popoverWidth * scale - popoverWidth) / 2;
+			const overflowY = (popoverHeight * scale - popoverHeight) / 2;
+
+			// Prevent overflow on the right side
+			if (x + popoverWidth + overflowX + margin > window.innerWidth) {
+				// Flip to the left side of the cursor
+				x = e.clientX - popoverWidth - margin;
+			}
+			// Prevent overflow on the left side
+			if (x - overflowX < margin) {
+				x = margin + overflowX;
+			}
+
+			// Prevent overflow on the bottom
+			if (y + popoverHeight + overflowY + margin > window.innerHeight) {
+				y = window.innerHeight - popoverHeight - overflowY - margin;
+			}
+			// Prevent overflow on the top
+			if (y - overflowY < margin) {
+				y = margin + overflowY;
+			}
 
 			// Add perspective, rotation, and slight scale for a 3D float effect
-			popoverRef.current.style.transform = `translate(${x}px, ${y}px) perspective(1200px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.05)`;
+			popoverRef.current.style.transform = `translate(${x}px, ${y}px) perspective(1200px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(${scale})`;
 		}
 	};
 
