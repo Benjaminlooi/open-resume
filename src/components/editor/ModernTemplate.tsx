@@ -1,18 +1,24 @@
 import { useStore } from "@tanstack/react-store";
-import { resumeStore } from "#/lib/resume-store";
+import { resumeStore, type EditorState } from "#/lib/resume-store";
 
-export default function ModernTemplate() {
-	const personalInfo = useStore(resumeStore, (state) => state.personalInfo);
-	const sections = useStore(resumeStore, (state) => state.sections);
-	const experience = useStore(resumeStore, (state) => state.experience);
-	const education = useStore(resumeStore, (state) => state.education);
-	const skills = useStore(resumeStore, (state) => state.skills);
-	const projects = useStore(resumeStore, (state) => state.projects || []);
-	const certifications = useStore(
-		resumeStore,
-		(state) => state.certifications || [],
-	);
-	const languages = useStore(resumeStore, (state) => state.languages || []);
+export default function ModernTemplate({ resume }: { resume?: EditorState }) {
+	const globalPersonalInfo = useStore(resumeStore, (state) => state.personalInfo);
+	const globalSections = useStore(resumeStore, (state) => state.sections);
+	const globalExperience = useStore(resumeStore, (state) => state.experience);
+	const globalEducation = useStore(resumeStore, (state) => state.education);
+	const globalSkills = useStore(resumeStore, (state) => state.skills);
+	const globalProjects = useStore(resumeStore, (state) => state.projects || []);
+	const globalCertifications = useStore(resumeStore, (state) => state.certifications || []);
+	const globalLanguages = useStore(resumeStore, (state) => state.languages || []);
+
+	const personalInfo = resume ? resume.personalInfo : globalPersonalInfo;
+	const sections = resume ? resume.sections : globalSections;
+	const experience = resume ? resume.experience : globalExperience;
+	const education = resume ? resume.education : globalEducation;
+	const skills = resume ? resume.skills : globalSkills;
+	const projects = resume ? (resume.projects || []) : globalProjects;
+	const certifications = resume ? (resume.certifications || []) : globalCertifications;
+	const languages = resume ? (resume.languages || []) : globalLanguages;
 
 	const renderSection = (id: string) => {
 		switch (id) {
