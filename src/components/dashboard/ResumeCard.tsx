@@ -28,12 +28,28 @@ export default function ResumeCard({ resumeIndex, onDelete }: ResumeCardProps) {
 
 	const handleMouseMove = (e: React.MouseEvent) => {
 		if (popoverRef.current) {
+			const target = e.currentTarget as HTMLElement;
+			const rect = target.getBoundingClientRect();
+
+			// Calculate mouse position relative to the center of the thumbnail
+			const centerX = rect.left + rect.width / 2;
+			const centerY = rect.top + rect.height / 2;
+
+			// Distance from center (-1 to 1)
+			const percentX = (e.clientX - centerX) / (rect.width / 2);
+			const percentY = (e.clientY - centerY) / (rect.height / 2);
+
+			// Rotate up to 15 degrees based on mouse position
+			const rotateX = percentY * -15;
+			const rotateY = percentX * 15;
+
 			// Smooth magnetic effect: offset slightly from the cursor
 			// and use a bit of transform to center the magnetic pull
 			const x = e.clientX + 20;
 			const y = e.clientY - 198; // Half the height (396/2) to center it vertically relative to mouse
 
-			popoverRef.current.style.transform = `translate(${x}px, ${y}px)`;
+			// Add perspective, rotation, and slight scale for a 3D float effect
+			popoverRef.current.style.transform = `translate(${x}px, ${y}px) perspective(1200px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.05)`;
 		}
 	};
 
