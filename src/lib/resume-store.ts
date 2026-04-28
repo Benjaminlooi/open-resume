@@ -11,7 +11,7 @@ import type {
 } from "./resume-schema";
 
 // We extend the Resume type locally for UI state
-type EditorState = Resume & {
+export type EditorState = Resume & {
 	id: string;
 	name: string;
 	activeSection: string;
@@ -248,6 +248,41 @@ export const loadResume = (id: string) => {
 		}
 	}
 	return false;
+};
+
+export const getResumeData = (id: string): EditorState | null => {
+	if (typeof window !== "undefined") {
+		const saved = localStorage.getItem(`resume-${id}`);
+		if (saved) {
+			try {
+				const parsed = JSON.parse(saved) as any;
+
+				const migrateBullets = (items: any[]) => {
+					return (
+						items?.map((item) => {
+							if (item.bullets && Array.isArray(item.bullets)) {
+								const html = `<ul>${item.bullets
+									.map((b: string) => `<li>${b}</li>`)
+									.join("")}</ul>`;
+								const { bullets, ...rest } = item;
+								return { ...rest, description: html };
+							}
+							return item;
+						}) || []
+					);
+				};
+
+				if (parsed.experience) parsed.experience = migrateBullets(parsed.experience);
+				if (parsed.education) parsed.education = migrateBullets(parsed.education);
+				if (parsed.projects) parsed.projects = migrateBullets(parsed.projects);
+
+				return parsed as EditorState;
+			} catch (e) {
+				console.error("Failed to parse saved resume state", e);
+			}
+		}
+	}
+	return null;
 };
 
 export const setActiveSection = (id: string) => {

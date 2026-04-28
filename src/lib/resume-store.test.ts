@@ -359,6 +359,31 @@ describe("resumeStore", () => {
 			vi.restoreAllMocks();
 		});
 
+		it("retrieves and parses resume data without altering the store", async () => {
+			const dummyState = {
+				id: "dummy-1",
+				name: "Dummy Resume",
+				templateId: "modern",
+				experience: [{ id: "exp-1", bullets: ["Fixed a bug"] }]
+			};
+			(globalThis.window.localStorage.getItem as any).mockReturnValue(
+				JSON.stringify(dummyState)
+			);
+
+			vi.resetModules();
+			const { getResumeData, resumeStore } = await import("./resume-store");
+			
+			const data = getResumeData("dummy-1");
+			
+			expect(data).not.toBeNull();
+			expect(data?.id).toBe("dummy-1");
+			// Legacy migration check
+			expect(data?.experience[0].description).toBe("<ul><li>Fixed a bug</li></ul>");
+			
+			// Verify global store is unchanged
+			expect(resumeStore.state.id).toBe("default");
+		});
+
 		it("migrates legacy bullets to description HTML on loadResume", async () => {
 			const legacyState = {
 				experience: [
