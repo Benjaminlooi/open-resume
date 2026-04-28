@@ -1,10 +1,13 @@
 import { Moon, Download } from "lucide-react";
 import { useState } from "react";
+import { useStore } from "@tanstack/react-store";
+import { resumeStore, setTemplateId, AVAILABLE_TEMPLATES } from "#/lib/resume-store";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 
 export default function EditorHeader() {
 	const [resumeName, setResumeName] = useState("test resume");
+	const templateId = useStore(resumeStore, (state) => state.templateId);
 
 	const handleDownloadPdf = () => {
 		window.print();
@@ -28,52 +31,18 @@ export default function EditorHeader() {
 							value={resumeName}
 							className="max-w-[200px] hidden md:inline-flex"
 						/>
-						{/* <button
-							data-slot="button"
-							className="inline-flex items-center justify-center whitespace-nowrap rounded-base font-base ring-offset-white transition-all gap-2 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 text-main-foreground border-2 border-border hover:translate-x-boxShadowX hover:translate-y-boxShadowY py-2 relative bg-secondary-background dark:text-white shadow-nav dark:shadow-navDark hover:translate-x-[4px]! hover:translate-y-[4px]! hover:shadow-none dark:hover:shadow-none px-3 pr-3 xl:pr-16 shrink-0 xl:w-[unset] w-9 h-9 text-base"
-						>
-							<span className="flex text-sm items-center gap-1">
-								<svg
-									xmlns="http://www.w3.org/2000/svg"
-									width="24"
-									height="24"
-									viewBox="0 0 24 24"
-									fill="none"
-									stroke="currentColor"
-									stroke-width="2"
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									className="lucide lucide-search xl:!size-4 !size-5 shrink-0"
-								>
-									<circle cx="11" cy="11" r="8"></circle>
-									<path d="m21 21-4.3-4.3"></path>
-								</svg>
-								<span className="xl:inline hidden">Search</span>
-							</span>
-							<span className="absolute xl:flex hidden items-center justify-center text-black border text-xs px-1 border-black rounded-base bg-main h-6 right-2 top-1">
-								⌘ K
-							</span>
-						</button>
-						<div
-							data-slot="dialog-header"
-							className="flex flex-col gap-2 text-center sm:text-left sr-only"
-						>
-							<h2
-								id="radix-:R2cdbH1:"
-								data-slot="dialog-title"
-								className="text-lg font-heading leading-none tracking-tight"
-							>
-								Search documentation
-							</h2>
-							<p
-								id="radix-:R2cdbH2:"
-								data-slot="dialog-description"
-								className="text-sm font-base text-foreground"
-							>
-								Search for a command to run...
-							</p>
-						</div> */}
 						<div className="flex items-center justify-end gap-4">
+							<select
+								value={templateId}
+								onChange={(e) => setTemplateId(e.target.value)}
+								className="h-10 rounded-base border-2 border-border bg-secondary-background px-3 py-2 text-sm font-base ring-offset-background focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 hover:translate-x-boxShadowX hover:translate-y-boxShadowY hover:shadow-none transition-all shadow-light dark:shadow-dark"
+							>
+								{AVAILABLE_TEMPLATES.map((t) => (
+									<option key={t.id} value={t.id}>
+										{t.name}
+									</option>
+								))}
+							</select>
 							<Button onClick={handleDownloadPdf} className="gap-2">
 								<Download className="size-4" />
 								<span className="hidden sm:inline">Download PDF</span>

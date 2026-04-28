@@ -13,6 +13,7 @@ import type {
 // We extend the Resume type locally for UI state
 type EditorState = Resume & {
 	activeSection: string;
+	templateId: string;
 };
 
 export const AVAILABLE_SECTIONS = [
@@ -24,8 +25,14 @@ export const AVAILABLE_SECTIONS = [
 	{ id: "languages", name: "Languages" },
 ];
 
+export const AVAILABLE_TEMPLATES = [
+	{ id: "demo", name: "Classic" },
+	{ id: "modern", name: "Modern" },
+];
+
 const initialResume: EditorState = {
 	activeSection: "personalInfo",
+	templateId: "demo",
 	personalInfo: {
 		fullName: "John Doe",
 		email: "john.doe@example.com",
@@ -235,6 +242,13 @@ export const setActiveSection = (id: string) => {
 	resumeStore.setState((state) => ({
 		...state,
 		activeSection: id,
+	}));
+};
+
+export const setTemplateId = (id: string) => {
+	resumeStore.setState((state) => ({
+		...state,
+		templateId: id,
 	}));
 };
 
