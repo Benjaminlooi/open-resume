@@ -359,7 +359,7 @@ describe("resumeStore", () => {
 			vi.restoreAllMocks();
 		});
 
-		it("migrates legacy bullets to description HTML on initialization", async () => {
+		it("migrates legacy bullets to description HTML on loadResume", async () => {
 			const legacyState = {
 				experience: [
 					{
@@ -373,7 +373,9 @@ describe("resumeStore", () => {
 			);
 
 			vi.resetModules();
-			const { resumeStore } = await import("./resume-store");
+			const { resumeStore, loadResume } = await import("./resume-store");
+			
+			loadResume("default");
 
 			expect(resumeStore.state.experience[0].description).toBe(
 				"<ul><li>Fixed a bug</li><li>Wrote a test</li></ul>",
@@ -390,7 +392,7 @@ describe("resumeStore", () => {
 			updatePersonalInfo("fullName", "Morty Smith");
 
 			expect(globalThis.window.localStorage.setItem).toHaveBeenCalledWith(
-				"resume-builder-state",
+				"resume-default",
 				expect.stringContaining("Morty Smith"),
 			);
 		});
