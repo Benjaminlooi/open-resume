@@ -1,10 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/")({
-	component: App,
+	beforeLoad: () => {
+		throw redirect({
+			to: "/resumes",
+		});
+	},
 });
-
-function App() {
-	return <></>;
-}
