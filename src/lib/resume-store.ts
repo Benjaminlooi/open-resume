@@ -12,6 +12,8 @@ import type {
 
 // We extend the Resume type locally for UI state
 type EditorState = Resume & {
+	id: string;
+	name: string;
 	activeSection: string;
 	templateId: string;
 };
@@ -31,6 +33,8 @@ export const AVAILABLE_TEMPLATES = [
 ];
 
 const initialResume: EditorState = {
+	id: "default",
+	name: "My Resume",
 	activeSection: "personalInfo",
 	templateId: "demo",
 	personalInfo: {
@@ -190,8 +194,26 @@ const initialResume: EditorState = {
 };
 
 const getInitialState = (): EditorState => {
+	return initialResume;
+};
+
+export const resumeStore = new Store<EditorState>(getInitialState());
+
+if (typeof window !== "undefined") {
+	resumeStore.subscribe(() => {
+		const state = resumeStore.state;
+		if (state.id) {
+			localStorage.setItem(
+				`resume-${state.id}`,
+				JSON.stringify(state),
+			);
+		}
+	});
+}
+
+export const loadResume = (id: string) => {
 	if (typeof window !== "undefined") {
-		const saved = localStorage.getItem("resume-builder-state");
+		const saved = localStorage.getItem(`resume-${id}`);
 		if (saved) {
 			try {
 				const parsed = JSON.parse(saved) as any;
@@ -218,25 +240,15 @@ const getInitialState = (): EditorState => {
 					parsed.education = migrateBullets(parsed.education);
 				if (parsed.projects) parsed.projects = migrateBullets(parsed.projects);
 
-				return parsed as EditorState;
+				resumeStore.setState(() => parsed as EditorState);
+				return true;
 			} catch (e) {
 				console.error("Failed to parse saved resume state", e);
 			}
 		}
 	}
-	return initialResume;
+	return false;
 };
-
-export const resumeStore = new Store<EditorState>(getInitialState());
-
-if (typeof window !== "undefined") {
-	resumeStore.subscribe(() => {
-		localStorage.setItem(
-			"resume-builder-state",
-			JSON.stringify(resumeStore.state),
-		);
-	});
-}
 
 export const setActiveSection = (id: string) => {
 	resumeStore.setState((state) => ({
