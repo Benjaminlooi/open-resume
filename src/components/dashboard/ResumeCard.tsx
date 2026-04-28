@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { type EditorState, getResumeData } from "#/lib/resume-store";
 import ResumeThumbnail from "./ResumeThumbnail";
 
@@ -15,6 +15,7 @@ interface ResumeCardProps {
 
 export default function ResumeCard({ resumeIndex, onDelete }: ResumeCardProps) {
 	const [fullResume, setFullResume] = useState<EditorState | null>(null);
+	const popoverRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
 		const data = getResumeData(resumeIndex.id);
@@ -23,8 +24,20 @@ export default function ResumeCard({ resumeIndex, onDelete }: ResumeCardProps) {
 		}
 	}, [resumeIndex.id]);
 
+	const handleMouseMove = (e: React.MouseEvent) => {
+		if (popoverRef.current) {
+			// Smooth magnetic effect: offset slightly from the cursor
+			// and use a bit of transform to center the magnetic pull
+			const x = e.clientX + 20;
+			const y = e.clientY - 198; // Half the height (396/2) to center it vertically relative to mouse
+
+			popoverRef.current.style.transform = `translate(${x}px, ${y}px)`;
+		}
+	};
+
 	return (
-		<div className="relative group">
+		// biome-ignore lint/a11y/noStaticElementInteractions: Visual effect only
+		<div className="relative group" onMouseMove={handleMouseMove}>
 			<div className="border-2 border-border rounded-base h-64 flex flex-col bg-white overflow-hidden shadow-shadow hover:-translate-y-1 transition-transform relative z-10">
 				{/* Top Half: Thumbnail with fallback */}
 				<div className="flex-1 border-b-2 border-border relative overflow-hidden bg-main/10">
@@ -72,7 +85,10 @@ export default function ResumeCard({ resumeIndex, onDelete }: ResumeCardProps) {
 
 			{/* Hover Popover */}
 			{fullResume && (
-				<div className="hidden group-hover:block absolute left-full ml-4 top-[-20px] z-50 border-2 border-border bg-white shadow-shadow rounded-base overflow-hidden w-[280px] h-[396px] pointer-events-none">
+				<div
+					ref={popoverRef}
+					className="hidden group-hover:block fixed top-0 left-0 z-50 border-2 border-border bg-white shadow-shadow rounded-base overflow-hidden w-[280px] h-[396px] pointer-events-none transition-transform duration-75 ease-out"
+				>
 					<ResumeThumbnail
 						templateId={resumeIndex.templateId}
 						resume={fullResume}
