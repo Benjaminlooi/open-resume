@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { type EditorState, getResumeData } from "#/lib/resume-store";
 import ResumeThumbnail from "./ResumeThumbnail";
 
@@ -15,6 +16,7 @@ interface ResumeCardProps {
 
 export default function ResumeCard({ resumeIndex, onDelete }: ResumeCardProps) {
 	const [fullResume, setFullResume] = useState<EditorState | null>(null);
+	const [isHovering, setIsHovering] = useState(false);
 	const popoverRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
@@ -35,14 +37,25 @@ export default function ResumeCard({ resumeIndex, onDelete }: ResumeCardProps) {
 		}
 	};
 
+	const handleMouseEnter = (e: React.MouseEvent) => {
+		setIsHovering(true);
+		handleMouseMove(e);
+	};
+
+	const handleMouseLeave = () => {
+		setIsHovering(false);
+	};
+
 	return (
 		<div className="relative">
 			<div className="border-2 border-border rounded-base h-64 flex flex-col bg-white overflow-hidden shadow-shadow hover:-translate-y-1 transition-transform relative z-10">
 				{/* Top Half: Thumbnail with fallback */}
 				{/* biome-ignore lint/a11y/noStaticElementInteractions: Visual effect only */}
 				<div
-					className="flex-1 border-b-2 border-border relative overflow-hidden bg-main/10 peer"
+					className="flex-1 border-b-2 border-border relative overflow-hidden bg-main/10 cursor-default"
 					onMouseMove={handleMouseMove}
+					onMouseEnter={handleMouseEnter}
+					onMouseLeave={handleMouseLeave}
 				>
 					{fullResume ? (
 						<ResumeThumbnail
@@ -58,20 +71,6 @@ export default function ResumeCard({ resumeIndex, onDelete }: ResumeCardProps) {
 						</div>
 					)}
 				</div>
-
-				{/* Hover Popover */}
-				{fullResume && (
-					<div
-						ref={popoverRef}
-						className="hidden peer-hover:block fixed top-0 left-0 z-50 border-2 border-border bg-white shadow-shadow rounded-base overflow-hidden w-[280px] h-[396px] pointer-events-none transition-transform duration-75 ease-out"
-					>
-						<ResumeThumbnail
-							templateId={resumeIndex.templateId}
-							resume={fullResume}
-							scale={0.35}
-						/>
-					</div>
-				)}
 
 				{/* Bottom Half: Info and Actions */}
 				<div className="p-4 flex flex-col gap-2 bg-white relative z-20 h-[116px]">
@@ -99,6 +98,23 @@ export default function ResumeCard({ resumeIndex, onDelete }: ResumeCardProps) {
 					</div>
 				</div>
 			</div>
+
+			{/* Hover Popover */}
+			{fullResume &&
+				typeof document !== "undefined" &&
+				createPortal(
+					<div
+						ref={popoverRef}
+						className={`${isHovering ? "block" : "hidden"} fixed top-0 left-0 z-[100] border-2 border-border bg-white shadow-shadow rounded-base overflow-hidden w-[280px] h-[396px] pointer-events-none transition-transform duration-75 ease-out`}
+					>
+						<ResumeThumbnail
+							templateId={resumeIndex.templateId}
+							resume={fullResume}
+							scale={0.35}
+						/>
+					</div>,
+					document.body,
+				)}
 		</div>
 	);
 }
