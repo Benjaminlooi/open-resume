@@ -36,11 +36,14 @@ export default function ResumeCard({ resumeIndex, onDelete }: ResumeCardProps) {
 	};
 
 	return (
-		// biome-ignore lint/a11y/noStaticElementInteractions: Visual effect only
-		<div className="relative group" onMouseMove={handleMouseMove}>
+		<div className="relative">
 			<div className="border-2 border-border rounded-base h-64 flex flex-col bg-white overflow-hidden shadow-shadow hover:-translate-y-1 transition-transform relative z-10">
 				{/* Top Half: Thumbnail with fallback */}
-				<div className="flex-1 border-b-2 border-border relative overflow-hidden bg-main/10">
+				{/* biome-ignore lint/a11y/noStaticElementInteractions: Visual effect only */}
+				<div
+					className="flex-1 border-b-2 border-border relative overflow-hidden bg-main/10 peer"
+					onMouseMove={handleMouseMove}
+				>
 					{fullResume ? (
 						<ResumeThumbnail
 							templateId={resumeIndex.templateId}
@@ -55,6 +58,20 @@ export default function ResumeCard({ resumeIndex, onDelete }: ResumeCardProps) {
 						</div>
 					)}
 				</div>
+
+				{/* Hover Popover */}
+				{fullResume && (
+					<div
+						ref={popoverRef}
+						className="hidden peer-hover:block fixed top-0 left-0 z-50 border-2 border-border bg-white shadow-shadow rounded-base overflow-hidden w-[280px] h-[396px] pointer-events-none transition-transform duration-75 ease-out"
+					>
+						<ResumeThumbnail
+							templateId={resumeIndex.templateId}
+							resume={fullResume}
+							scale={0.35}
+						/>
+					</div>
+				)}
 
 				{/* Bottom Half: Info and Actions */}
 				<div className="p-4 flex flex-col gap-2 bg-white relative z-20 h-[116px]">
@@ -82,20 +99,6 @@ export default function ResumeCard({ resumeIndex, onDelete }: ResumeCardProps) {
 					</div>
 				</div>
 			</div>
-
-			{/* Hover Popover */}
-			{fullResume && (
-				<div
-					ref={popoverRef}
-					className="hidden group-hover:block fixed top-0 left-0 z-50 border-2 border-border bg-white shadow-shadow rounded-base overflow-hidden w-[280px] h-[396px] pointer-events-none transition-transform duration-75 ease-out"
-				>
-					<ResumeThumbnail
-						templateId={resumeIndex.templateId}
-						resume={fullResume}
-						scale={0.35}
-					/>
-				</div>
-			)}
 		</div>
 	);
 }
