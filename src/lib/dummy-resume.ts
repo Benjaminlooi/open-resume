@@ -1,19 +1,22 @@
 import { type EditorState } from "./resume-store";
 
 export const blankResumeState: EditorState = {
-	templateId: "demo", // Overridden by component
+	id: "dummy",
+	name: "Template Preview",
+	activeSection: "personalInfo",
+	templateId: "demo",
 	personalInfo: {
-		firstName: "First",
-		lastName: "Last",
+		fullName: "First Last",
 		email: "",
 		phone: "",
-		title: "",
 		location: "",
-		summary: "",
-		socialLinks: []
+		website: "",
 	},
+	sections: [],
 	experience: [],
 	education: [],
 	skills: [],
-	projects: []
+	projects: [],
+	certifications: [],
+	languages: [],
 };
