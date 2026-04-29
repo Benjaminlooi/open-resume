@@ -1,5 +1,5 @@
 import { useStore } from "@tanstack/react-store";
-import { resumeStore, type EditorState } from "#/lib/resume-store";
+import { type EditorState, resumeStore } from "#/lib/resume-store";
 
 export default function DemoTemplate({ resume }: { resume?: EditorState }) {
 	const globalPersonalInfo = useStore(resumeStore, (state) => state.personalInfo);

@@ -30,6 +30,6 @@ This document specifies the design for adding AI LLM integration to the Resume B
     *   **Result**: The generated text is appended to the current section's description field (e.g., the Rich Text Editor for the Experience description).
 
 ## Technical Requirements
-*   **Dependencies**: Add necessary UI components via Shadcn (`npx shadcn@latest add dialog input label select`). Add AI SDK packages if needed for streamlined API calls.
+*   **Dependencies**: Add necessary UI components via Shadcn using Neobrutalism registry (`npx shadcn@latest add https://neobrutalism.dev/r/dialog.json https://neobrutalism.dev/r/input.json https://neobrutalism.dev/r/label.json https://neobrutalism.dev/r/select.json https://neobrutalism.dev/r/button.json https://neobrutalism.dev/r/textarea.json`). Add AI SDK packages (`@ai-sdk/core`, `@ai-sdk/openai`, `@ai-sdk/anthropic`, `@ai-sdk/google`, `@ai-sdk/deepseek`, `groq-sdk` or equivalent) if needed for streamlined API calls.
 *   **Security**: Clearly communicate in the UI that API keys are stored locally and not sent to our servers.
 *   **Error Handling**: Implement graceful error handling for invalid API keys, network issues, or provider rate limits, displaying user-friendly error messages in the UI.
