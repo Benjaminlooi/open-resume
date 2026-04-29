@@ -6,7 +6,7 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 
 export default function EditorHeader() {
-	const [resumeName, setResumeName] = useState("test resume");
+	const [resumeName] = useState("test resume");
 	const templateId = useStore(resumeStore, (state) => state.templateId);
 
 	const handleDownloadPdf = () => {

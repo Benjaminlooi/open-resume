@@ -161,6 +161,7 @@ const initialResume: EditorState = {
 			id: "proj-3",
 			name: "Personal Finance Tracker",
 			date: "2020",
+			url: "",
 			description:
 				"<ul><li>Developed a mobile-first web app to track expenses and budget goals.</li><li>Integrated Plaid API for real-time bank transaction sync.</li></ul>",
 		},
