@@ -44,10 +44,9 @@ export function AIPromptModal({ role, company, onGenerate }: AIPromptModalProps)
       onGenerate(result);
       setOpen(false);
       setInstructions("");
-    } catch (err: any) {
-      setError(err.message || "An error occurred");
-    } finally {
-      setIsGenerating(false);
+    } catch (err: unknown) {
+    	setError(err instanceof Error ? err.message : "An error occurred");
+    } finally {      setIsGenerating(false);
     }
   };
 

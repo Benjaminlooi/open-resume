@@ -20,7 +20,8 @@ import type React from "react";
 import { useState } from "react";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
-import { Textarea } from "#/components/ui/textarea";
+import { RichTextEditor } from "#/components/ui/rich-text-editor";
+import { AIPromptModal } from "./AIPromptModal";
 import {
 	addEducation,
 	deleteEducation,
@@ -170,15 +171,23 @@ function EducationItem({ id }: { id: string }) {
 						</div>
 					</div>
 					<div className="space-y-2">
-						<label className="text-sm font-medium leading-none">
-							Description/Awards (one bullet per line)
-						</label>
-						<Textarea
-							name="bullets"
-							value={edu.bullets?.join("\n") || ""}
-							onChange={handleChange}
-							placeholder="Dean's List..."
-							className="min-h-[80px]"
+						<div className="flex justify-between items-center">
+							<label className="text-sm font-medium leading-none">
+								Description/Awards
+							</label>
+							<AIPromptModal 
+								role={edu.degree || ""} 
+								company={edu.institution || ""} 
+								onGenerate={(newBullets) => {
+									const currentDesc = edu.description || "";
+									const merged = currentDesc ? `${currentDesc}<br/>${newBullets}` : newBullets;
+									updateEducation(id, { description: merged });
+								}}
+							/>
+						</div>
+						<RichTextEditor
+							value={edu.description || ""}
+							onChange={(val) => updateEducation(id, { description: val })}
 						/>
 					</div>
 				</div>
