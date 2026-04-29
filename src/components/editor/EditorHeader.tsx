@@ -4,6 +4,7 @@ import { useStore } from "@tanstack/react-store";
 import { resumeStore, setTemplateId, AVAILABLE_TEMPLATES } from "#/lib/resume-store";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
+import { GlobalSettingsModal } from "./GlobalSettingsModal";
 
 export default function EditorHeader() {
 	const [resumeName] = useState("test resume");
@@ -47,6 +48,7 @@ export default function EditorHeader() {
 								<Download className="size-4" />
 								<span className="hidden sm:inline">Download PDF</span>
 							</Button>
+							<GlobalSettingsModal />
 							<Button>
 								<p className="font-semibold sm:inline hidden">3.2k</p>
 								<svg
