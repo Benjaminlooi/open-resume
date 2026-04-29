@@ -44,7 +44,7 @@ export default function NewResumeModal({ onClose }: NewResumeModalProps) {
 								<button
 									key={tpl.id}
 									onClick={() => setTemplateId(tpl.id)}
-									className={`relative flex flex-col items-center justify-between border-2 rounded-base p-2 transition-all h-64 overflow-hidden ${
+									className={`relative flex flex-col items-center justify-between border-2 rounded-base p-2 transition-all h-64 overflow-hidden text-left ${
 										isSelected 
 											? 'bg-main/10 border-border shadow-shadow hover:bg-main/20' 
 											: 'border-border/50 text-muted-foreground hover:border-border hover:shadow-shadow'
