@@ -15,13 +15,13 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useStore } from "@tanstack/react-store";
-import { ChevronDown, ChevronUp, GripVertical, Trash2, Loader2 } from "lucide-react";
+import { ChevronDown, ChevronUp, GripVertical, Trash2 } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
 import { RichTextEditor } from "#/components/ui/rich-text-editor";
-import { generateExperienceBullets } from "#/lib/ai";
+import { AIPromptModal } from "./AIPromptModal";
 import {
 	addExperience,
 	deleteExperience,
@@ -32,7 +32,6 @@ import {
 
 function ExperienceItem({ id }: { id: string }) {
 	const [isExpanded, setIsExpanded] = useState(false);
-	const [isGenerating, setIsGenerating] = useState(false);
 	const exp = useStore(resumeStore, (state) =>
 		state.experience.find((e) => e.id === id),
 	);
@@ -52,21 +51,6 @@ function ExperienceItem({ id }: { id: string }) {
 	) => {
 		const { name, value } = e.target;
 		updateExperience(id, { [name]: value });
-	};
-
-	const handleGenerateBullets = async () => {
-		setIsGenerating(true);
-		try {
-			const newBullets = await generateExperienceBullets(
-				exp.role || "",
-				exp.company || ""
-			);
-			const currentDesc = exp.description || "";
-			const merged = currentDesc ? currentDesc + newBullets : newBullets;
-			updateExperience(id, { description: merged });
-		} finally {
-			setIsGenerating(false);
-		}
 	};
 
 	return (
@@ -174,16 +158,15 @@ function ExperienceItem({ id }: { id: string }) {
 							<label className="text-sm font-medium leading-none">
 								Description
 							</label>
-							<Button
-								variant="neutral"
-								size="sm"
-								onClick={handleGenerateBullets}
-								disabled={isGenerating}
-								className="h-8"
-							>
-								{isGenerating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-								Generate with AI
-							</Button>
+							<AIPromptModal 
+								role={exp.role || ""} 
+								company={exp.company || ""} 
+								onGenerate={(newBullets) => {
+									const currentDesc = exp.description || "";
+									const merged = currentDesc ? currentDesc + "<br/>" + newBullets : newBullets;
+									updateExperience(id, { description: merged });
+								}}
+							/>
 						</div>
 						<RichTextEditor
 							value={exp.description || ""}
