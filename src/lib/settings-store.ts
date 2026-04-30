@@ -1,10 +1,12 @@
 import { Store } from "@tanstack/react-store";
 
-export type AIProvider = "openai" | "anthropic" | "google" | "deepseek" | "groq";
+export type AIProvider = "openai" | "anthropic" | "google" | "deepseek" | "groq" | "ollama" | "lmstudio";
 
 export interface SettingsState {
   apiKeys: Partial<Record<AIProvider, string>>;
   defaultProvider: AIProvider;
+  baseUrls: Partial<Record<AIProvider, string>>;
+  selectedModels: Partial<Record<AIProvider, string>>;
 }
 
 const getInitialState = (): SettingsState => {
@@ -12,7 +14,13 @@ const getInitialState = (): SettingsState => {
     const saved = localStorage.getItem("resume-builder-settings");
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        return {
+          apiKeys: parsed.apiKeys || {},
+          defaultProvider: parsed.defaultProvider || "openai",
+          baseUrls: parsed.baseUrls || {},
+          selectedModels: parsed.selectedModels || {}
+        };
       } catch (e) {
         console.error("Failed to parse settings", e);
       }
@@ -21,6 +29,8 @@ const getInitialState = (): SettingsState => {
   return {
     apiKeys: {},
     defaultProvider: "openai",
+    baseUrls: {},
+    selectedModels: {}
   };
 };
 
@@ -46,5 +56,19 @@ export const setDefaultProvider = (provider: AIProvider) => {
   settingsStore.setState((state) => ({
     ...state,
     defaultProvider: provider,
+  }));
+};
+
+export const updateBaseUrl = (provider: AIProvider, url: string) => {
+  settingsStore.setState((state) => ({
+    ...state,
+    baseUrls: { ...state.baseUrls, [provider]: url },
+  }));
+};
+
+export const updateSelectedModel = (provider: AIProvider, model: string) => {
+  settingsStore.setState((state) => ({
+    ...state,
+    selectedModels: { ...state.selectedModels, [provider]: model },
   }));
 };

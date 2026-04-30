@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { settingsStore, updateAPIKey, setDefaultProvider } from './settings-store';
+import { settingsStore, updateAPIKey, setDefaultProvider, updateBaseUrl, updateSelectedModel } from './settings-store';
 
 describe('settingsStore', () => {
   beforeEach(() => {
@@ -7,6 +7,8 @@ describe('settingsStore', () => {
     settingsStore.setState(() => ({
       apiKeys: {},
       defaultProvider: 'openai',
+      baseUrls: {},
+      selectedModels: {}
     }));
   });
 
@@ -16,5 +18,15 @@ describe('settingsStore', () => {
     
     setDefaultProvider('anthropic');
     expect(settingsStore.state.defaultProvider).toBe('anthropic');
+  });
+
+  it('updates base URL for a provider', () => {
+    updateBaseUrl('ollama', 'http://localhost:11434/v1');
+    expect(settingsStore.state.baseUrls['ollama']).toBe('http://localhost:11434/v1');
+  });
+
+  it('updates selected model for a provider', () => {
+    updateSelectedModel('lmstudio', 'mistral-7b');
+    expect(settingsStore.state.selectedModels['lmstudio']).toBe('mistral-7b');
   });
 });
