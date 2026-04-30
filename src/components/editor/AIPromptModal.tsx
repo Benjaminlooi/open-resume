@@ -21,14 +21,22 @@ export function AIPromptModal({ role, company, onGenerate }: AIPromptModalProps)
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
-  const { defaultProvider, apiKeys } = useStore(settingsStore);
+  const { defaultProvider, apiKeys, baseUrls, selectedModels } = useStore(settingsStore);
   const [selectedProvider, setSelectedProvider] = useState<AIProvider>(defaultProvider);
 
-  const hasKey = !!apiKeys[selectedProvider];
+  const isLocal = selectedProvider === "ollama" || selectedProvider === "lmstudio";
+  
+  const hasKeyOrConfig = isLocal 
+    ? (!!baseUrls[selectedProvider] && !!selectedModels[selectedProvider])
+    : !!apiKeys[selectedProvider];
 
   const handleGenerate = async () => {
-    if (!hasKey) {
-      setError(`No API key for ${selectedProvider}. Please add it in Global Settings first.`);
+    if (!hasKeyOrConfig) {
+      if (isLocal) {
+        setError(`Base URL and Selected Model must be configured for ${selectedProvider} in Global Settings.`);
+      } else {
+        setError(`No API key for ${selectedProvider}. Please add it in Global Settings first.`);
+      }
       return;
     }
     
@@ -45,8 +53,9 @@ export function AIPromptModal({ role, company, onGenerate }: AIPromptModalProps)
       setOpen(false);
       setInstructions("");
     } catch (err: unknown) {
-    	setError(err instanceof Error ? err.message : "An error occurred");
-    } finally {      setIsGenerating(false);
+      setError(err instanceof Error ? err.message : "An error occurred");
+    } finally {      
+      setIsGenerating(false);
     }
   };
 
@@ -88,6 +97,8 @@ export function AIPromptModal({ role, company, onGenerate }: AIPromptModalProps)
                 <SelectItem value="google">Google</SelectItem>
                 <SelectItem value="deepseek">DeepSeek</SelectItem>
                 <SelectItem value="groq">Groq</SelectItem>
+                <SelectItem value="ollama">Ollama</SelectItem>
+                <SelectItem value="lmstudio">LM Studio</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -95,7 +106,7 @@ export function AIPromptModal({ role, company, onGenerate }: AIPromptModalProps)
         </div>
         <div className="flex justify-end gap-2">
           <Button variant="neutral" onClick={() => setOpen(false)} disabled={isGenerating}>Cancel</Button>
-          <Button onClick={handleGenerate} disabled={isGenerating || !hasKey}>
+          <Button onClick={handleGenerate} disabled={isGenerating || !hasKeyOrConfig}>
             {isGenerating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Generate
           </Button>
