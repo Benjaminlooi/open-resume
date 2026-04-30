@@ -19,9 +19,11 @@ export async function generateExperienceBullets({
 }: GenerateParams): Promise<string> {
   const state = settingsStore.state;
   const activeProvider = providerId || state.defaultProvider;
-  const apiKey = state.apiKeys[activeProvider];
+  const isLocal = activeProvider === "ollama" || activeProvider === "lmstudio";
+  
+  const apiKey = isLocal ? "dummy-key" : state.apiKeys[activeProvider];
 
-  if (!apiKey) {
+  if (!apiKey && !isLocal) {
     throw new Error(`No API key configured for ${activeProvider}. Please add it in settings.`);
   }
 
@@ -38,13 +40,21 @@ export async function generateExperienceBullets({
       model = createGoogleGenerativeAI({ apiKey })("gemini-1.5-flash");
       break;
     case "deepseek":
-      // DeepSeek provides an OpenAI-compatible API
       model = createOpenAI({ apiKey, baseURL: "https://api.deepseek.com/v1" })("deepseek-chat");
       break;
     case "groq":
-      // Groq provides an OpenAI-compatible API
       model = createOpenAI({ apiKey, baseURL: "https://api.groq.com/openai/v1" })("llama3-8b-8192");
       break;
+    case "ollama":
+    case "lmstudio": {
+      const baseUrl = state.baseUrls[activeProvider];
+      const selectedModel = state.selectedModels[activeProvider];
+      if (!baseUrl || !selectedModel) {
+         throw new Error(`Base URL and Model must be configured for ${activeProvider}.`);
+      }
+      model = createOpenAI({ apiKey: "dummy-key", baseURL: baseUrl })(selectedModel);
+      break;
+    }
     default:
       throw new Error(`Unsupported provider: ${activeProvider}`);
   }
@@ -69,6 +79,6 @@ Format the output strictly as HTML <ul> and <li> tags. Do not include markdown c
     return text.replace(/```html\n?/g, "").replace(/```\n?/g, "").trim();
   } catch (error) {
     console.error("AI Generation Error:", error);
-    throw new Error("Failed to generate content. Please check your API key and try again.");
+    throw new Error("Failed to generate content. Please check your configuration and try again.");
   }
 }
