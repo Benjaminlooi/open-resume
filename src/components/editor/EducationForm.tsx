@@ -21,7 +21,7 @@ import { useState } from "react";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
 import { RichTextEditor } from "#/components/ui/rich-text-editor";
-import { AIPromptModal } from "./AIPromptModal";
+import { InteractiveAIPromptModal } from "./InteractiveAIPromptModal";
 import {
 	addEducation,
 	deleteEducation,

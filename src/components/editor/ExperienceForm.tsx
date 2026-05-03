@@ -158,16 +158,14 @@ function ExperienceItem({ id }: { id: string }) {
 							<label className="text-sm font-medium leading-none">
 								Description
 							</label>
-							<AIPromptModal 
-								role={exp.role || ""} 
-								company={exp.company || ""} 
-								onGenerate={(newBullets) => {
-									const currentDesc = exp.description || "";
-									const merged = currentDesc ? currentDesc + "<br/>" + newBullets : newBullets;
-									updateExperience(id, { description: merged });
-								}}
-							/>
-						</div>
+							<InteractiveAIPromptModal 
+							        role={exp.role || ""} 
+							        company={exp.company || ""} 
+							        currentDescription={exp.description || ""}
+							        onApply={(newHtml) => {
+							                updateExperience(id, { description: newHtml });
+							        }}
+							/>						</div>
 						<RichTextEditor
 							value={exp.description || ""}
 							onChange={(val) => updateExperience(id, { description: val })}
@@ -237,6 +235,12 @@ export default function ExperienceForm() {
 				</SortableContext>
 			</DndContext>
 			<Button variant="neutral" className="w-full mt-2" onClick={handleAdd}>
+				+ Add Experience
+			</Button>
+		</div>
+	);
+}
+eAdd}>
 				+ Add Experience
 			</Button>
 		</div>
