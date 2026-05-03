@@ -21,7 +21,7 @@ import { useState } from "react";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
 import { RichTextEditor } from "#/components/ui/rich-text-editor";
-import { AIPromptModal } from "./AIPromptModal";
+import { InteractiveAIPromptModal } from "./InteractiveAIPromptModal";
 import {
 	addExperience,
 	deleteExperience,
@@ -235,12 +235,6 @@ export default function ExperienceForm() {
 				</SortableContext>
 			</DndContext>
 			<Button variant="neutral" className="w-full mt-2" onClick={handleAdd}>
-				+ Add Experience
-			</Button>
-		</div>
-	);
-}
-eAdd}>
 				+ Add Experience
 			</Button>
 		</div>

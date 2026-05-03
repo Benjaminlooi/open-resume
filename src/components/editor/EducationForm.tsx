@@ -175,13 +175,12 @@ function EducationItem({ id }: { id: string }) {
 							<label className="text-sm font-medium leading-none">
 								Description/Awards
 							</label>
-							<AIPromptModal 
+							<InteractiveAIPromptModal 
 								role={edu.degree || ""} 
 								company={edu.institution || ""} 
-								onGenerate={(newBullets) => {
-									const currentDesc = edu.description || "";
-									const merged = currentDesc ? `${currentDesc}<br/>${newBullets}` : newBullets;
-									updateEducation(id, { description: merged });
+								currentDescription={edu.description || ""}
+								onApply={(newHtml) => {
+									updateEducation(id, { description: newHtml });
 								}}
 							/>
 						</div>
