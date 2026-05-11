@@ -28,6 +28,7 @@ export function RichTextEditor({
 			attributes: {
 				class: cn(
 					"prose prose-sm max-w-none w-full border-2 border-border bg-white px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black disabled:cursor-not-allowed disabled:opacity-50 min-h-[120px] rounded-b-base",
+					"prose-p:my-1! prose-ul:my-1! prose-li:my-0! prose-ul:ml-2! prose-ol:my-1! prose-ol:ml-2!",
 					className,
 				),
 			},

@@ -30,6 +30,122 @@ import {
 	updateEducation,
 } from "#/lib/resume-store";
 
+function EducationFields({
+	id,
+	hideAITrigger = false,
+}: { id: string; hideAITrigger?: boolean }) {
+	const edu = useStore(resumeStore, (state) =>
+		state.education.find((e) => e.id === id),
+	);
+
+	if (!edu) return null;
+
+	const handleChange = (
+		e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+	) => {
+		const { name, value } = e.target;
+		if (name === "bullets") {
+			updateEducation(id, { bullets: value.split("\n") });
+		} else {
+			updateEducation(id, { [name]: value });
+		}
+	};
+
+	return (
+		<div className="space-y-4">
+			<div className="grid grid-cols-2 gap-4">
+				<div className="space-y-2 col-span-2">
+					<label htmlFor={`institution-${id}`} className="text-sm font-medium leading-none">
+						Institution
+					</label>
+					<Input
+						id={`institution-${id}`}
+						name="institution"
+						value={edu.institution}
+						onChange={handleChange}
+						placeholder="University of Technology"
+					/>
+				</div>
+				<div className="space-y-2 col-span-2">
+					<label htmlFor={`degree-${id}`} className="text-sm font-medium leading-none">Degree</label>
+					<Input
+						id={`degree-${id}`}
+						name="degree"
+						value={edu.degree}
+						onChange={handleChange}
+						placeholder="B.S. Computer Science"
+					/>
+				</div>
+				<div className="space-y-2">
+					<label htmlFor={`startDate-${id}`} className="text-sm font-medium leading-none">Start Date</label>
+					<Input
+						id={`startDate-${id}`}
+						name="startDate"
+						value={edu.startDate}
+						onChange={handleChange}
+						placeholder="Aug 2015"
+					/>
+				</div>
+				<div className="space-y-2">
+					<label htmlFor={`endDate-${id}`} className="text-sm font-medium leading-none">End Date</label>
+					<Input
+						id={`endDate-${id}`}
+						name="endDate"
+						value={edu.endDate}
+						onChange={handleChange}
+						placeholder="May 2019"
+					/>
+				</div>
+				<div className="space-y-2">
+					<label htmlFor={`location-${id}`} className="text-sm font-medium leading-none">Location</label>
+					<Input
+						id={`location-${id}`}
+						name="location"
+						value={edu.location}
+						onChange={handleChange}
+						placeholder="New York, NY"
+					/>
+				</div>
+				<div className="space-y-2">
+					<label htmlFor={`gpa-${id}`} className="text-sm font-medium leading-none">
+						GPA (Optional)
+					</label>
+					<Input
+						id={`gpa-${id}`}
+						name="gpa"
+						value={edu.gpa || ""}
+						onChange={handleChange}
+						placeholder="3.8/4.0"
+					/>
+				</div>
+			</div>
+			<div className="space-y-2">
+				<div className="flex justify-between items-center">
+					<label htmlFor={`description-${id}`} className="text-sm font-medium leading-none">
+						Description/Awards
+					</label>
+					{!hideAITrigger && (
+						<InteractiveAIPromptModal
+							role={edu.degree || ""}
+							company={edu.institution || ""}
+							currentDescription={edu.description || ""}
+							onApply={(newHtml) => {
+								updateEducation(id, { description: newHtml });
+							}}
+						>
+							<EducationFields id={id} hideAITrigger />
+						</InteractiveAIPromptModal>
+					)}
+				</div>
+				<RichTextEditor
+					value={edu.description || ""}
+					onChange={(val) => updateEducation(id, { description: val })}
+				/>
+			</div>
+		</div>
+	);
+}
+
 function EducationItem({ id }: { id: string }) {
 	const [isExpanded, setIsExpanded] = useState(false);
 	const edu = useStore(resumeStore, (state) =>
@@ -45,17 +161,6 @@ function EducationItem({ id }: { id: string }) {
 	};
 
 	if (!edu) return null;
-
-	const handleChange = (
-		e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-	) => {
-		const { name, value } = e.target;
-		if (name === "bullets") {
-			updateEducation(id, { bullets: value.split("\n") });
-		} else {
-			updateEducation(id, { [name]: value });
-		}
-	};
 
 	return (
 		<div
@@ -104,91 +209,7 @@ function EducationItem({ id }: { id: string }) {
 
 			{isExpanded && (
 				<div className="p-4 space-y-4 border-t-2 border-border bg-white">
-					<div className="grid grid-cols-2 gap-4">
-						<div className="space-y-2 col-span-2">
-							<label className="text-sm font-medium leading-none">
-								Institution
-							</label>
-							<Input
-								name="institution"
-								value={edu.institution}
-								onChange={handleChange}
-								placeholder="University of Technology"
-							/>
-						</div>
-						<div className="space-y-2 col-span-2">
-							<label className="text-sm font-medium leading-none">Degree</label>
-							<Input
-								name="degree"
-								value={edu.degree}
-								onChange={handleChange}
-								placeholder="B.S. Computer Science"
-							/>
-						</div>
-						<div className="space-y-2">
-							<label className="text-sm font-medium leading-none">
-								Start Date
-							</label>
-							<Input
-								name="startDate"
-								value={edu.startDate}
-								onChange={handleChange}
-								placeholder="Aug 2015"
-							/>
-						</div>
-						<div className="space-y-2">
-							<label className="text-sm font-medium leading-none">
-								End Date
-							</label>
-							<Input
-								name="endDate"
-								value={edu.endDate}
-								onChange={handleChange}
-								placeholder="May 2019"
-							/>
-						</div>
-						<div className="space-y-2">
-							<label className="text-sm font-medium leading-none">
-								Location
-							</label>
-							<Input
-								name="location"
-								value={edu.location}
-								onChange={handleChange}
-								placeholder="New York, NY"
-							/>
-						</div>
-						<div className="space-y-2">
-							<label className="text-sm font-medium leading-none">
-								GPA (Optional)
-							</label>
-							<Input
-								name="gpa"
-								value={edu.gpa || ""}
-								onChange={handleChange}
-								placeholder="3.8/4.0"
-							/>
-						</div>
-					</div>
-					<div className="space-y-2">
-						<div className="flex justify-between items-center">
-							<label className="text-sm font-medium leading-none">
-								Description/Awards
-							</label>
-							<InteractiveAIPromptModal 
-								role={edu.degree || ""} 
-								company={edu.institution || ""} 
-								currentDescription={edu.description || ""}
-								onApply={(newHtml) => {
-									updateEducation(id, { description: newHtml });
-								}}
-							/>
-						</div>
-						<RichTextEditor
-							value={edu.description || ""}
-							onChange={(val) => updateEducation(id, { description: val })}
-						/>
-					</div>
+					<EducationFields id={id} />
 				</div>
 			)}
 		</div>
