@@ -1,9 +1,10 @@
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createOpenAI } from "@ai-sdk/openai";
-
 import { streamText } from "ai";
+import DOMPurify from "isomorphic-dompurify";
 import { Check, Loader2, Send, Sparkles, Square } from "lucide-react";
+import { marked } from "marked";
 import { useEffect, useRef } from "react";
 import { z } from "zod";
 import { Button } from "#/components/ui/button";
@@ -324,13 +325,15 @@ DO NOT use the \`propose_resume_update\` tool during the drafting or brainstormi
 										AI Writing Assistant
 									</h3>
 									<p className="text-sm text-muted-foreground mb-6 max-w-sm">
-										Chat with the AI resume coach to draft and refine your bullet points. 
-										Once you are happy with the suggestions, ask the AI to apply them!
+										Chat with the AI resume coach to draft and refine your
+										bullet points. Once you are happy with the suggestions, ask
+										the AI to apply them!
 									</p>
 								</div>
 							)}
 							{messages.map((m, i) => (
 								<div
+									// biome-ignore lint/suspicious/noArrayIndexKey: order is stable
 									key={i}
 									className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
 								>
@@ -342,7 +345,20 @@ DO NOT use the \`propose_resume_update\` tool during the drafting or brainstormi
 												: "bg-muted text-foreground rounded-2xl rounded-tl-none",
 										)}
 									>
-										{typeof m.content === "string" && m.content}
+										{typeof m.content === "string" && (
+											<div
+												className={cn(
+													"prose prose-sm max-w-none text-current prose-p:my-1 prose-ul:my-1 prose-li:my-0 prose-ul:ml-4 prose-ol:my-1 prose-ol:ml-4 prose-a:text-current prose-strong:text-current prose-strong:font-semibold prose-code:text-current",
+													m.role === "user" ? "prose-invert" : "",
+												)}
+												// biome-ignore lint/security/noDangerouslySetInnerHtml: sanitized with DOMPurify
+												dangerouslySetInnerHTML={{
+													__html: DOMPurify.sanitize(
+														marked.parse(m.content as string) as string,
+													),
+												}}
+											/>
+										)}
 										{m._toolCalls?.map((tool: any) => {
 											if (
 												tool.toolName === "propose_resume_update" &&
@@ -360,6 +376,7 @@ DO NOT use the \`propose_resume_update\` tool during the drafting or brainstormi
 															<ul className="list-disc pl-5 space-y-1">
 																{tool.args.bullets?.map(
 																	(b: string, idx: number) => (
+																		// biome-ignore lint/suspicious/noArrayIndexKey: order is stable
 																		<li key={idx}>{b}</li>
 																	),
 																)}
