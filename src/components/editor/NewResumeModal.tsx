@@ -1,8 +1,7 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import ResumeThumbnail from "#/components/dashboard/ResumeThumbnail";
-import { blankResumeState } from "#/lib/dummy-resume";
-import { createResumeIndexEntry } from "#/lib/resume-index-store";
+import { useResumeIndexStore } from "#/lib/resume-index-store";
 import { AVAILABLE_TEMPLATES } from "#/lib/resume-store";
 
 interface NewResumeModalProps {
@@ -13,6 +12,7 @@ export default function NewResumeModal({ onClose }: NewResumeModalProps) {
 	const navigate = useNavigate();
 	const [name, setName] = useState("My New Resume");
 	const [templateId, setTemplateId] = useState("demo");
+	const { createResumeIndexEntry } = useResumeIndexStore();
 
 	const handleCreate = () => {
 		const id = crypto.randomUUID();
