@@ -26,7 +26,10 @@ import { InteractiveAIPromptModal } from "./InteractiveAIPromptModal";
 function ExperienceFields({
 	id,
 	hideAITrigger = false,
-}: { id: string; hideAITrigger?: boolean }) {
+}: {
+	id: string;
+	hideAITrigger?: boolean;
+}) {
 	const exp = useResumeStore((state) =>
 		state.experience.find((e) => e.id === id),
 	);
@@ -43,7 +46,12 @@ function ExperienceFields({
 		<div className="space-y-4">
 			<div className="grid grid-cols-2 gap-4">
 				<div className="space-y-2">
-					<label htmlFor={`role-${id}`} className="text-sm font-medium leading-none">Role</label>
+					<label
+						htmlFor={`role-${id}`}
+						className="text-sm font-medium leading-none"
+					>
+						Role
+					</label>
 					<Input
 						id={`role-${id}`}
 						name="role"
@@ -53,7 +61,12 @@ function ExperienceFields({
 					/>
 				</div>
 				<div className="space-y-2">
-					<label htmlFor={`company-${id}`} className="text-sm font-medium leading-none">Company</label>
+					<label
+						htmlFor={`company-${id}`}
+						className="text-sm font-medium leading-none"
+					>
+						Company
+					</label>
 					<Input
 						id={`company-${id}`}
 						name="company"
@@ -63,7 +76,12 @@ function ExperienceFields({
 					/>
 				</div>
 				<div className="space-y-2">
-					<label htmlFor={`startDate-${id}`} className="text-sm font-medium leading-none">Start Date</label>
+					<label
+						htmlFor={`startDate-${id}`}
+						className="text-sm font-medium leading-none"
+					>
+						Start Date
+					</label>
 					<Input
 						id={`startDate-${id}`}
 						name="startDate"
@@ -73,7 +91,12 @@ function ExperienceFields({
 					/>
 				</div>
 				<div className="space-y-2">
-					<label htmlFor={`endDate-${id}`} className="text-sm font-medium leading-none">End Date</label>
+					<label
+						htmlFor={`endDate-${id}`}
+						className="text-sm font-medium leading-none"
+					>
+						End Date
+					</label>
 					<Input
 						id={`endDate-${id}`}
 						name="endDate"
@@ -84,7 +107,12 @@ function ExperienceFields({
 				</div>
 			</div>
 			<div className="space-y-2">
-				<label htmlFor={`location-${id}`} className="text-sm font-medium leading-none">Location</label>
+				<label
+					htmlFor={`location-${id}`}
+					className="text-sm font-medium leading-none"
+				>
+					Location
+				</label>
 				<Input
 					id={`location-${id}`}
 					name="location"

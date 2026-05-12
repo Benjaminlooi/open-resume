@@ -1,7 +1,7 @@
 import { useResumeStore } from "#/lib/resume-store";
 
 export default function PersonalInfoForm() {
-        const { personalInfo, updatePersonalInfo } = useResumeStore();
+	const { personalInfo, updatePersonalInfo } = useResumeStore();
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const { name, value } = e.target;
 		updatePersonalInfo(name as keyof typeof personalInfo, value);

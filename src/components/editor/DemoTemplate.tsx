@@ -1,4 +1,4 @@
-import { useResumeStore, type EditorState } from "#/lib/resume-store";
+import { type EditorState, useResumeStore } from "#/lib/resume-store";
 
 export default function DemoTemplate({ resume }: { resume?: EditorState }) {
 	const globalPersonalInfo = useResumeStore((state) => state.personalInfo);
@@ -17,9 +17,11 @@ export default function DemoTemplate({ resume }: { resume?: EditorState }) {
 	const experience = resume ? resume.experience : globalExperience;
 	const education = resume ? resume.education : globalEducation;
 	const skills = resume ? resume.skills : globalSkills;
-	const projects = resume ? (resume.projects || []) : globalProjects;
-	const certifications = resume ? (resume.certifications || []) : globalCertifications;
-	const languages = resume ? (resume.languages || []) : globalLanguages;
+	const projects = resume ? resume.projects || [] : globalProjects;
+	const certifications = resume
+		? resume.certifications || []
+		: globalCertifications;
+	const languages = resume ? resume.languages || [] : globalLanguages;
 
 	const renderSection = (id: string) => {
 		switch (id) {

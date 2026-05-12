@@ -58,7 +58,7 @@ export function InteractiveAIPromptModal({
 	const chatEndRef = useRef<HTMLDivElement>(null);
 	useEffect(() => {
 		chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-	}, [messages]);
+	}, []);
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -120,11 +120,11 @@ export function InteractiveAIPromptModal({
 			// Map our internal messages format to Vercel AI SDK CoreMessage format
 			const coreMessages = messages.flatMap((m) => {
 				if (m.role === "user") return { role: "user", content: m.content };
-				
+
 				if (m.role === "assistant") {
 					const parts: any[] = [];
 					if (m.content) parts.push({ type: "text", text: m.content });
-					
+
 					if (m._toolCalls && m._toolCalls.length > 0) {
 						m._toolCalls.forEach((tc: any) => {
 							parts.push({
@@ -135,9 +135,9 @@ export function InteractiveAIPromptModal({
 							});
 						});
 					}
-					
+
 					const msgs: any[] = [{ role: "assistant", content: parts }];
-					
+
 					// If there were tool calls, we must provide the tool results in the next message
 					if (m._toolCalls && m._toolCalls.length > 0) {
 						const resultParts = m._toolCalls.map((tc: any) => ({
@@ -148,7 +148,7 @@ export function InteractiveAIPromptModal({
 						}));
 						msgs.push({ role: "tool", content: resultParts });
 					}
-					
+
 					return msgs;
 				}
 				return m;
@@ -160,8 +160,7 @@ export function InteractiveAIPromptModal({
 				messages: [...coreMessages, userMessage],
 				tools: {
 					propose_resume_update: {
-						description:
-							"Propose a new set of resume bullet points.",
+						description: "Propose a new set of resume bullet points.",
 						inputSchema: z.object({
 							bullets: z
 								.array(z.string())
@@ -196,7 +195,7 @@ export function InteractiveAIPromptModal({
 			if (calls && calls.length > 0) {
 				setMessages((prev) => {
 					const newMessages = [...prev];
-					// @ts-ignore - appending custom tool data to render later
+					// @ts-expect-error - appending custom tool data to render later
 					newMessages[assistantMessageIndex] = {
 						...newMessages[assistantMessageIndex],
 						_toolCalls: calls,
@@ -282,9 +281,11 @@ export function InteractiveAIPromptModal({
 														</div>
 														<div className="text-sm mb-3">
 															<ul className="list-disc pl-5 space-y-1">
-																{tool.args.bullets?.map((b: string, idx: number) => (
-																	<li key={idx}>{b}</li>
-																))}
+																{tool.args.bullets?.map(
+																	(b: string, idx: number) => (
+																		<li key={idx}>{b}</li>
+																	),
+																)}
 															</ul>
 														</div>
 														<Button

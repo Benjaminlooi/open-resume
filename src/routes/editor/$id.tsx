@@ -2,13 +2,13 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import CertificationsForm from "#/components/editor/CertificationsForm";
 import DemoTemplate from "#/components/editor/DemoTemplate";
-import ResumePreview from "#/components/editor/ResumePreview";
 import EditorHeader from "#/components/editor/EditorHeader";
 import EducationForm from "#/components/editor/EducationForm";
 import ExperienceForm from "#/components/editor/ExperienceForm";
 import LanguagesForm from "#/components/editor/LanguagesForm";
 import PersonalInfoForm from "#/components/editor/PersonalInfoForm";
 import ProjectsForm from "#/components/editor/ProjectsForm";
+import ResumePreview from "#/components/editor/ResumePreview";
 import SectionList from "#/components/editor/SectionList";
 import SkillsForm from "#/components/editor/SkillsForm";
 import {
@@ -26,7 +26,7 @@ function RouteComponent() {
 	const { id } = Route.useParams();
 	const { activeSection, loadResume } = useResumeStore();
 	const [isLoading, setIsLoading] = useState(true);
-	const navigate = useNavigate();
+	const _navigate = useNavigate();
 
 	useEffect(() => {
 		const success = loadResume(id);
@@ -40,7 +40,12 @@ function RouteComponent() {
 		setIsLoading(false);
 	}, [id, loadResume]);
 
-	if (isLoading) return <div className="flex h-screen w-full items-center justify-center font-heading text-2xl">Loading...</div>;
+	if (isLoading)
+		return (
+			<div className="flex h-screen w-full items-center justify-center font-heading text-2xl">
+				Loading...
+			</div>
+		);
 
 	const renderActiveForm = () => {
 		switch (activeSection) {

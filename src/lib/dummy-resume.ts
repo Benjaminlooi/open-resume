@@ -1,7 +1,10 @@
-import { type EditorState } from "./resume-store";
 import type { Resume } from "./resume-schema";
+import type { EditorState } from "./resume-store";
 
-export const dummyResumeData: Omit<Resume, 'id' | 'name' | 'activeSection' | 'templateId'> = {
+export const dummyResumeData: Omit<
+	Resume,
+	"id" | "name" | "activeSection" | "templateId"
+> = {
 	personalInfo: {
 		fullName: "John Doe",
 		email: "john.doe@example.com",
@@ -92,7 +95,8 @@ export const dummyResumeData: Omit<Resume, 'id' | 'name' | 'activeSection' | 'te
 		{
 			id: "skill-2",
 			category: "Frameworks",
-			items: "React, Next.js, Express, Tailwind CSS, Vue.js, Django, Spring Boot",
+			items:
+				"React, Next.js, Express, Tailwind CSS, Vue.js, Django, Spring Boot",
 		},
 		{
 			id: "skill-3",
@@ -164,5 +168,5 @@ export const blankResumeState: EditorState = {
 	name: "Template Preview",
 	activeSection: "personalInfo",
 	templateId: "demo",
-	...dummyResumeData
+	...dummyResumeData,
 };

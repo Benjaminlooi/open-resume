@@ -26,8 +26,12 @@ function CertificationItem({ id }: { id: string }) {
 	const cert = useResumeStore((state) =>
 		(state.certifications || []).find((c) => c.id === id),
 	);
-	const updateCertification = useResumeStore((state) => state.updateCertification);
-	const deleteCertification = useResumeStore((state) => state.deleteCertification);
+	const updateCertification = useResumeStore(
+		(state) => state.updateCertification,
+	);
+	const deleteCertification = useResumeStore(
+		(state) => state.deleteCertification,
+	);
 
 	const { attributes, listeners, setNodeRef, transform, transition } =
 		useSortable({ id });

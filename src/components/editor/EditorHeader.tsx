@@ -1,9 +1,6 @@
-import { Moon, Download } from "lucide-react";
+import { Download, Moon } from "lucide-react";
 import { useState } from "react";
-import {
-	useResumeStore,
-	AVAILABLE_TEMPLATES,
-} from "#/lib/resume-store";
+import { AVAILABLE_TEMPLATES, useResumeStore } from "#/lib/resume-store";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { GlobalSettingsModal } from "./GlobalSettingsModal";

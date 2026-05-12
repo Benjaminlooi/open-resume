@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { dummyResumeData } from "./dummy-resume";
 import type {
 	Certification,
 	Education,
@@ -9,7 +10,6 @@ import type {
 	Resume,
 	SkillGroup,
 } from "./resume-schema";
-import { dummyResumeData } from "./dummy-resume";
 
 // We extend the Resume type locally for UI state
 export type EditorState = Resume & {
@@ -45,7 +45,10 @@ export interface ResumeActions {
 	deleteProject: (id: string) => void;
 	reorderProjects: (startIndex: number, endIndex: number) => void;
 	addCertification: (item: Certification) => void;
-	updateCertification: (id: string, updatedItem: Partial<Certification>) => void;
+	updateCertification: (
+		id: string,
+		updatedItem: Partial<Certification>,
+	) => void;
 	deleteCertification: (id: string) => void;
 	reorderCertifications: (startIndex: number, endIndex: number) => void;
 	addLanguage: (item: Language) => void;
@@ -119,7 +122,7 @@ export const getResumeData = (id: string): EditorState | null => {
 	return null;
 };
 
-export const useResumeStore = create<ResumeStore>((set, get) => ({
+export const useResumeStore = create<ResumeStore>((set, _get) => ({
 	...getInitialState(),
 
 	loadResume: (id: string) => {
@@ -147,12 +150,12 @@ export const useResumeStore = create<ResumeStore>((set, get) => ({
 	},
 
 	setActiveSection: (id) =>
-		set((state) => ({
+		set((_state) => ({
 			activeSection: id,
 		})),
 
 	setTemplateId: (id) =>
-		set((state) => ({
+		set((_state) => ({
 			templateId: id,
 		})),
 
