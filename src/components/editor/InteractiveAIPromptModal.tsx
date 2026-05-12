@@ -22,7 +22,7 @@ import {
 	SelectValue,
 } from "#/components/ui/select";
 import { Textarea } from "#/components/ui/textarea";
-import { useSettingsStore, type AIProvider } from "#/lib/settings-store";
+import { type AIProvider, useSettingsStore } from "#/lib/settings-store";
 import { cn } from "#/lib/utils";
 
 interface Props {
@@ -34,8 +34,7 @@ interface Props {
 const suggestions = [
 	{
 		label: "✨ Quantify impact",
-		prompt:
-			"Make my bullet points more quantifiable with numbers and metrics.",
+		prompt: "Make my bullet points more quantifiable with numbers and metrics.",
 	},
 	{
 		label: "✍️ Use action verbs",
@@ -77,8 +76,9 @@ export function InteractiveAIPromptModal({
 	const modelName = selectedModels[selectedProvider];
 
 	const chatEndRef = useRef<HTMLDivElement>(null);
+	// biome-ignore lint/correctness/useExhaustiveDependencies: We want to scroll whenever messages change
 	useEffect(() => {
-		chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+		chatEndRef.current?.scrollIntoView({ behavior: "auto" });
 	}, [messages]);
 
 	const handleStop = () => {
@@ -234,7 +234,7 @@ You MUST use the propose_resume_update tool to suggest bullet points.`;
 			if (calls && calls.length > 0) {
 				setMessages((prev) => {
 					const newMessages = [...prev];
-					// @ts-ignore - appending custom tool data to render later
+					// @ts-expect-error - appending custom tool data to render later
 					newMessages[assistantMessageIndex] = {
 						...newMessages[assistantMessageIndex],
 						_toolCalls: calls,
@@ -296,8 +296,17 @@ You MUST use the propose_resume_update tool to suggest bullet points.`;
 					<div className="w-1/2 flex flex-col bg-white">
 						<div className="flex-1 overflow-y-auto p-4 space-y-4">
 							{messages.length === 0 && (
-								<div className="text-center text-muted-foreground mt-10">
-									Ask the AI to generate or improve your bullet points!
+								<div className="flex flex-col items-center justify-center h-full text-center p-8">
+									<div className="size-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+										<Sparkles className="size-6 text-primary" />
+									</div>
+									<h3 className="font-semibold text-lg mb-2">
+										AI Writing Assistant
+									</h3>
+									<p className="text-sm text-muted-foreground mb-6 max-w-sm">
+										Ask the AI to generate or improve your bullet points. You
+										can use the suggestions below or type your own instructions.
+									</p>
 								</div>
 							)}
 							{messages.map((m: any, i) => (
