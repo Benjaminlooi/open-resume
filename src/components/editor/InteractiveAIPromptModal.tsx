@@ -39,9 +39,10 @@ export function InteractiveAIPromptModal({
   const chatEndRef = useRef<HTMLDivElement>(null);
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || isLoading) return;
+	const chatEndRef = useRef<HTMLDivElement>(null);
+	useEffect(() => {
+		chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+	}, []);
 
     const userMessage = { role: "user", content: input };
     setMessages((prev) => [...prev, userMessage]);
@@ -95,28 +96,64 @@ export function InteractiveAIPromptModal({
         },
       });
 
-      let fullText = "";
-      const assistantMessageIndex = messages.length + 1; // +1 for the new user message
-      setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
+		try {
+			// Map our internal messages format to Vercel AI SDK CoreMessage format
+			const coreMessages = messages.flatMap((m) => {
+				if (m.role === "user") return { role: "user", content: m.content };
 
-      for await (const chunk of result.textStream) {
-         fullText += chunk;
-         setMessages((prev) => {
-            const newMessages = [...prev];
-            newMessages[assistantMessageIndex] = { role: "assistant", content: fullText };
-            return newMessages;
-         });
-      }
-      
-      const calls = await result.toolCalls;
-      if (calls && calls.length > 0) {
-        setMessages((prev) => {
-            const newMessages = [...prev];
-            // @ts-ignore - appending custom tool data to render later
-            newMessages[assistantMessageIndex] = { ...newMessages[assistantMessageIndex], _toolCalls: calls };
-            return newMessages;
-        });
-      }
+				if (m.role === "assistant") {
+					const parts: any[] = [];
+					if (m.content) parts.push({ type: "text", text: m.content });
+
+					if (m._toolCalls && m._toolCalls.length > 0) {
+						m._toolCalls.forEach((tc: any) => {
+							parts.push({
+								type: "tool-call",
+								toolCallId: tc.toolCallId,
+								toolName: tc.toolName,
+								args: tc.args,
+							});
+						});
+					}
+
+					const msgs: any[] = [{ role: "assistant", content: parts }];
+
+					// If there were tool calls, we must provide the tool results in the next message
+					if (m._toolCalls && m._toolCalls.length > 0) {
+						const resultParts = m._toolCalls.map((tc: any) => ({
+							type: "tool-result",
+							toolCallId: tc.toolCallId,
+							toolName: tc.toolName,
+							result: tc.args, // We just reflect the args as the result
+						}));
+						msgs.push({ role: "tool", content: resultParts });
+					}
+
+					return msgs;
+				}
+				return m;
+			});
+
+			const result = streamText({
+				model,
+				system: `You are an expert resume writer. The user is updating their resume for the role of ${role} at ${company}. Help them write impressive, quantifiable bullet points. You MUST use the propose_resume_update tool to suggest bullet points.`,
+				messages: [...coreMessages, userMessage],
+				tools: {
+					propose_resume_update: {
+						description: "Propose a new set of resume bullet points.",
+						inputSchema: z.object({
+							bullets: z
+								.array(z.string())
+								.describe(
+									"An array of proposed resume bullet points. Each string should be a single bullet point. Do not include HTML tags.",
+								),
+						}),
+						execute: async ({ bullets }: { bullets: string[] }) => {
+							return { bullets };
+						},
+					},
+				},
+			});
 
     } catch (err: any) {
       setError(err.message);
@@ -150,15 +187,24 @@ export function InteractiveAIPromptModal({
           </div>
         </DialogHeader>
 
-        <div className="flex flex-1 overflow-hidden">
-          {/* Left Pane: Current State */}
-          <div className="w-1/2 border-r p-6 overflow-y-auto flex flex-col gap-4 bg-muted/20">
-            <div>
-              <h3 className="font-semibold text-lg">{role || "Role"}</h3>
-              <p className="text-muted-foreground">{company || "Company"}</p>
-            </div>
-            <div className="bg-white p-4 rounded-md border min-h-[200px]" dangerouslySetInnerHTML={{ __html: currentDescription || "<em>No description yet...</em>" }} />
-          </div>
+			const calls = await result.toolCalls;
+			if (calls && calls.length > 0) {
+				setMessages((prev) => {
+					const newMessages = [...prev];
+					// @ts-expect-error - appending custom tool data to render later
+					newMessages[assistantMessageIndex] = {
+						...newMessages[assistantMessageIndex],
+						_toolCalls: calls,
+					};
+					return newMessages;
+				});
+			}
+		} catch (err: any) {
+			setError(err.message);
+		} finally {
+			setIsLoading(false);
+		}
+	};
 
           {/* Right Pane: Chat */}
           <div className="w-1/2 flex flex-col bg-white">
@@ -192,23 +238,110 @@ export function InteractiveAIPromptModal({
               <div ref={chatEndRef} />
             </div>
 
-            <form onSubmit={handleSubmit} className="p-4 border-t shrink-0 flex gap-2">
-              <Textarea 
-                value={input} 
-                onChange={(e) => setInput(e.target.value)} 
-                placeholder="e.g. Focus on my leadership skills..." 
-                className="min-h-[60px] resize-none" 
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmit(e); }
-                }}
-              />
-              <Button type="submit" disabled={isLoading || !input.trim()} className="h-auto">
-                <Send className="size-4" />
-              </Button>
-            </form>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
+				<div className="flex flex-1 overflow-hidden">
+					{/* Left Pane: Current State */}
+					<div className="w-1/2 border-r p-6 overflow-y-auto flex flex-col gap-4 bg-muted/20">
+						{children}
+					</div>
+
+					{/* Right Pane: Chat */}
+					<div className="w-1/2 flex flex-col bg-white">
+						<div className="flex-1 overflow-y-auto p-4 space-y-4">
+							{messages.length === 0 && (
+								<div className="text-center text-muted-foreground mt-10">
+									Ask the AI to generate or improve your bullet points!
+								</div>
+							)}
+							{messages.map((m: any, i) => (
+								<div
+									key={i}
+									className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
+								>
+									<div
+										className={`max-w-[85%] p-3 rounded-lg ${m.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"}`}
+									>
+										{typeof m.content === "string" && m.content}
+										{m._toolCalls?.map((tool: any) => {
+											if (
+												tool.toolName === "propose_resume_update" &&
+												tool.args
+											) {
+												return (
+													<div
+														key={tool.toolCallId}
+														className="mt-3 p-3 bg-background border rounded-md text-foreground"
+													>
+														<div className="font-medium text-sm mb-2 pb-2 border-b">
+															Proposed Update:
+														</div>
+														<div className="text-sm mb-3">
+															<ul className="list-disc pl-5 space-y-1">
+																{tool.args.bullets?.map(
+																	(b: string, idx: number) => (
+																		<li key={idx}>{b}</li>
+																	),
+																)}
+															</ul>
+														</div>
+														<Button
+															size="sm"
+															className="w-full gap-2"
+															onClick={() => {
+																const html = `<ul>${tool.args.bullets?.map((b: string) => `<li>${b}</li>`).join("")}</ul>`;
+																onApply(html);
+																setOpen(false);
+															}}
+														>
+															<Check className="size-4" /> Apply Changes
+														</Button>
+													</div>
+												);
+											}
+											return null;
+										})}
+									</div>
+								</div>
+							))}
+							{isLoading && (
+								<div className="text-muted-foreground flex gap-2 items-center">
+									<Loader2 className="size-4 animate-spin" /> AI is thinking...
+								</div>
+							)}
+							{error && (
+								<div className="text-red-500 bg-red-100 p-2 rounded">
+									Error: {error}
+								</div>
+							)}
+							<div ref={chatEndRef} />
+						</div>
+
+						<form
+							onSubmit={handleSubmit}
+							className="p-4 border-t shrink-0 flex gap-2"
+						>
+							<Textarea
+								value={input}
+								onChange={(e) => setInput(e.target.value)}
+								placeholder="e.g. Focus on my leadership skills..."
+								className="min-h-[60px] resize-none"
+								onKeyDown={(e) => {
+									if (e.key === "Enter" && !e.shiftKey) {
+										e.preventDefault();
+										handleSubmit(e);
+									}
+								}}
+							/>
+							<Button
+								type="submit"
+								disabled={isLoading || !input.trim()}
+								className="h-auto"
+							>
+								<Send className="size-4" />
+							</Button>
+						</form>
+					</div>
+				</div>
+			</DialogContent>
+		</Dialog>
+	);
 }

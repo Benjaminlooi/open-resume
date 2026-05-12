@@ -2,9 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import ResumeCard from "#/components/dashboard/ResumeCard";
 import NewResumeModal from "#/components/editor/NewResumeModal";
-import {
-	useResumeIndexStore,
-} from "#/lib/resume-index-store";
+import { useResumeIndexStore } from "#/lib/resume-index-store";
 
 export const Route = createFileRoute("/resumes")({
 	component: ResumesDashboard,

@@ -26,8 +26,13 @@ import { InteractiveAIPromptModal } from "./InteractiveAIPromptModal";
 function EducationFields({
 	id,
 	hideAITrigger = false,
-}: { id: string; hideAITrigger?: boolean }) {
-	const edu = useResumeStore((state) => state.education.find((e) => e.id === id));
+}: {
+	id: string;
+	hideAITrigger?: boolean;
+}) {
+	const edu = useResumeStore((state) =>
+		state.education.find((e) => e.id === id),
+	);
 	const updateEducation = useResumeStore((state) => state.updateEducation);
 
 	if (!edu) return null;
@@ -169,7 +174,9 @@ function EducationFields({
 
 function EducationItem({ id }: { id: string }) {
 	const [isExpanded, setIsExpanded] = useState(false);
-	const edu = useResumeStore((state) => state.education.find((e) => e.id === id));
+	const edu = useResumeStore((state) =>
+		state.education.find((e) => e.id === id),
+	);
 	const deleteEducation = useResumeStore((state) => state.deleteEducation);
 
 	const { attributes, listeners, setNodeRef, transform, transition } =

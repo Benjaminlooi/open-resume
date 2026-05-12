@@ -14,21 +14,12 @@ import {
 	verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { ChevronDown, ChevronUp, GripVertical, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { useResumeStore } from "#/lib/resume-store";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
-import { Label } from "#/components/ui/label";
-import { InteractiveAIPromptModal } from "./InteractiveAIPromptModal";
 import { RichTextEditor } from "#/components/ui/rich-text-editor";
-import {
-	Plus,
-	Trash2,
-	ChevronDown,
-	ChevronUp,
-	GripVertical,
-} from "lucide-react";
-import type { Project } from "#/lib/resume-schema";
+import { useResumeStore } from "#/lib/resume-store";
 
 function ProjectItem({ id }: { id: string }) {
 	const [isExpanded, setIsExpanded] = useState(false);

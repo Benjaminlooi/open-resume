@@ -10,7 +10,8 @@ export default function ResumePreview() {
 	const [unscaledHeight, setUnscaledHeight] = useState<number | "auto">("auto");
 	const templateId = useResumeStore((state) => state.templateId);
 
-	const TemplateComponent = templateId === "modern" ? ModernTemplate : DemoTemplate;
+	const TemplateComponent =
+		templateId === "modern" ? ModernTemplate : DemoTemplate;
 
 	useEffect(() => {
 		const observer = new ResizeObserver((entries) => {

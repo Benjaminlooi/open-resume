@@ -17,11 +17,11 @@ import { CSS } from "@dnd-kit/utilities";
 import { useResumeStore } from "#/lib/resume-store";
 
 function LanguageItem({ id }: { id: string }) {
-        const [isExpanded, setIsExpanded] = useState(false);
-        const { updateLanguage, deleteLanguage } = useResumeStore();
-        const lang = useResumeStore((state) =>
-                (state.languages || []).find((l) => l.id === id),
-        );
+	const [isExpanded, setIsExpanded] = useState(false);
+	const { updateLanguage, deleteLanguage } = useResumeStore();
+	const lang = useResumeStore((state) =>
+		(state.languages || []).find((l) => l.id === id),
+	);
 	const { attributes, listeners, setNodeRef, transform, transition } =
 		useSortable({ id });
 
@@ -115,63 +115,62 @@ function LanguageItem({ id }: { id: string }) {
 }
 
 export default function LanguagesForm() {
-        const { languages, addLanguage, reorderLanguages } = useResumeStore();
-        const langItems = languages || [];
+	const { languages, addLanguage, reorderLanguages } = useResumeStore();
+	const langItems = languages || [];
 
-        const sensors = useSensors(
-                useSensor(PointerSensor, {
-                        activationConstraint: {
-                                distance: 5,
-                        },
-                }),
-                useSensor(KeyboardSensor, {
-                        coordinateGetter: sortableKeyboardCoordinates,
-                }),
-        );
+	const sensors = useSensors(
+		useSensor(PointerSensor, {
+			activationConstraint: {
+				distance: 5,
+			},
+		}),
+		useSensor(KeyboardSensor, {
+			coordinateGetter: sortableKeyboardCoordinates,
+		}),
+	);
 
-        function handleDragEnd(event: DragEndEvent) {
-                const { active, over } = event;
+	function handleDragEnd(event: DragEndEvent) {
+		const { active, over } = event;
 
-                if (over && active.id !== over.id) {
-                        const oldIndex = langItems.findIndex((item) => item.id === active.id);
-                        const newIndex = langItems.findIndex((item) => item.id === over.id);
-                        reorderLanguages(oldIndex, newIndex);
-                }
-        }
+		if (over && active.id !== over.id) {
+			const oldIndex = langItems.findIndex((item) => item.id === active.id);
+			const newIndex = langItems.findIndex((item) => item.id === over.id);
+			reorderLanguages(oldIndex, newIndex);
+		}
+	}
 
-        const handleAdd = () => {
-                addLanguage({
-                        id: `lang-${Date.now()}`,
-                        language: "",
-                        proficiency: "",
-                });
-        };
+	const handleAdd = () => {
+		addLanguage({
+			id: `lang-${Date.now()}`,
+			language: "",
+			proficiency: "",
+		});
+	};
 
-        return (
-                <div className="space-y-4">
-                        <p className="text-sm text-muted-foreground">
-                                Manage your languages here. Click an item to edit its details.
-                        </p>
-                        <DndContext
-                                sensors={sensors}
-                                collisionDetection={closestCenter}
-                                onDragEnd={handleDragEnd}
-                        >
-                                <SortableContext
-                                        items={langItems.map((e) => e.id)}
-                                        strategy={verticalListSortingStrategy}
-                                >
-                                        <div className="flex flex-col gap-3">
-                                                {langItems.map((lang) => (
-                                                        <LanguageItem key={lang.id} id={lang.id} />
-                                                ))}
-                                        </div>
-                                </SortableContext>
-                        </DndContext>
-                        <Button variant="neutral" className="w-full mt-2" onClick={handleAdd}>
-                                + Add Language
-                        </Button>
-                </div>
-        );
+	return (
+		<div className="space-y-4">
+			<p className="text-sm text-muted-foreground">
+				Manage your languages here. Click an item to edit its details.
+			</p>
+			<DndContext
+				sensors={sensors}
+				collisionDetection={closestCenter}
+				onDragEnd={handleDragEnd}
+			>
+				<SortableContext
+					items={langItems.map((e) => e.id)}
+					strategy={verticalListSortingStrategy}
+				>
+					<div className="flex flex-col gap-3">
+						{langItems.map((lang) => (
+							<LanguageItem key={lang.id} id={lang.id} />
+						))}
+					</div>
+				</SortableContext>
+			</DndContext>
+			<Button variant="neutral" className="w-full mt-2" onClick={handleAdd}>
+				+ Add Language
+			</Button>
+		</div>
+	);
 }
-

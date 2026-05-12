@@ -23,7 +23,10 @@ export interface SettingsState {
 
 const getInitialState = (): Omit<
 	SettingsState,
-	"updateAPIKey" | "setDefaultProvider" | "updateBaseUrl" | "updateSelectedModel"
+	| "updateAPIKey"
+	| "setDefaultProvider"
+	| "updateBaseUrl"
+	| "updateSelectedModel"
 > => {
 	if (typeof window !== "undefined") {
 		const saved = localStorage.getItem("resume-builder-settings");

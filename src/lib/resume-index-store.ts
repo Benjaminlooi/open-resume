@@ -46,7 +46,7 @@ const getInitialIndexState = (): { resumes: ResumeIndexEntry[] } => {
 						},
 					],
 				};
-			} catch (e) {}
+			} catch (_e) {}
 		}
 	}
 	return { resumes: [] };

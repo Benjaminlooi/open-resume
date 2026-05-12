@@ -1,29 +1,31 @@
-import { useResumeStore } from "#/lib/resume-store";
 import type { EditorState } from "#/lib/resume-store";
+import { useResumeStore } from "#/lib/resume-store";
 
 export default function ModernTemplate({ resume }: { resume?: EditorState }) {
-        const {
-                personalInfo: globalPersonalInfo,
-                sections: globalSections,
-                experience: globalExperience,
-                education: globalEducation,
-                skills: globalSkills,
-                projects: globalProjectsRaw,
-                certifications: globalCertificationsRaw,
-                languages: globalLanguagesRaw,
-        } = useResumeStore();
+	const {
+		personalInfo: globalPersonalInfo,
+		sections: globalSections,
+		experience: globalExperience,
+		education: globalEducation,
+		skills: globalSkills,
+		projects: globalProjectsRaw,
+		certifications: globalCertificationsRaw,
+		languages: globalLanguagesRaw,
+	} = useResumeStore();
 
-        const globalProjects = globalProjectsRaw || [];
-        const globalCertifications = globalCertificationsRaw || [];
-        const globalLanguages = globalLanguagesRaw || [];
+	const globalProjects = globalProjectsRaw || [];
+	const globalCertifications = globalCertificationsRaw || [];
+	const globalLanguages = globalLanguagesRaw || [];
 	const personalInfo = resume ? resume.personalInfo : globalPersonalInfo;
 	const sections = resume ? resume.sections : globalSections;
 	const experience = resume ? resume.experience : globalExperience;
 	const education = resume ? resume.education : globalEducation;
 	const skills = resume ? resume.skills : globalSkills;
-	const projects = resume ? (resume.projects || []) : globalProjects;
-	const certifications = resume ? (resume.certifications || []) : globalCertifications;
-	const languages = resume ? (resume.languages || []) : globalLanguages;
+	const projects = resume ? resume.projects || [] : globalProjects;
+	const certifications = resume
+		? resume.certifications || []
+		: globalCertifications;
+	const languages = resume ? resume.languages || [] : globalLanguages;
 
 	const renderSection = (id: string) => {
 		switch (id) {
@@ -36,17 +38,24 @@ export default function ModernTemplate({ resume }: { resume?: EditorState }) {
 						</h2>
 						<div className="flex flex-col gap-5">
 							{experience.map((item) => (
-								<div key={item.id} className="relative pl-4 border-l-2 border-indigo-200">
+								<div
+									key={item.id}
+									className="relative pl-4 border-l-2 border-indigo-200"
+								>
 									<div className="absolute w-2.5 h-2.5 bg-indigo-600 rounded-full -left-[6px] top-1.5"></div>
 									<div className="flex justify-between items-baseline mb-1">
-										<h3 className="font-bold text-lg text-gray-900">{item.role}</h3>
+										<h3 className="font-bold text-lg text-gray-900">
+											{item.role}
+										</h3>
 										<span className="text-sm font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-sm">
 											{item.startDate} - {item.endDate}
 										</span>
 									</div>
 									<div className="flex justify-between items-baseline mb-2 text-gray-700">
 										<span className="text-md font-medium">{item.company}</span>
-										<span className="text-sm text-gray-500">{item.location}</span>
+										<span className="text-sm text-gray-500">
+											{item.location}
+										</span>
 									</div>
 									{item.description && (
 										<div
@@ -70,7 +79,9 @@ export default function ModernTemplate({ resume }: { resume?: EditorState }) {
 							{education.map((item) => (
 								<div key={item.id} className="bg-gray-50 rounded-lg p-4">
 									<div className="flex justify-between items-baseline mb-1">
-										<h3 className="font-bold text-lg text-gray-900">{item.institution}</h3>
+										<h3 className="font-bold text-lg text-gray-900">
+											{item.institution}
+										</h3>
 										<span className="text-sm font-semibold text-indigo-600">
 											{item.startDate
 												? `${item.startDate} - ${item.endDate}`
@@ -105,10 +116,15 @@ export default function ModernTemplate({ resume }: { resume?: EditorState }) {
 						<div className="grid grid-cols-1 gap-3">
 							{skills.map((item) => (
 								<div key={item.id}>
-									<div className="font-semibold text-gray-900 mb-1.5">{item.category}</div>
+									<div className="font-semibold text-gray-900 mb-1.5">
+										{item.category}
+									</div>
 									<div className="flex flex-wrap gap-2">
-										{item.items.split(',').map((skill, i) => (
-											<span key={i} className="bg-white border border-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm shadow-sm">
+										{item.items.split(",").map((skill, i) => (
+											<span
+												key={i}
+												className="bg-white border border-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm shadow-sm"
+											>
 												{skill.trim()}
 											</span>
 										))}
@@ -130,7 +146,9 @@ export default function ModernTemplate({ resume }: { resume?: EditorState }) {
 							{projects.map((item) => (
 								<div key={item.id}>
 									<div className="flex justify-between items-baseline mb-1">
-										<h3 className="font-bold text-lg text-gray-900">{item.name}</h3>
+										<h3 className="font-bold text-lg text-gray-900">
+											{item.name}
+										</h3>
 										<span className="text-sm font-semibold text-gray-600">
 											{item.date}
 										</span>
@@ -168,7 +186,9 @@ export default function ModernTemplate({ resume }: { resume?: EditorState }) {
 									className="flex justify-between items-baseline"
 								>
 									<div>
-										<span className="font-bold text-md text-gray-900">{item.name}</span>
+										<span className="font-bold text-md text-gray-900">
+											{item.name}
+										</span>
 										{item.issuer && (
 											<span className="text-sm text-gray-600">
 												{" "}
@@ -196,7 +216,11 @@ export default function ModernTemplate({ resume }: { resume?: EditorState }) {
 							{languages.map((item) => (
 								<div key={item.id} className="flex items-center gap-2">
 									<strong className="text-gray-900">{item.language}</strong>
-									{item.proficiency && <span className="text-gray-600 bg-gray-100 px-2 py-0.5 rounded-sm">{item.proficiency}</span>}
+									{item.proficiency && (
+										<span className="text-gray-600 bg-gray-100 px-2 py-0.5 rounded-sm">
+											{item.proficiency}
+										</span>
+									)}
 								</div>
 							))}
 						</div>
