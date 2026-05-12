@@ -318,8 +318,8 @@ You MUST use the propose_resume_update tool to suggest bullet points.`;
 										AI Writing Assistant
 									</h3>
 									<p className="text-sm text-muted-foreground mb-6 max-w-sm">
-										Ask the AI to generate or improve your bullet points. You
-										can use the suggestions below or type your own instructions.
+										Chat with the AI resume coach to draft and refine your bullet points. 
+										Once you are happy with the suggestions, ask the AI to apply them!
 									</p>
 								</div>
 							)}
