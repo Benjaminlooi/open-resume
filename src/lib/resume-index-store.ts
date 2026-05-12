@@ -1,4 +1,4 @@
-import { Store } from "@tanstack/store";
+import { create } from "zustand";
 
 export interface ResumeIndexEntry {
 	id: string;
@@ -7,21 +7,28 @@ export interface ResumeIndexEntry {
 	templateId: string;
 }
 
-type ResumeIndexState = {
+interface ResumeIndexState {
 	resumes: ResumeIndexEntry[];
-};
+	createResumeIndexEntry: (
+		id: string,
+		name: string,
+		templateId: string,
+	) => void;
+	updateResumeIndexModified: (id: string) => void;
+	deleteResumeIndexEntry: (id: string) => void;
+}
 
-const getInitialIndexState = (): ResumeIndexState => {
+const getInitialIndexState = (): { resumes: ResumeIndexEntry[] } => {
 	if (typeof window !== "undefined") {
 		const saved = localStorage.getItem("resume-index");
 		if (saved) {
 			try {
-				return JSON.parse(saved) as ResumeIndexState;
+				return JSON.parse(saved) as { resumes: ResumeIndexEntry[] };
 			} catch (e) {
 				console.error("Failed to parse resume index", e);
 			}
 		}
-		
+
 		// Migration for existing single resume
 		const legacySaved = localStorage.getItem("resume-builder-state");
 		if (legacySaved) {
@@ -30,12 +37,14 @@ const getInitialIndexState = (): ResumeIndexState => {
 				const legacyId = "default";
 				localStorage.setItem(`resume-${legacyId}`, legacySaved);
 				return {
-					resumes: [{
-						id: legacyId,
-						name: "Imported Resume",
-						lastModified: Date.now(),
-						templateId: parsedLegacy.templateId || "demo"
-					}]
+					resumes: [
+						{
+							id: legacyId,
+							name: "Imported Resume",
+							lastModified: Date.now(),
+							templateId: parsedLegacy.templateId || "demo",
+						},
+					],
 				};
 			} catch (e) {}
 		}
@@ -43,34 +52,33 @@ const getInitialIndexState = (): ResumeIndexState => {
 	return { resumes: [] };
 };
 
-export const resumeIndexStore = new Store<ResumeIndexState>(getInitialIndexState());
+export const useResumeIndexStore = create<ResumeIndexState>((set) => ({
+	...getInitialIndexState(),
+	createResumeIndexEntry: (id, name, templateId) =>
+		set((state) => ({
+			resumes: [
+				...state.resumes,
+				{ id, name, templateId, lastModified: Date.now() },
+			],
+		})),
+	updateResumeIndexModified: (id) =>
+		set((state) => ({
+			resumes: state.resumes.map((r) =>
+				r.id === id ? { ...r, lastModified: Date.now() } : r,
+			),
+		})),
+	deleteResumeIndexEntry: (id) =>
+		set((state) => {
+			if (typeof window !== "undefined") {
+				localStorage.removeItem(`resume-${id}`);
+			}
+			return { resumes: state.resumes.filter((r) => r.id !== id) };
+		}),
+}));
 
 if (typeof window !== "undefined") {
-	resumeIndexStore.subscribe(() => {
-		localStorage.setItem("resume-index", JSON.stringify(resumeIndexStore.state));
+	useResumeIndexStore.subscribe((state) => {
+		const { resumes } = state;
+		localStorage.setItem("resume-index", JSON.stringify({ resumes }));
 	});
 }
-
-export const createResumeIndexEntry = (id: string, name: string, templateId: string) => {
-	resumeIndexStore.setState((state) => ({
-		resumes: [
-			...state.resumes,
-			{ id, name, templateId, lastModified: Date.now() },
-		],
-	}));
-};
-
-export const updateResumeIndexModified = (id: string) => {
-    resumeIndexStore.setState((state) => ({
-        resumes: state.resumes.map(r => r.id === id ? { ...r, lastModified: Date.now() } : r)
-    }));
-};
-
-export const deleteResumeIndexEntry = (id: string) => {
-	resumeIndexStore.setState((state) => ({
-		resumes: state.resumes.filter((r) => r.id !== id),
-	}));
-    if (typeof window !== "undefined") {
-        localStorage.removeItem(`resume-${id}`);
-    }
-};
