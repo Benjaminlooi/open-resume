@@ -14,29 +14,23 @@ import {
 	verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { useStore } from "@tanstack/react-store";
 import { ChevronDown, ChevronUp, GripVertical, Trash2 } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
 import { RichTextEditor } from "#/components/ui/rich-text-editor";
-import {
-	addExperience,
-	deleteExperience,
-	reorderExperience,
-	resumeStore,
-	updateExperience,
-} from "#/lib/resume-store";
+import { useResumeStore } from "#/lib/resume-store";
 import { InteractiveAIPromptModal } from "./InteractiveAIPromptModal";
 
 function ExperienceFields({
 	id,
 	hideAITrigger = false,
 }: { id: string; hideAITrigger?: boolean }) {
-	const exp = useStore(resumeStore, (state) =>
+	const exp = useResumeStore((state) =>
 		state.experience.find((e) => e.id === id),
 	);
+	const updateExperience = useResumeStore((state) => state.updateExperience);
 
 	if (!exp) return null;
 
@@ -128,9 +122,10 @@ function ExperienceFields({
 
 function ExperienceItem({ id }: { id: string }) {
 	const [isExpanded, setIsExpanded] = useState(false);
-	const exp = useStore(resumeStore, (state) =>
+	const exp = useResumeStore((state) =>
 		state.experience.find((e) => e.id === id),
 	);
+	const deleteExperience = useResumeStore((state) => state.deleteExperience);
 
 	const { attributes, listeners, setNodeRef, transform, transition } =
 		useSortable({ id });
@@ -197,7 +192,9 @@ function ExperienceItem({ id }: { id: string }) {
 }
 
 export default function ExperienceForm() {
-	const experience = useStore(resumeStore, (state) => state.experience);
+	const experience = useResumeStore((state) => state.experience);
+	const reorderExperience = useResumeStore((state) => state.reorderExperience);
+	const addExperience = useResumeStore((state) => state.addExperience);
 
 	const sensors = useSensors(
 		useSensor(PointerSensor, {

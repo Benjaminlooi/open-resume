@@ -1,7 +1,6 @@
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createOpenAI } from "@ai-sdk/openai";
-import { useStore } from "@tanstack/react-store";
 import { streamText } from "ai";
 import { Check, Loader2, Send, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -22,7 +21,7 @@ import {
 	SelectValue,
 } from "#/components/ui/select";
 import { Textarea } from "#/components/ui/textarea";
-import { type AIProvider, settingsStore } from "#/lib/settings-store";
+import { type AIProvider, useSettingsStore } from "#/lib/settings-store";
 
 interface Props {
 	role: string;
@@ -41,7 +40,7 @@ export function InteractiveAIPromptModal({
 }: Props) {
 	const [open, setOpen] = useState(false);
 	const { defaultProvider, apiKeys, baseUrls, selectedModels } =
-		useStore(settingsStore);
+		useSettingsStore();
 	const [selectedProvider, setSelectedProvider] =
 		useState<AIProvider>(defaultProvider);
 

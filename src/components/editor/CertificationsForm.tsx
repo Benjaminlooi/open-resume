@@ -14,25 +14,20 @@ import {
 	verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { useStore } from "@tanstack/react-store";
 import { ChevronDown, ChevronUp, GripVertical, Trash2 } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
-import {
-	addCertification,
-	deleteCertification,
-	reorderCertifications,
-	resumeStore,
-	updateCertification,
-} from "#/lib/resume-store";
+import { useResumeStore } from "#/lib/resume-store";
 
 function CertificationItem({ id }: { id: string }) {
 	const [isExpanded, setIsExpanded] = useState(false);
-	const cert = useStore(resumeStore, (state) =>
+	const cert = useResumeStore((state) =>
 		(state.certifications || []).find((c) => c.id === id),
 	);
+	const updateCertification = useResumeStore((state) => state.updateCertification);
+	const deleteCertification = useResumeStore((state) => state.deleteCertification);
 
 	const { attributes, listeners, setNodeRef, transform, transition } =
 		useSortable({ id });
@@ -132,10 +127,11 @@ function CertificationItem({ id }: { id: string }) {
 }
 
 export default function CertificationsForm() {
-	const certifications = useStore(
-		resumeStore,
-		(state) => state.certifications || [],
+	const certifications = useResumeStore((state) => state.certifications || []);
+	const reorderCertifications = useResumeStore(
+		(state) => state.reorderCertifications,
 	);
+	const addCertification = useResumeStore((state) => state.addCertification);
 
 	const sensors = useSensors(
 		useSensor(PointerSensor, {

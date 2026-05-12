@@ -14,27 +14,28 @@ import {
 	verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { useStore } from "@tanstack/react-store";
-import { ChevronDown, ChevronUp, GripVertical, Trash2 } from "lucide-react";
-import type React from "react";
 import { useState } from "react";
+import { useResumeStore } from "#/lib/resume-store";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
+import { Label } from "#/components/ui/label";
+import { InteractiveAIPromptModal } from "./InteractiveAIPromptModal";
 import { RichTextEditor } from "#/components/ui/rich-text-editor";
 import {
-	addProject,
-	deleteProject,
-	reorderProjects,
-	resumeStore,
-	updateProject,
-} from "#/lib/resume-store";
+	Plus,
+	Trash2,
+	ChevronDown,
+	ChevronUp,
+	GripVertical,
+} from "lucide-react";
+import type { Project } from "#/lib/resume-schema";
 
 function ProjectItem({ id }: { id: string }) {
 	const [isExpanded, setIsExpanded] = useState(false);
-	const project = useStore(resumeStore, (state) =>
+	const { updateProject, deleteProject } = useResumeStore();
+	const project = useResumeStore((state) =>
 		(state.projects || []).find((p) => p.id === id),
 	);
-
 	const { attributes, listeners, setNodeRef, transform, transition } =
 		useSortable({ id });
 

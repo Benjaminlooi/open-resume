@@ -1,14 +1,17 @@
 import { Moon, Download } from "lucide-react";
 import { useState } from "react";
-import { useStore } from "@tanstack/react-store";
-import { resumeStore, setTemplateId, AVAILABLE_TEMPLATES } from "#/lib/resume-store";
+import {
+	useResumeStore,
+	AVAILABLE_TEMPLATES,
+} from "#/lib/resume-store";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { GlobalSettingsModal } from "./GlobalSettingsModal";
 
 export default function EditorHeader() {
 	const [resumeName] = useState("test resume");
-	const templateId = useStore(resumeStore, (state) => state.templateId);
+	const templateId = useResumeStore((state) => state.templateId);
+	const setTemplateId = useResumeStore((state) => state.setTemplateId);
 
 	const handleDownloadPdf = () => {
 		window.print();

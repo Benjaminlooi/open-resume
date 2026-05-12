@@ -1,16 +1,21 @@
-import { useStore } from "@tanstack/react-store";
-import { resumeStore, type EditorState } from "#/lib/resume-store";
+import { useResumeStore } from "#/lib/resume-store";
+import type { EditorState } from "#/lib/resume-store";
 
 export default function ModernTemplate({ resume }: { resume?: EditorState }) {
-	const globalPersonalInfo = useStore(resumeStore, (state) => state.personalInfo);
-	const globalSections = useStore(resumeStore, (state) => state.sections);
-	const globalExperience = useStore(resumeStore, (state) => state.experience);
-	const globalEducation = useStore(resumeStore, (state) => state.education);
-	const globalSkills = useStore(resumeStore, (state) => state.skills);
-	const globalProjects = useStore(resumeStore, (state) => state.projects || []);
-	const globalCertifications = useStore(resumeStore, (state) => state.certifications || []);
-	const globalLanguages = useStore(resumeStore, (state) => state.languages || []);
+        const {
+                personalInfo: globalPersonalInfo,
+                sections: globalSections,
+                experience: globalExperience,
+                education: globalEducation,
+                skills: globalSkills,
+                projects: globalProjectsRaw,
+                certifications: globalCertificationsRaw,
+                languages: globalLanguagesRaw,
+        } = useResumeStore();
 
+        const globalProjects = globalProjectsRaw || [];
+        const globalCertifications = globalCertificationsRaw || [];
+        const globalLanguages = globalLanguagesRaw || [];
 	const personalInfo = resume ? resume.personalInfo : globalPersonalInfo;
 	const sections = resume ? resume.sections : globalSections;
 	const experience = resume ? resume.experience : globalExperience;

@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useStore } from "@tanstack/react-store";
-import { resumeStore } from "#/lib/resume-store";
+import { useResumeStore } from "#/lib/resume-store";
 import DemoTemplate from "./DemoTemplate";
 import ModernTemplate from "./ModernTemplate";
 
@@ -9,7 +8,7 @@ export default function ResumePreview() {
 	const contentRef = useRef<HTMLDivElement>(null);
 	const [scale, setScale] = useState(1);
 	const [unscaledHeight, setUnscaledHeight] = useState<number | "auto">("auto");
-	const templateId = useStore(resumeStore, (state) => state.templateId);
+	const templateId = useResumeStore((state) => state.templateId);
 
 	const TemplateComponent = templateId === "modern" ? ModernTemplate : DemoTemplate;
 

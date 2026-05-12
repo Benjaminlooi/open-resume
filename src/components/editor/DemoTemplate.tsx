@@ -1,15 +1,16 @@
-import { useStore } from "@tanstack/react-store";
-import { type EditorState, resumeStore } from "#/lib/resume-store";
+import { useResumeStore, type EditorState } from "#/lib/resume-store";
 
 export default function DemoTemplate({ resume }: { resume?: EditorState }) {
-	const globalPersonalInfo = useStore(resumeStore, (state) => state.personalInfo);
-	const globalSections = useStore(resumeStore, (state) => state.sections);
-	const globalExperience = useStore(resumeStore, (state) => state.experience);
-	const globalEducation = useStore(resumeStore, (state) => state.education);
-	const globalSkills = useStore(resumeStore, (state) => state.skills);
-	const globalProjects = useStore(resumeStore, (state) => state.projects || []);
-	const globalCertifications = useStore(resumeStore, (state) => state.certifications || []);
-	const globalLanguages = useStore(resumeStore, (state) => state.languages || []);
+	const globalPersonalInfo = useResumeStore((state) => state.personalInfo);
+	const globalSections = useResumeStore((state) => state.sections);
+	const globalExperience = useResumeStore((state) => state.experience);
+	const globalEducation = useResumeStore((state) => state.education);
+	const globalSkills = useResumeStore((state) => state.skills);
+	const globalProjects = useResumeStore((state) => state.projects || []);
+	const globalCertifications = useResumeStore(
+		(state) => state.certifications || [],
+	);
+	const globalLanguages = useResumeStore((state) => state.languages || []);
 
 	const personalInfo = resume ? resume.personalInfo : globalPersonalInfo;
 	const sections = resume ? resume.sections : globalSections;
