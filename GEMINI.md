@@ -1,28 +1,54 @@
 # Project Overview
 
-Resume builder app. Use TanStack Start, React 19, TypeScript. 
-SSR ready. File-based routing via TanStack Router.
-Styling via Tailwind CSS v4 + Shadcn UI.
-Analytics via PostHog.
+Resume builder app built with **TanStack Start**, **React 19**, and **TypeScript**. 
+Optimized for **Cloudflare Workers** (via compatibility flags).
+SSR ready with file-based routing via **TanStack Router**.
+Styling via **Tailwind CSS v4** + **Shadcn UI**.
+Analytics via **PostHog**.
 
-# Architecture & Structure
+# Tech Stack
 
-- `src/routes/`: Route components.
-- `src/components/ui/`: Shadcn components.
-- `src/lib/`: Utilities.
+- **Framework:** TanStack Start (React 19)
+- **State Management:** Zustand (with LocalStorage persistence)
+- **AI Integration:** AI SDK (@ai-sdk/react, @ai-sdk/openai, etc.)
+- **Styling:** Tailwind CSS v4, Shadcn UI, Lucide React
+- **Analytics:** PostHog
+- **Tooling:** Biome (lint/format), Vitest (testing), Wrangler (deployment)
 
-# Building and Running
+# Core Architecture
 
-Commands use `npm` or `pnpm`.
+- `src/routes/`: File-based routing via TanStack Router.
+- `src/lib/`:
+    - `resume-store.ts`: Core Zustand store for resume data.
+    - `settings-store.ts`: Zustand store for app settings.
+    - `resume-schema.ts`: Zod schema for resume validation.
+- `src/components/`:
+    - `editor/`: Complex form components for resume editing.
+    - `dashboard/`: Components for managing saved resumes.
+    - `ui/`: Shared Shadcn components.
 
-- Dev server: `npm run dev` (run `vite dev --port 3000`)
-- Build prod: `npm run build`
-- Preview prod: `npm run preview`
-- Run tests: `npm run test` (Vitest)
+# Development Workflow
+
+All commands use `pnpm`.
+
+- **Install:** `pnpm install`
+- **Dev server:** `pnpm dev` (Vite dev server)
+- **Build prod:** `pnpm build`
+- **Preview prod:** `pnpm preview`
+- **Run tests:** `pnpm test` (Vitest)
+- **Lint/Format:** `pnpm lint` or `pnpm format` (Biome)
+- **Typegen:** `pnpm cf-typegen` (Wrangler types)
+- **Check:** `pnpm check` (Biome)
 
 # Development Conventions
 
 - **Routing:** Add files in `src/routes/` to create routes. Use `<Link>` from `@tanstack/react-router`.
-- **Lint/Format:** Use Biome. Run `npm run lint` or `npm run format`.
+- **Styling:** Tailwind CSS v4. Edit `src/styles.css`. Use Shadcn components for UI elements.
 - **Components:** Add Shadcn components via `pnpm dlx shadcn@latest add <component>`.
-- **Styling:** Tailwind CSS. Edit `src/styles.css`.
+- **State:** Use Zustand stores in `src/lib/` for global/persistent state.
+
+# Deployment
+
+The app is deployed to Cloudflare Workers.
+
+- **Deploy:** `pnpm deploy` (Builds and then runs `wrangler deploy`)
