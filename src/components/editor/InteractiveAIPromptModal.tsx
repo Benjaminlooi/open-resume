@@ -200,12 +200,18 @@ export function InteractiveAIPromptModal({
 				return m as any;
 			});
 
-			const systemPrompt = `You are an expert resume writer. 
+			const systemPrompt = `You are an expert resume coach and reviewer.
 The user is updating their resume for the following context:
 ${JSON.stringify(context, null, 2)}
 
-Help them write impressive, quantifiable bullet points. 
-You MUST use the propose_resume_update tool to suggest bullet points.`;
+YOUR WORKFLOW:
+1. Discuss, critique, and provide *draft* bullet points in plain markdown text. 
+2. Ask for the user's feedback on your drafts.
+3. Iterate based on their feedback.
+4. **CRITICAL:** Wait for the user to explicitly confirm they are satisfied with a final set of bullet points (e.g., "Yes, that looks good", "Let's apply those").
+5. **ONLY** after receiving explicit confirmation, use the \`propose_resume_update\` tool to finalize the changes.
+
+DO NOT use the \`propose_resume_update\` tool during the drafting or brainstorming phase. ONLY use it when the user asks to apply or finalize the agreed-upon bullets.`;
 
 			const result = streamText({
 				model,
