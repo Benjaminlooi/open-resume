@@ -46,7 +46,7 @@ export default function DemoTemplate({ resume }: { resume?: EditorState }) {
 									</div>
 									{item.description && (
 										<div
-											className="prose prose-sm max-w-none text-black/80 mt-1 prose-resume"
+											className="prose prose-sm max-w-none text-black/80 mt-1 prose-p:my-1 prose-ul:my-1 prose-li:my-0 prose-ul:ml-4 prose-ol:my-1 prose-ol:ml-4"
 											dangerouslySetInnerHTML={{ __html: item.description }}
 										/>
 									)}
@@ -81,7 +81,7 @@ export default function DemoTemplate({ resume }: { resume?: EditorState }) {
 									</div>
 									{item.description && (
 										<div
-											className="prose prose-sm max-w-none text-black/80 mt-2 prose-resume"
+											className="prose prose-sm max-w-none text-black/80 mt-2 prose-p:my-1 prose-ul:my-1 prose-li:my-0 prose-ul:ml-4 prose-ol:my-1 prose-ol:ml-4"
 											dangerouslySetInnerHTML={{ __html: item.description }}
 										/>
 									)}
@@ -131,7 +131,7 @@ export default function DemoTemplate({ resume }: { resume?: EditorState }) {
 									</div>
 									{item.description && (
 										<div
-											className="prose prose-sm max-w-none text-black/80 mt-2 prose-resume"
+											className="prose prose-sm max-w-none text-black/80 mt-2 prose-p:my-1 prose-ul:my-1 prose-li:my-0 prose-ul:ml-4 prose-ol:my-1 prose-ol:ml-4"
 											dangerouslySetInnerHTML={{ __html: item.description }}
 										/>
 									)}

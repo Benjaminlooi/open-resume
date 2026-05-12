@@ -192,8 +192,6 @@ You MUST use the propose_resume_update tool to suggest bullet points.`;
 				},
 			});
 
-			
-
 			let fullText = "";
 			const assistantMessageIndex = messages.length + 1; // +1 for the new user message
 			setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
@@ -333,11 +331,12 @@ You MUST use the propose_resume_update tool to suggest bullet points.`;
 							{isLoading && (
 								<div className="space-y-2">
 									<div className="text-muted-foreground flex gap-2 items-center">
-										<Loader2 className="size-4 animate-spin" /> AI is thinking...
+										<Loader2 className="size-4 animate-spin" /> AI is
+										thinking...
 									</div>
 									<div className="flex justify-center p-2">
 										<Button
-											variant="ghost"
+											variant="neutral"
 											size="sm"
 											onClick={handleStop}
 											className="gap-2 text-xs"

@@ -3,7 +3,6 @@ import { useState } from "react";
 import ResumeThumbnail from "#/components/dashboard/ResumeThumbnail";
 import { useResumeIndexStore } from "#/lib/resume-index-store";
 import { AVAILABLE_TEMPLATES } from "#/lib/resume-store";
-import { blankResumeState } from "#/lib/dummy-resume";
 
 interface NewResumeModalProps {
 	onClose: () => void;

@@ -128,9 +128,10 @@ function ExperienceFields({
 					</label>
 					{!hideAITrigger && (
 						<InteractiveAIPromptModal
-							role={exp.role}
-							company={exp.company}
-							onApply={(newHtml) => updateExperience(exp.id, { description: newHtml })}
+							context={exp}
+							onApply={(newHtml) =>
+								updateExperience(exp.id, { description: newHtml })
+							}
 						>
 							<ExperienceFields id={id} hideAITrigger />
 						</InteractiveAIPromptModal>

@@ -133,8 +133,7 @@ function ProjectItem({ id }: { id: string }) {
 }
 
 export default function ProjectsForm() {
-	const { projects: projectsFromStore, addProject, reorderProjects } = useResumeStore();
-	const projects = projectsFromStore || [];
+	const projects = useStore(resumeStore, (state) => state.projects || []);
 
 	const sensors = useSensors(
 		useSensor(PointerSensor, {
