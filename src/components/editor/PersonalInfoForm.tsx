@@ -1,4 +1,5 @@
 import { useResumeStore } from "#/lib/resume-store";
+import { Input } from "#/components/ui/input";
 
 export default function PersonalInfoForm() {
 	const { personalInfo, updatePersonalInfo } = useResumeStore();

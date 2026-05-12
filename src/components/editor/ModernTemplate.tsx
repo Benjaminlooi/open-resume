@@ -59,7 +59,7 @@ export default function ModernTemplate({ resume }: { resume?: EditorState }) {
 									</div>
 									{item.description && (
 										<div
-											className="prose prose-sm max-w-none text-gray-700 mt-1 prose-p:my-1 prose-ul:my-1 prose-li:my-0 prose-ul:ml-4 prose-ol:my-1 prose-ol:ml-4"
+											className="prose prose-sm max-w-none text-gray-700 mt-1 prose-resume"
 											dangerouslySetInnerHTML={{ __html: item.description }}
 										/>
 									)}
@@ -97,7 +97,7 @@ export default function ModernTemplate({ resume }: { resume?: EditorState }) {
 									</div>
 									{item.description && (
 										<div
-											className="prose prose-sm max-w-none text-gray-700 mt-2 prose-p:my-1 prose-ul:my-1 prose-li:my-0 prose-ul:ml-4 prose-ol:my-1 prose-ol:ml-4"
+											className="prose prose-sm max-w-none text-gray-700 mt-2 prose-resume"
 											dangerouslySetInnerHTML={{ __html: item.description }}
 										/>
 									)}
@@ -162,7 +162,7 @@ export default function ModernTemplate({ resume }: { resume?: EditorState }) {
 									</div>
 									{item.description && (
 										<div
-											className="prose prose-sm max-w-none text-gray-700 mt-2 prose-p:my-1 prose-ul:my-1 prose-li:my-0 prose-ul:ml-4 prose-ol:my-1 prose-ol:ml-4"
+											className="prose prose-sm max-w-none text-gray-700 mt-2 prose-resume"
 											dangerouslySetInnerHTML={{ __html: item.description }}
 										/>
 									)}

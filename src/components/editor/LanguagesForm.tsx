@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { DragEndEvent } from "@dnd-kit/core";
 import {
 	closestCenter,
@@ -14,7 +15,15 @@ import {
 	verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import {
+	ChevronDown,
+	ChevronUp,
+	GripVertical,
+	Trash2,
+} from "lucide-react";
 import { useResumeStore } from "#/lib/resume-store";
+import { Button } from "#/components/ui/button";
+import { Input } from "#/components/ui/input";
 
 function LanguageItem({ id }: { id: string }) {
 	const [isExpanded, setIsExpanded] = useState(false);

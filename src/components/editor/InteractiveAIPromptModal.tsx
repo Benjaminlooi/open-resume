@@ -1,27 +1,37 @@
-import { createAnthropic, createAnthropic } from "@ai-sdk/anthropic";
-import { createGoogleGenerativeAI, createGoogleGenerativeAI } from "@ai-sdk/google";
-import { createOpenAI, createOpenAI } from "@ai-sdk/openai";
+import { createAnthropic } from "@ai-sdk/anthropic";
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
+import { createOpenAI } from "@ai-sdk/openai";
+
 import { streamText } from "ai";
-import { Check, Loader2, Send, Sparkles } from "lucide-react";
+import { Check, Loader2, Send, Sparkles, Square } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { Button } from "#/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "#/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
+import {
+	Dialog,
+	DialogContent,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from "#/components/ui/dialog";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "#/components/ui/select";
 import { Textarea } from "#/components/ui/textarea";
 import { type AIProvider, useSettingsStore } from "#/lib/settings-store";
 
 interface Props {
-  role: string;
-  company: string;
-  currentDescription: string;
-  onApply: (html: string) => void;
+	context: Record<string, any>;
+	onApply: (html: string) => void;
+	children?: React.ReactNode;
 }
 
 export function InteractiveAIPromptModal({
-	role,
-	company,
-	currentDescription,
+	context,
 	onApply,
 	children,
 }: Props) {
@@ -31,70 +41,89 @@ export function InteractiveAIPromptModal({
 	const [selectedProvider, setSelectedProvider] =
 		useState<AIProvider>(defaultProvider);
 
-  const isLocal = selectedProvider === "ollama" || selectedProvider === "lmstudio";
-  const apiKey = isLocal ? "dummy" : apiKeys[selectedProvider];
-  const baseUrl = baseUrls[selectedProvider];
-  const modelName = selectedModels[selectedProvider];
+	const [messages, setMessages] = useState<any[]>([]);
+	const [input, setInput] = useState("");
+	const [isLoading, setIsLoading] = useState(false);
+	const [error, setError] = useState<string | null>(null);
+	const [abortController, setAbortController] =
+		useState<AbortController | null>(null);
 
-  const chatEndRef = useRef<HTMLDivElement>(null);
-  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
+	const isLocal =
+		selectedProvider === "ollama" || selectedProvider === "lmstudio";
+	const apiKey = isLocal ? "dummy" : apiKeys[selectedProvider];
+	const baseUrl = baseUrls[selectedProvider];
+	const modelName = selectedModels[selectedProvider];
 
 	const chatEndRef = useRef<HTMLDivElement>(null);
 	useEffect(() => {
 		chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-	}, []);
+	}, [messages]);
 
-    const userMessage = { role: "user", content: input };
-    setMessages((prev) => [...prev, userMessage]);
-    setInput("");
-    setIsLoading(true);
-    setError(null);
+	const handleStop = () => {
+		abortController?.abort();
+		setAbortController(null);
+		setIsLoading(false);
+	};
 
-    let model;
-    switch (selectedProvider) {
-      case "openai": model = createOpenAI({ apiKey })("gpt-4o-mini"); break;
-      case "anthropic": model = createAnthropic({ apiKey })("claude-3-5-haiku-latest"); break;
-      case "google": model = createGoogleGenerativeAI({ apiKey })("gemini-1.5-flash"); break;
-      case "deepseek": model = createOpenAI({ apiKey, baseURL: "https://api.deepseek.com/v1" })("deepseek-chat"); break;
-      case "groq": model = createOpenAI({ apiKey, baseURL: "https://api.groq.com/openai/v1" })("llama3-8b-8192"); break;
-      case "ollama":
-      case "lmstudio":
-        if (!baseUrl || !modelName) {
-           setError("Base URL and Model required.");
-           setIsLoading(false);
-           return;
-        }
-        model = createOpenAI({ apiKey: "dummy-key", baseURL: baseUrl })(modelName);
-        break;
-      default:
-        setError("Unsupported provider");
-        setIsLoading(false);
-        return;
-    }
+	const handleSubmit = async (e?: React.FormEvent, overrideInput?: string) => {
+		e?.preventDefault();
+		const messageContent = overrideInput || input;
+		if (!messageContent.trim() || isLoading) return;
 
-    if (!apiKey && !isLocal) {
-      setError("No API key configured.");
-      setIsLoading(false);
-      return;
-    }
+		const userMessage = { role: "user", content: messageContent };
+		setMessages((prev) => [...prev, userMessage]);
+		setInput("");
+		setIsLoading(true);
+		setError(null);
 
-    try {
-      const result = streamText({
-        model,
-        system: `You are an expert resume writer. The user is updating their resume for the role of ${role} at ${company}. Help them write impressive, quantifiable bullet points. You MUST use the propose_resume_update tool to suggest bullet points.`,
-        messages: [...messages, userMessage],
-        tools: {
-          propose_resume_update: {
-            description: 'Propose a new set of resume bullet points as an HTML string with <ul> and <li> tags.',
-            inputSchema: z.object({
-              bulletsHtml: z.string().describe('The proposed bullet points formatted exactly as HTML <ul><li>...</li></ul>'),
-            }),
-            execute: async ({ bulletsHtml }: { bulletsHtml: string }) => {
-              return { bulletsHtml };
-            },
-          },
-        },
-      });
+		const controller = new AbortController();
+		setAbortController(controller);
+
+		let model;
+		switch (selectedProvider) {
+			case "openai":
+				model = createOpenAI({ apiKey })("gpt-4o-mini");
+				break;
+			case "anthropic":
+				model = createAnthropic({ apiKey })("claude-3-5-haiku-latest");
+				break;
+			case "google":
+				model = createGoogleGenerativeAI({ apiKey })("gemini-1.5-flash");
+				break;
+			case "deepseek":
+				model = createOpenAI({
+					apiKey,
+					baseURL: "https://api.deepseek.com/v1",
+				})("deepseek-chat");
+				break;
+			case "groq":
+				model = createOpenAI({
+					apiKey,
+					baseURL: "https://api.groq.com/openai/v1",
+				})("llama3-8b-8192");
+				break;
+			case "ollama":
+			case "lmstudio":
+				if (!baseUrl || !modelName) {
+					setError("Base URL and Model required.");
+					setIsLoading(false);
+					return;
+				}
+				model = createOpenAI({ apiKey: "dummy-key", baseURL: baseUrl })(
+					modelName,
+				);
+				break;
+			default:
+				setError("Unsupported provider");
+				setIsLoading(false);
+				return;
+		}
+
+		if (!apiKey && !isLocal) {
+			setError("No API key configured.");
+			setIsLoading(false);
+			return;
+		}
 
 		try {
 			// Map our internal messages format to Vercel AI SDK CoreMessage format
@@ -134,10 +163,18 @@ export function InteractiveAIPromptModal({
 				return m;
 			});
 
+			const systemPrompt = `You are an expert resume writer. 
+The user is updating their resume for the following context:
+${JSON.stringify(context, null, 2)}
+
+Help them write impressive, quantifiable bullet points. 
+You MUST use the propose_resume_update tool to suggest bullet points.`;
+
 			const result = streamText({
 				model,
-				system: `You are an expert resume writer. The user is updating their resume for the role of ${role} at ${company}. Help them write impressive, quantifiable bullet points. You MUST use the propose_resume_update tool to suggest bullet points.`,
+				system: systemPrompt,
 				messages: [...coreMessages, userMessage],
+				abortSignal: controller.signal,
 				tools: {
 					propose_resume_update: {
 						description: "Propose a new set of resume bullet points.",
@@ -155,43 +192,29 @@ export function InteractiveAIPromptModal({
 				},
 			});
 
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+			
 
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="neutral" size="sm" className="h-8 gap-2"><Sparkles className="size-4" />Generate with AI</Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-4xl h-[80vh] flex flex-col p-0 overflow-hidden">
-        <DialogHeader className="px-6 py-4 border-b shrink-0">
-          <DialogTitle>Improve with AI</DialogTitle>
-          <div className="flex items-center gap-2 mt-2">
-            <span className="text-sm font-medium">Provider:</span>
-            <Select value={selectedProvider} onValueChange={(val) => setSelectedProvider(val as AIProvider)}>
-              <SelectTrigger className="w-[180px] h-8"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="openai">OpenAI</SelectItem>
-                <SelectItem value="anthropic">Anthropic</SelectItem>
-                <SelectItem value="google">Google</SelectItem>
-                <SelectItem value="deepseek">DeepSeek</SelectItem>
-                <SelectItem value="groq">Groq</SelectItem>
-                <SelectItem value="ollama">Ollama</SelectItem>
-                <SelectItem value="lmstudio">LM Studio</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </DialogHeader>
+			let fullText = "";
+			const assistantMessageIndex = messages.length + 1; // +1 for the new user message
+			setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
+
+			for await (const chunk of result.textStream) {
+				fullText += chunk;
+				setMessages((prev) => {
+					const newMessages = [...prev];
+					newMessages[assistantMessageIndex] = {
+						role: "assistant",
+						content: fullText,
+					};
+					return newMessages;
+				});
+			}
 
 			const calls = await result.toolCalls;
 			if (calls && calls.length > 0) {
 				setMessages((prev) => {
 					const newMessages = [...prev];
-					// @ts-expect-error - appending custom tool data to render later
+					// @ts-ignore - appending custom tool data to render later
 					newMessages[assistantMessageIndex] = {
 						...newMessages[assistantMessageIndex],
 						_toolCalls: calls,
@@ -200,43 +223,48 @@ export function InteractiveAIPromptModal({
 				});
 			}
 		} catch (err: any) {
+			if (err.name === "AbortError") {
+				return;
+			}
 			setError(err.message);
 		} finally {
 			setIsLoading(false);
+			setAbortController(null);
 		}
 	};
 
-          {/* Right Pane: Chat */}
-          <div className="w-1/2 flex flex-col bg-white">
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {messages.length === 0 && (
-                <div className="text-center text-muted-foreground mt-10">Ask the AI to generate or improve your bullet points!</div>
-              )}
-              {messages.map((m: any, i) => (
-                <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[85%] p-3 rounded-lg ${m.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
-                    {typeof m.content === 'string' && m.content}
-                    {m._toolCalls?.map((tool: any) => {
-                      if (tool.toolName === 'propose_resume_update' && tool.args) {
-                        return (
-                          <div key={tool.toolCallId} className="mt-3 p-3 bg-background border rounded-md text-foreground">
-                            <div className="font-medium text-sm mb-2 pb-2 border-b">Proposed Update:</div>
-                            <div className="text-sm mb-3" dangerouslySetInnerHTML={{ __html: tool.args.bulletsHtml }} />
-                            <Button size="sm" className="w-full gap-2" onClick={() => { onApply(tool.args.bulletsHtml); setOpen(false); }}>
-                              <Check className="size-4" /> Apply Changes
-                            </Button>
-                          </div>
-                        );
-                      }
-                      return null;
-                    })}
-                  </div>
-                </div>
-              ))}
-              {isLoading && <div className="text-muted-foreground flex gap-2 items-center"><Loader2 className="size-4 animate-spin" /> AI is thinking...</div>}
-              {error && <div className="text-red-500 bg-red-100 p-2 rounded">Error: {error}</div>}
-              <div ref={chatEndRef} />
-            </div>
+	return (
+		<Dialog open={open} onOpenChange={setOpen}>
+			<DialogTrigger asChild>
+				<Button variant="neutral" size="sm" className="h-8 gap-2">
+					<Sparkles className="size-4" />
+					Generate with AI
+				</Button>
+			</DialogTrigger>
+			<DialogContent className="w-7xl max-w-7xl h-[80vh] flex flex-col p-0 overflow-hidden">
+				<DialogHeader className="px-6 py-4 border-b shrink-0">
+					<DialogTitle>Improve with AI</DialogTitle>
+					<div className="flex items-center gap-2 mt-2">
+						<span className="text-sm font-medium">Provider:</span>
+						<Select
+							value={selectedProvider}
+							onValueChange={(val) => setSelectedProvider(val as AIProvider)}
+						>
+							<SelectTrigger className="w-[180px] h-8">
+								<SelectValue />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value="openai">OpenAI</SelectItem>
+								<SelectItem value="anthropic">Anthropic</SelectItem>
+								<SelectItem value="google">Google</SelectItem>
+								<SelectItem value="deepseek">DeepSeek</SelectItem>
+								<SelectItem value="groq">Groq</SelectItem>
+								<SelectItem value="ollama">Ollama</SelectItem>
+								<SelectItem value="lmstudio">LM Studio</SelectItem>
+							</SelectContent>
+						</Select>
+					</div>
+				</DialogHeader>
 
 				<div className="flex flex-1 overflow-hidden">
 					{/* Left Pane: Current State */}
@@ -303,8 +331,20 @@ export function InteractiveAIPromptModal({
 								</div>
 							))}
 							{isLoading && (
-								<div className="text-muted-foreground flex gap-2 items-center">
-									<Loader2 className="size-4 animate-spin" /> AI is thinking...
+								<div className="space-y-2">
+									<div className="text-muted-foreground flex gap-2 items-center">
+										<Loader2 className="size-4 animate-spin" /> AI is thinking...
+									</div>
+									<div className="flex justify-center p-2">
+										<Button
+											variant="ghost"
+											size="sm"
+											onClick={handleStop}
+											className="gap-2 text-xs"
+										>
+											<Square className="size-3 fill-current" /> Stop generating
+										</Button>
+									</div>
 								</div>
 							)}
 							{error && (

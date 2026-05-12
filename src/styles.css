@@ -79,6 +79,12 @@
   }
 }
 
+@layer components {
+  .prose-resume {
+    @apply prose-p:my-1! prose-ul:my-1! prose-li:my-0! prose-ul:ml-4! prose-ol:my-1! prose-ol:ml-4!;
+  }
+}
+
 @media print {
   @page {
     size: A4;

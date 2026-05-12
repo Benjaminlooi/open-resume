@@ -128,12 +128,9 @@ function ExperienceFields({
 					</label>
 					{!hideAITrigger && (
 						<InteractiveAIPromptModal
-							role={exp.role || ""}
-							company={exp.company || ""}
-							currentDescription={exp.description || ""}
-							onApply={(newHtml) => {
-								updateExperience(id, { description: newHtml });
-							}}
+							role={exp.role}
+							company={exp.company}
+							onApply={(newHtml) => updateExperience(exp.id, { description: newHtml })}
 						>
 							<ExperienceFields id={id} hideAITrigger />
 						</InteractiveAIPromptModal>
@@ -164,13 +161,6 @@ function ExperienceItem({ id }: { id: string }) {
 	};
 
 	if (!exp) return null;
-
-	const handleChange = (
-		e: React.ChangeEvent<HTMLInputElement>,
-	) => {
-		const { name, value } = e.target;
-		updateExperience(id, { [name]: value });
-	};
 
 	return (
 		<div
@@ -219,77 +209,7 @@ function ExperienceItem({ id }: { id: string }) {
 
 			{isExpanded && (
 				<div className="p-4 space-y-4 border-t-2 border-border bg-white">
-					<div className="grid grid-cols-2 gap-4">
-						<div className="space-y-2">
-							<label className="text-sm font-medium leading-none">Role</label>
-							<Input
-								name="role"
-								value={exp.role}
-								onChange={handleChange}
-								placeholder="Software Engineer"
-							/>
-						</div>
-						<div className="space-y-2">
-							<label className="text-sm font-medium leading-none">
-								Company
-							</label>
-							<Input
-								name="company"
-								value={exp.company}
-								onChange={handleChange}
-								placeholder="Acme Corp"
-							/>
-						</div>
-						<div className="space-y-2">
-							<label className="text-sm font-medium leading-none">
-								Start Date
-							</label>
-							<Input
-								name="startDate"
-								value={exp.startDate}
-								onChange={handleChange}
-								placeholder="Jan 2020"
-							/>
-						</div>
-						<div className="space-y-2">
-							<label className="text-sm font-medium leading-none">
-								End Date
-							</label>
-							<Input
-								name="endDate"
-								value={exp.endDate}
-								onChange={handleChange}
-								placeholder="Present"
-							/>
-						</div>
-					</div>
-					<div className="space-y-2">
-						<label className="text-sm font-medium leading-none">Location</label>
-						<Input
-							name="location"
-							value={exp.location}
-							onChange={handleChange}
-							placeholder="New York, NY"
-						/>
-					</div>
-					<div className="space-y-2">
-						<div className="flex items-center justify-between">
-							<label className="text-sm font-medium leading-none">
-								Description
-							</label>
-							<InteractiveAIPromptModal 
-							        role={exp.role || ""} 
-							        company={exp.company || ""} 
-							        currentDescription={exp.description || ""}
-							        onApply={(newHtml) => {
-							                updateExperience(id, { description: newHtml });
-							        }}
-							/>						</div>
-						<RichTextEditor
-							value={exp.description || ""}
-							onChange={(val) => updateExperience(id, { description: val })}
-						/>
-					</div>
+					<ExperienceFields id={id} />
 				</div>
 			)}
 		</div>
