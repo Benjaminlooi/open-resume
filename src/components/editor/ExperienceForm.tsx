@@ -14,27 +14,118 @@ import {
 	verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { useStore } from "@tanstack/react-store";
 import { ChevronDown, ChevronUp, GripVertical, Trash2 } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
 import { RichTextEditor } from "#/components/ui/rich-text-editor";
+import { useResumeStore } from "#/lib/resume-store";
 import { InteractiveAIPromptModal } from "./InteractiveAIPromptModal";
-import {
-	addExperience,
-	deleteExperience,
-	reorderExperience,
-	resumeStore,
-	updateExperience,
-} from "#/lib/resume-store";
+
+function ExperienceFields({
+	id,
+	hideAITrigger = false,
+}: { id: string; hideAITrigger?: boolean }) {
+	const exp = useResumeStore((state) =>
+		state.experience.find((e) => e.id === id),
+	);
+	const updateExperience = useResumeStore((state) => state.updateExperience);
+
+	if (!exp) return null;
+
+	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const { name, value } = e.target;
+		updateExperience(id, { [name]: value });
+	};
+
+	return (
+		<div className="space-y-4">
+			<div className="grid grid-cols-2 gap-4">
+				<div className="space-y-2">
+					<label htmlFor={`role-${id}`} className="text-sm font-medium leading-none">Role</label>
+					<Input
+						id={`role-${id}`}
+						name="role"
+						value={exp.role}
+						onChange={handleChange}
+						placeholder="Software Engineer"
+					/>
+				</div>
+				<div className="space-y-2">
+					<label htmlFor={`company-${id}`} className="text-sm font-medium leading-none">Company</label>
+					<Input
+						id={`company-${id}`}
+						name="company"
+						value={exp.company}
+						onChange={handleChange}
+						placeholder="Acme Corp"
+					/>
+				</div>
+				<div className="space-y-2">
+					<label htmlFor={`startDate-${id}`} className="text-sm font-medium leading-none">Start Date</label>
+					<Input
+						id={`startDate-${id}`}
+						name="startDate"
+						value={exp.startDate}
+						onChange={handleChange}
+						placeholder="Jan 2020"
+					/>
+				</div>
+				<div className="space-y-2">
+					<label htmlFor={`endDate-${id}`} className="text-sm font-medium leading-none">End Date</label>
+					<Input
+						id={`endDate-${id}`}
+						name="endDate"
+						value={exp.endDate}
+						onChange={handleChange}
+						placeholder="Present"
+					/>
+				</div>
+			</div>
+			<div className="space-y-2">
+				<label htmlFor={`location-${id}`} className="text-sm font-medium leading-none">Location</label>
+				<Input
+					id={`location-${id}`}
+					name="location"
+					value={exp.location}
+					onChange={handleChange}
+					placeholder="New York, NY"
+				/>
+			</div>
+			<div className="space-y-2">
+				<div className="flex items-center justify-between">
+					<label className="text-sm font-medium leading-none">
+						Description
+					</label>
+					{!hideAITrigger && (
+						<InteractiveAIPromptModal
+							role={exp.role || ""}
+							company={exp.company || ""}
+							currentDescription={exp.description || ""}
+							onApply={(newHtml) => {
+								updateExperience(id, { description: newHtml });
+							}}
+						>
+							<ExperienceFields id={id} hideAITrigger />
+						</InteractiveAIPromptModal>
+					)}
+				</div>
+				<RichTextEditor
+					value={exp.description || ""}
+					onChange={(val) => updateExperience(id, { description: val })}
+				/>
+			</div>
+		</div>
+	);
+}
 
 function ExperienceItem({ id }: { id: string }) {
 	const [isExpanded, setIsExpanded] = useState(false);
-	const exp = useStore(resumeStore, (state) =>
+	const exp = useResumeStore((state) =>
 		state.experience.find((e) => e.id === id),
 	);
+	const deleteExperience = useResumeStore((state) => state.deleteExperience);
 
 	const { attributes, listeners, setNodeRef, transform, transition } =
 		useSortable({ id });
@@ -178,7 +269,9 @@ function ExperienceItem({ id }: { id: string }) {
 }
 
 export default function ExperienceForm() {
-	const experience = useStore(resumeStore, (state) => state.experience);
+	const experience = useResumeStore((state) => state.experience);
+	const reorderExperience = useResumeStore((state) => state.reorderExperience);
+	const addExperience = useResumeStore((state) => state.addExperience);
 
 	const sensors = useSensors(
 		useSensor(PointerSensor, {

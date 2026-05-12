@@ -1,11 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useStore } from "@tanstack/react-store";
 import { useState } from "react";
 import ResumeCard from "#/components/dashboard/ResumeCard";
 import NewResumeModal from "#/components/editor/NewResumeModal";
 import {
-	deleteResumeIndexEntry,
-	resumeIndexStore,
+	useResumeIndexStore,
 } from "#/lib/resume-index-store";
 
 export const Route = createFileRoute("/resumes")({
@@ -13,7 +11,7 @@ export const Route = createFileRoute("/resumes")({
 });
 
 function ResumesDashboard() {
-	const { resumes } = useStore(resumeIndexStore);
+	const { resumes, deleteResumeIndexEntry } = useResumeIndexStore();
 	const [isModalOpen, setIsModalOpen] = useState(false);
 
 	return (

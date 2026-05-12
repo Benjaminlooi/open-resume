@@ -1,16 +1,15 @@
-import { useStore } from "@tanstack/react-store";
+import { createAnthropic, createAnthropic } from "@ai-sdk/anthropic";
+import { createGoogleGenerativeAI, createGoogleGenerativeAI } from "@ai-sdk/google";
+import { createOpenAI, createOpenAI } from "@ai-sdk/openai";
 import { streamText } from "ai";
-import { createOpenAI } from "@ai-sdk/openai";
-import { createAnthropic } from "@ai-sdk/anthropic";
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
+import { Check, Loader2, Send, Sparkles } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
-import { Loader2, Sparkles, Send, Check } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
 import { Button } from "#/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "#/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { Textarea } from "#/components/ui/textarea";
-import { type AIProvider, settingsStore } from "#/lib/settings-store";
+import { type AIProvider, useSettingsStore } from "#/lib/settings-store";
 
 interface Props {
   role: string;
@@ -19,15 +18,18 @@ interface Props {
   onApply: (html: string) => void;
 }
 
-export function InteractiveAIPromptModal({ role, company, currentDescription, onApply }: Props) {
-  const [open, setOpen] = useState(false);
-  const { defaultProvider, apiKeys, baseUrls, selectedModels } = useStore(settingsStore);
-  const [selectedProvider, setSelectedProvider] = useState<AIProvider>(defaultProvider);
-  
-  const [messages, setMessages] = useState<any[]>([]);
-  const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+export function InteractiveAIPromptModal({
+	role,
+	company,
+	currentDescription,
+	onApply,
+	children,
+}: Props) {
+	const [open, setOpen] = useState(false);
+	const { defaultProvider, apiKeys, baseUrls, selectedModels } =
+		useSettingsStore();
+	const [selectedProvider, setSelectedProvider] =
+		useState<AIProvider>(defaultProvider);
 
   const isLocal = selectedProvider === "ollama" || selectedProvider === "lmstudio";
   const apiKey = isLocal ? "dummy" : apiKeys[selectedProvider];

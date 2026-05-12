@@ -1,5 +1,4 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useStore } from "@tanstack/react-store";
 import { useEffect, useState } from "react";
 import CertificationsForm from "#/components/editor/CertificationsForm";
 import DemoTemplate from "#/components/editor/DemoTemplate";
@@ -17,7 +16,7 @@ import {
 	ResizablePanel,
 	ResizablePanelGroup,
 } from "#/components/ui/resizable";
-import { resumeStore, loadResume } from "#/lib/resume-store";
+import { useResumeStore } from "#/lib/resume-store";
 
 export const Route = createFileRoute("/editor/$id")({
 	component: RouteComponent,
@@ -25,7 +24,7 @@ export const Route = createFileRoute("/editor/$id")({
 
 function RouteComponent() {
 	const { id } = Route.useParams();
-	const activeSection = useStore(resumeStore, (state) => state.activeSection);
+	const { activeSection, loadResume } = useResumeStore();
 	const [isLoading, setIsLoading] = useState(true);
 	const navigate = useNavigate();
 
@@ -33,13 +32,13 @@ function RouteComponent() {
 		const success = loadResume(id);
 		if (!success) {
 			// Initialize new resume state
-			resumeStore.setState((state) => ({
+			useResumeStore.setState((state) => ({
 				...state,
 				id: id,
 			}));
 		}
 		setIsLoading(false);
-	}, [id]);
+	}, [id, loadResume]);
 
 	if (isLoading) return <div className="flex h-screen w-full items-center justify-center font-heading text-2xl">Loading...</div>;
 

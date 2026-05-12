@@ -14,24 +14,18 @@ import {
 	verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { useStore } from "@tanstack/react-store";
-import { ChevronDown, ChevronUp, GripVertical, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, GripVertical, Trash2, Plus } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
 import { Textarea } from "#/components/ui/textarea";
-import {
-	addSkillGroup,
-	deleteSkillGroup,
-	reorderSkills,
-	resumeStore,
-	updateSkillGroup,
-} from "#/lib/resume-store";
+import { useResumeStore } from "#/lib/resume-store";
 
 function SkillItem({ id }: { id: string }) {
 	const [isExpanded, setIsExpanded] = useState(false);
-	const skill = useStore(resumeStore, (state) =>
+	const { updateSkillGroup, deleteSkillGroup } = useResumeStore();
+	const skill = useResumeStore((state) =>
 		state.skills.find((s) => s.id === id),
 	);
 
@@ -127,9 +121,9 @@ function SkillItem({ id }: { id: string }) {
 }
 
 export default function SkillsForm() {
-	const skills = useStore(resumeStore, (state) => state.skills);
-
+	const { skills, reorderSkills, addSkillGroup } = useResumeStore();
 	const sensors = useSensors(
+
 		useSensor(PointerSensor, {
 			activationConstraint: {
 				distance: 5,

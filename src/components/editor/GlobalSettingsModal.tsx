@@ -1,4 +1,3 @@
-import { useStore } from "@tanstack/react-store";
 import { Loader2, Settings } from "lucide-react";
 import { useState } from "react";
 import { Button } from "#/components/ui/button";
@@ -8,11 +7,7 @@ import { Label } from "#/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import {
 	type AIProvider,
-	setDefaultProvider,
-	settingsStore,
-	updateAPIKey,
-	updateBaseUrl,
-	updateSelectedModel,
+	useSettingsStore,
 } from "#/lib/settings-store";
 
 const PROVIDERS: { id: AIProvider; name: string; isLocal?: boolean; defaultUrl?: string }[] = [
@@ -26,8 +21,17 @@ const PROVIDERS: { id: AIProvider; name: string; isLocal?: boolean; defaultUrl?:
 ];
 
 export function GlobalSettingsModal() {
-  const { apiKeys, defaultProvider, baseUrls, selectedModels } =
-			useStore(settingsStore);
+  const {
+  	apiKeys,
+  	defaultProvider,
+  	baseUrls,
+  	selectedModels,
+  	updateAPIKey,
+  	setDefaultProvider,
+  	updateBaseUrl,
+  	updateSelectedModel,
+  } = useSettingsStore();
+
 		const [isFetching, setIsFetching] = useState(false);
 		const [fetchError, setFetchError] = useState<string | null>(null);
 		const [availableModels, setAvailableModels] = useState<string[]>([]);

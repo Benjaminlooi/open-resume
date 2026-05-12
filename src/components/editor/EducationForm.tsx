@@ -14,27 +14,163 @@ import {
 	verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { useStore } from "@tanstack/react-store";
 import { ChevronDown, ChevronUp, GripVertical, Trash2 } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
 import { RichTextEditor } from "#/components/ui/rich-text-editor";
+import { useResumeStore } from "#/lib/resume-store";
 import { InteractiveAIPromptModal } from "./InteractiveAIPromptModal";
-import {
-	addEducation,
-	deleteEducation,
-	reorderEducation,
-	resumeStore,
-	updateEducation,
-} from "#/lib/resume-store";
+
+function EducationFields({
+	id,
+	hideAITrigger = false,
+}: { id: string; hideAITrigger?: boolean }) {
+	const edu = useResumeStore((state) => state.education.find((e) => e.id === id));
+	const updateEducation = useResumeStore((state) => state.updateEducation);
+
+	if (!edu) return null;
+
+	const handleChange = (
+		e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+	) => {
+		const { name, value } = e.target;
+		if (name === "bullets") {
+			updateEducation(id, { bullets: (value as any).split("\n") });
+		} else {
+			updateEducation(id, { [name]: value });
+		}
+	};
+
+	return (
+		<div className="space-y-4">
+			<div className="grid grid-cols-2 gap-4">
+				<div className="space-y-2 col-span-2">
+					<label
+						htmlFor={`institution-${id}`}
+						className="text-sm font-medium leading-none"
+					>
+						Institution
+					</label>
+					<Input
+						id={`institution-${id}`}
+						name="institution"
+						value={edu.institution}
+						onChange={handleChange}
+						placeholder="University of Technology"
+					/>
+				</div>
+				<div className="space-y-2 col-span-2">
+					<label
+						htmlFor={`degree-${id}`}
+						className="text-sm font-medium leading-none"
+					>
+						Degree
+					</label>
+					<Input
+						id={`degree-${id}`}
+						name="degree"
+						value={edu.degree}
+						onChange={handleChange}
+						placeholder="B.S. Computer Science"
+					/>
+				</div>
+				<div className="space-y-2">
+					<label
+						htmlFor={`startDate-${id}`}
+						className="text-sm font-medium leading-none"
+					>
+						Start Date
+					</label>
+					<Input
+						id={`startDate-${id}`}
+						name="startDate"
+						value={edu.startDate}
+						onChange={handleChange}
+						placeholder="Aug 2015"
+					/>
+				</div>
+				<div className="space-y-2">
+					<label
+						htmlFor={`endDate-${id}`}
+						className="text-sm font-medium leading-none"
+					>
+						End Date
+					</label>
+					<Input
+						id={`endDate-${id}`}
+						name="endDate"
+						value={edu.endDate}
+						onChange={handleChange}
+						placeholder="May 2019"
+					/>
+				</div>
+				<div className="space-y-2">
+					<label
+						htmlFor={`location-${id}`}
+						className="text-sm font-medium leading-none"
+					>
+						Location
+					</label>
+					<Input
+						id={`location-${id}`}
+						name="location"
+						value={edu.location}
+						onChange={handleChange}
+						placeholder="New York, NY"
+					/>
+				</div>
+				<div className="space-y-2">
+					<label
+						htmlFor={`gpa-${id}`}
+						className="text-sm font-medium leading-none"
+					>
+						GPA (Optional)
+					</label>
+					<Input
+						id={`gpa-${id}`}
+						name="gpa"
+						value={edu.gpa || ""}
+						onChange={handleChange}
+						placeholder="3.8/4.0"
+					/>
+				</div>
+			</div>
+			<div className="space-y-2">
+				<div className="flex justify-between items-center">
+					<label
+						htmlFor={`description-${id}`}
+						className="text-sm font-medium leading-none"
+					>
+						Description/Awards
+					</label>
+					{!hideAITrigger && (
+						<InteractiveAIPromptModal
+							role={edu.degree || ""}
+							company={edu.institution || ""}
+							currentDescription={edu.description || ""}
+							onApply={(newHtml) => {
+								updateEducation(id, { description: newHtml });
+							}}
+						>
+							<EducationFields id={id} hideAITrigger />
+						</InteractiveAIPromptModal>
+					)}
+				</div>
+				<RichTextEditor
+					value={edu.description || ""}
+					onChange={(val) => updateEducation(id, { description: val })}
+				/>
+			</div>
+		</div>
+	);
+}
 
 function EducationItem({ id }: { id: string }) {
 	const [isExpanded, setIsExpanded] = useState(false);
-	const edu = useStore(resumeStore, (state) =>
-		state.education.find((e) => e.id === id),
-	);
+	const edu = useResumeStore((state) => state.education.find((e) => e.id === id));
+	const deleteEducation = useResumeStore((state) => state.deleteEducation);
 
 	const { attributes, listeners, setNodeRef, transform, transition } =
 		useSortable({ id });
@@ -196,7 +332,9 @@ function EducationItem({ id }: { id: string }) {
 }
 
 export default function EducationForm() {
-	const education = useStore(resumeStore, (state) => state.education);
+	const education = useResumeStore((state) => state.education);
+	const reorderEducation = useResumeStore((state) => state.reorderEducation);
+	const addEducation = useResumeStore((state) => state.addEducation);
 
 	const sensors = useSensors(
 		useSensor(PointerSensor, {
