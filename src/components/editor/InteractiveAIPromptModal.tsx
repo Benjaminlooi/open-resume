@@ -4,7 +4,7 @@ import { createOpenAI } from "@ai-sdk/openai";
 
 import { streamText } from "ai";
 import { Check, Loader2, Send, Sparkles, Square } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { z } from "zod";
 import { Button } from "#/components/ui/button";
 import {
@@ -22,11 +22,12 @@ import {
 	SelectValue,
 } from "#/components/ui/select";
 import { Textarea } from "#/components/ui/textarea";
+import { type Message, useAIStore } from "#/lib/ai-store";
 import { type AIProvider, useSettingsStore } from "#/lib/settings-store";
 import { cn } from "#/lib/utils";
 
 interface Props {
-	context: Record<string, any>;
+	context: Record<string, unknown>;
 	onApply: (html: string) => void;
 	children?: React.ReactNode;
 }
@@ -56,24 +57,33 @@ export function InteractiveAIPromptModal({
 	onApply,
 	children,
 }: Props) {
-	const [open, setOpen] = useState(false);
+	const {
+		isOpen,
+		setIsOpen,
+		messages,
+		setMessages,
+		input,
+		setInput,
+		isLoading,
+		setIsLoading,
+		error,
+		setError,
+		selectedProvider,
+		setSelectedProvider,
+		abortController,
+		setAbortController,
+	} = useAIStore();
+
 	const { defaultProvider, apiKeys, baseUrls, selectedModels } =
 		useSettingsStore();
-	const [selectedProvider, setSelectedProvider] =
-		useState<AIProvider>(defaultProvider);
 
-	const [messages, setMessages] = useState<any[]>([]);
-	const [input, setInput] = useState("");
-	const [isLoading, setIsLoading] = useState(false);
-	const [error, setError] = useState<string | null>(null);
-	const [abortController, setAbortController] =
-		useState<AbortController | null>(null);
+	const currentProvider = selectedProvider || defaultProvider;
 
 	const isLocal =
-		selectedProvider === "ollama" || selectedProvider === "lmstudio";
-	const apiKey = isLocal ? "dummy" : apiKeys[selectedProvider];
-	const baseUrl = baseUrls[selectedProvider];
-	const modelName = selectedModels[selectedProvider];
+		currentProvider === "ollama" || currentProvider === "lmstudio";
+	const apiKey = isLocal ? "dummy" : apiKeys[currentProvider];
+	const baseUrl = baseUrls[currentProvider];
+	const modelName = selectedModels[currentProvider];
 
 	const chatEndRef = useRef<HTMLDivElement>(null);
 	// biome-ignore lint/correctness/useExhaustiveDependencies: We want to scroll whenever messages change
@@ -92,7 +102,7 @@ export function InteractiveAIPromptModal({
 		const messageContent = overrideInput || input;
 		if (!messageContent.trim() || isLoading) return;
 
-		const userMessage = { role: "user", content: messageContent };
+		const userMessage: Message = { role: "user", content: messageContent };
 		setMessages((prev) => [...prev, userMessage]);
 		setInput("");
 		setIsLoading(true);
@@ -101,8 +111,8 @@ export function InteractiveAIPromptModal({
 		const controller = new AbortController();
 		setAbortController(controller);
 
-		let model;
-		switch (selectedProvider) {
+		let model: any;
+		switch (currentProvider) {
 			case "openai":
 				model = createOpenAI({ apiKey })("gpt-4o-mini");
 				break;
@@ -150,11 +160,14 @@ export function InteractiveAIPromptModal({
 		try {
 			// Map our internal messages format to Vercel AI SDK CoreMessage format
 			const coreMessages = messages.flatMap((m) => {
-				if (m.role === "user") return { role: "user", content: m.content };
+				if (m.role === "user")
+					return { role: "user" as const, content: m.content as string };
 
 				if (m.role === "assistant") {
 					const parts: any[] = [];
-					if (m.content) parts.push({ type: "text", text: m.content });
+					if (typeof m.content === "string") {
+						parts.push({ type: "text", text: m.content });
+					}
 
 					if (m._toolCalls && m._toolCalls.length > 0) {
 						m._toolCalls.forEach((tc: any) => {
@@ -167,7 +180,9 @@ export function InteractiveAIPromptModal({
 						});
 					}
 
-					const msgs: any[] = [{ role: "assistant", content: parts }];
+					const content =
+						parts.length > 0 ? parts : (m.content as string) || "";
+					const msgs: any[] = [{ role: "assistant", content }];
 
 					// If there were tool calls, we must provide the tool results in the next message
 					if (m._toolCalls && m._toolCalls.length > 0) {
@@ -182,7 +197,7 @@ export function InteractiveAIPromptModal({
 
 					return msgs;
 				}
-				return m;
+				return m as any;
 			});
 
 			const systemPrompt = `You are an expert resume writer. 
@@ -195,7 +210,7 @@ You MUST use the propose_resume_update tool to suggest bullet points.`;
 			const result = streamText({
 				model,
 				system: systemPrompt,
-				messages: [...coreMessages, userMessage],
+				messages: [...coreMessages, { role: "user", content: messageContent }],
 				abortSignal: controller.signal,
 				tools: {
 					propose_resume_update: {
@@ -234,7 +249,6 @@ You MUST use the propose_resume_update tool to suggest bullet points.`;
 			if (calls && calls.length > 0) {
 				setMessages((prev) => {
 					const newMessages = [...prev];
-					// @ts-expect-error - appending custom tool data to render later
 					newMessages[assistantMessageIndex] = {
 						...newMessages[assistantMessageIndex],
 						_toolCalls: calls,
@@ -246,7 +260,7 @@ You MUST use the propose_resume_update tool to suggest bullet points.`;
 			if (err.name === "AbortError") {
 				return;
 			}
-			setError(err.message);
+			setError(err instanceof Error ? err.message : String(err));
 		} finally {
 			setIsLoading(false);
 			setAbortController(null);
@@ -254,7 +268,7 @@ You MUST use the propose_resume_update tool to suggest bullet points.`;
 	};
 
 	return (
-		<Dialog open={open} onOpenChange={setOpen}>
+		<Dialog open={isOpen} onOpenChange={setIsOpen}>
 			<DialogTrigger asChild>
 				<Button variant="neutral" size="sm" className="h-8 gap-2">
 					<Sparkles className="size-4" />
@@ -267,7 +281,7 @@ You MUST use the propose_resume_update tool to suggest bullet points.`;
 					<div className="flex items-center gap-2 mt-2">
 						<span className="text-sm font-medium">Provider:</span>
 						<Select
-							value={selectedProvider}
+							value={currentProvider}
 							onValueChange={(val) => setSelectedProvider(val as AIProvider)}
 						>
 							<SelectTrigger className="w-[180px] h-8">
@@ -309,7 +323,7 @@ You MUST use the propose_resume_update tool to suggest bullet points.`;
 									</p>
 								</div>
 							)}
-							{messages.map((m: any, i) => (
+							{messages.map((m, i) => (
 								<div
 									key={i}
 									className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
@@ -351,7 +365,7 @@ You MUST use the propose_resume_update tool to suggest bullet points.`;
 															onClick={() => {
 																const html = `<ul>${tool.args.bullets?.map((b: string) => `<li>${b}</li>`).join("")}</ul>`;
 																onApply(html);
-																setOpen(false);
+																setIsOpen(false);
 															}}
 														>
 															<Check className="size-4" /> Apply Changes

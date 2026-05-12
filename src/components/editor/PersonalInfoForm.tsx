@@ -1,3 +1,4 @@
+import { Input } from "#/components/ui/input";
 import { useResumeStore } from "#/lib/resume-store";
 
 export default function PersonalInfoForm() {
