@@ -22,13 +22,35 @@ import {
 	SelectValue,
 } from "#/components/ui/select";
 import { Textarea } from "#/components/ui/textarea";
-import { type AIProvider, useSettingsStore } from "#/lib/settings-store";
+import { useSettingsStore, type AIProvider } from "#/lib/settings-store";
+import { cn } from "#/lib/utils";
 
 interface Props {
 	context: Record<string, any>;
 	onApply: (html: string) => void;
 	children?: React.ReactNode;
 }
+
+const suggestions = [
+	{
+		label: "✨ Quantify impact",
+		prompt:
+			"Make my bullet points more quantifiable with numbers and metrics.",
+	},
+	{
+		label: "✍️ Use action verbs",
+		prompt: "Improve my bullet points using stronger action verbs.",
+	},
+	{
+		label: "📏 Shorten bullets",
+		prompt: "Make these bullet points more concise and impactful.",
+	},
+	{
+		label: "🎯 Tailor for role",
+		prompt:
+			"Tailor these bullet points specifically for the role mentioned in the context.",
+	},
+];
 
 export function InteractiveAIPromptModal({
 	context,
@@ -284,7 +306,12 @@ You MUST use the propose_resume_update tool to suggest bullet points.`;
 									className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
 								>
 									<div
-										className={`max-w-[85%] p-3 rounded-lg ${m.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"}`}
+										className={cn(
+											"max-w-[85%] p-3 text-sm shadow-sm",
+											m.role === "user"
+												? "bg-primary text-primary-foreground rounded-2xl rounded-tr-none"
+												: "bg-muted text-foreground rounded-2xl rounded-tl-none",
+										)}
 									>
 										{typeof m.content === "string" && m.content}
 										{m._toolCalls?.map((tool: any) => {
@@ -354,6 +381,20 @@ You MUST use the propose_resume_update tool to suggest bullet points.`;
 							<div ref={chatEndRef} />
 						</div>
 
+						<div className="flex gap-2 p-2 overflow-x-auto no-scrollbar border-t">
+							{suggestions.map((s) => (
+								<Button
+									key={s.label}
+									variant="neutral"
+									size="sm"
+									className="rounded-full whitespace-nowrap text-xs h-7"
+									onClick={() => handleSubmit(undefined, s.prompt)}
+									disabled={isLoading}
+								>
+									{s.label}
+								</Button>
+							))}
+						</div>
 						<form
 							onSubmit={handleSubmit}
 							className="p-4 border-t shrink-0 flex gap-2"
