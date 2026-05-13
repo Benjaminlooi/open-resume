@@ -56,6 +56,22 @@ describe("resumeStore", () => {
 		).toBe(true);
 	});
 
+	it("initializes a new resume without dirty state", () => {
+		// Simulate editing an existing resume
+		useResumeStore.getState().updatePersonalInfo("fullName", "Dirty Name");
+		useResumeStore.getState().setTemplateId("dirty-template");
+
+		// Now initialize a new one
+		useResumeStore.getState().initNewResume("new-id", "New Name", "modern");
+
+		const state = useResumeStore.getState();
+		expect(state.id).toBe("new-id");
+		expect(state.name).toBe("New Name");
+		expect(state.templateId).toBe("modern");
+		// Ensure dirty state is cleared by checking against dummy/blank resume
+		expect(state.personalInfo.fullName).toBe("John Doe"); // blankResumeState defaults to John Doe
+	});
+
 	describe("experience array mutations", () => {
 		it("adds an experience", () => {
 			const newItem = {

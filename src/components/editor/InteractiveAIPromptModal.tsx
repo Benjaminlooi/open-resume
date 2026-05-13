@@ -2,8 +2,10 @@ import { createAnthropic } from "@ai-sdk/anthropic";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createOpenAI } from "@ai-sdk/openai";
 import { streamText } from "ai";
-import { Check, Loader2, Send, Sparkles } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import DOMPurify from "isomorphic-dompurify";
+import { Check, Loader2, Send, Sparkles, Square } from "lucide-react";
+import { marked } from "marked";
+import { useEffect, useRef } from "react";
 import { z } from "zod";
 import { Button } from "#/components/ui/button";
 import {
@@ -21,57 +23,97 @@ import {
 	SelectValue,
 } from "#/components/ui/select";
 import { Textarea } from "#/components/ui/textarea";
+import { type Message, useAIStore } from "#/lib/ai-store";
 import { type AIProvider, useSettingsStore } from "#/lib/settings-store";
+import { cn } from "#/lib/utils";
 
 interface Props {
-	role: string;
-	company: string;
-	currentDescription: string;
+	context: Record<string, unknown>;
 	onApply: (html: string) => void;
 	children?: React.ReactNode;
 }
 
+const suggestions = [
+	{
+		label: "✨ Quantify impact",
+		prompt: "Make my bullet points more quantifiable with numbers and metrics.",
+	},
+	{
+		label: "✍️ Use action verbs",
+		prompt: "Improve my bullet points using stronger action verbs.",
+	},
+	{
+		label: "📏 Shorten bullets",
+		prompt: "Make these bullet points more concise and impactful.",
+	},
+	{
+		label: "🎯 Tailor for role",
+		prompt:
+			"Tailor these bullet points specifically for the role mentioned in the context.",
+	},
+];
+
 export function InteractiveAIPromptModal({
-	role,
-	company,
-	currentDescription,
+	context,
 	onApply,
 	children,
 }: Props) {
-	const [open, setOpen] = useState(false);
+	const {
+		isOpen,
+		setIsOpen,
+		messages,
+		setMessages,
+		input,
+		setInput,
+		isLoading,
+		setIsLoading,
+		error,
+		setError,
+		selectedProvider,
+		setSelectedProvider,
+		abortController,
+		setAbortController,
+	} = useAIStore();
+
 	const { defaultProvider, apiKeys, baseUrls, selectedModels } =
 		useSettingsStore();
-	const [selectedProvider, setSelectedProvider] =
-		useState<AIProvider>(defaultProvider);
 
-	const [messages, setMessages] = useState<any[]>([]);
-	const [input, setInput] = useState("");
-	const [isLoading, setIsLoading] = useState(false);
-	const [error, setError] = useState<string | null>(null);
+	const currentProvider = selectedProvider || defaultProvider;
 
 	const isLocal =
-		selectedProvider === "ollama" || selectedProvider === "lmstudio";
-	const apiKey = isLocal ? "dummy" : apiKeys[selectedProvider];
-	const baseUrl = baseUrls[selectedProvider];
-	const modelName = selectedModels[selectedProvider];
+		currentProvider === "ollama" || currentProvider === "lmstudio";
+	const apiKey = isLocal ? "dummy" : apiKeys[currentProvider];
+	const baseUrl = baseUrls[currentProvider];
+	const modelName = selectedModels[currentProvider];
 
 	const chatEndRef = useRef<HTMLDivElement>(null);
+	// biome-ignore lint/correctness/useExhaustiveDependencies: We want to scroll whenever messages change
 	useEffect(() => {
-		chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-	}, []);
+		chatEndRef.current?.scrollIntoView({ behavior: "auto" });
+	}, [messages]);
 
-	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
-		if (!input.trim() || isLoading) return;
+	const handleStop = () => {
+		abortController?.abort();
+		setAbortController(null);
+		setIsLoading(false);
+	};
 
-		const userMessage = { role: "user", content: input };
+	const handleSubmit = async (e?: React.FormEvent, overrideInput?: string) => {
+		e?.preventDefault();
+		const messageContent = overrideInput || input;
+		if (!messageContent.trim() || isLoading) return;
+
+		const userMessage: Message = { role: "user", content: messageContent };
 		setMessages((prev) => [...prev, userMessage]);
 		setInput("");
 		setIsLoading(true);
 		setError(null);
 
-		let model;
-		switch (selectedProvider) {
+		const controller = new AbortController();
+		setAbortController(controller);
+
+		let model: any;
+		switch (currentProvider) {
 			case "openai":
 				model = createOpenAI({ apiKey })("gpt-4o-mini");
 				break;
@@ -119,11 +161,14 @@ export function InteractiveAIPromptModal({
 		try {
 			// Map our internal messages format to Vercel AI SDK CoreMessage format
 			const coreMessages = messages.flatMap((m) => {
-				if (m.role === "user") return { role: "user", content: m.content };
+				if (m.role === "user")
+					return { role: "user" as const, content: m.content as string };
 
 				if (m.role === "assistant") {
 					const parts: any[] = [];
-					if (m.content) parts.push({ type: "text", text: m.content });
+					if (typeof m.content === "string") {
+						parts.push({ type: "text", text: m.content });
+					}
 
 					if (m._toolCalls && m._toolCalls.length > 0) {
 						m._toolCalls.forEach((tc: any) => {
@@ -136,7 +181,9 @@ export function InteractiveAIPromptModal({
 						});
 					}
 
-					const msgs: any[] = [{ role: "assistant", content: parts }];
+					const content =
+						parts.length > 0 ? parts : (m.content as string) || "";
+					const msgs: any[] = [{ role: "assistant", content }];
 
 					// If there were tool calls, we must provide the tool results in the next message
 					if (m._toolCalls && m._toolCalls.length > 0) {
@@ -151,13 +198,27 @@ export function InteractiveAIPromptModal({
 
 					return msgs;
 				}
-				return m;
+				return m as any;
 			});
+
+			const systemPrompt = `You are an expert resume coach and reviewer.
+The user is updating their resume for the following context:
+${JSON.stringify(context, null, 2)}
+
+YOUR WORKFLOW:
+1. Discuss, critique, and provide *draft* bullet points in plain markdown text. 
+2. Ask for the user's feedback on your drafts.
+3. Iterate based on their feedback.
+4. **CRITICAL:** Wait for the user to explicitly confirm they are satisfied with a final set of bullet points (e.g., "Yes, that looks good", "Let's apply those").
+5. **ONLY** after receiving explicit confirmation, use the \`propose_resume_update\` tool to finalize the changes.
+
+DO NOT use the \`propose_resume_update\` tool during the drafting or brainstorming phase. ONLY use it when the user asks to apply or finalize the agreed-upon bullets.`;
 
 			const result = streamText({
 				model,
-				system: `You are an expert resume writer. The user is updating their resume for the role of ${role} at ${company}. Help them write impressive, quantifiable bullet points. You MUST use the propose_resume_update tool to suggest bullet points.`,
-				messages: [...coreMessages, userMessage],
+				system: systemPrompt,
+				messages: [...coreMessages, { role: "user", content: messageContent }],
+				abortSignal: controller.signal,
 				tools: {
 					propose_resume_update: {
 						description: "Propose a new set of resume bullet points.",
@@ -195,7 +256,6 @@ export function InteractiveAIPromptModal({
 			if (calls && calls.length > 0) {
 				setMessages((prev) => {
 					const newMessages = [...prev];
-					// @ts-expect-error - appending custom tool data to render later
 					newMessages[assistantMessageIndex] = {
 						...newMessages[assistantMessageIndex],
 						_toolCalls: calls,
@@ -204,14 +264,18 @@ export function InteractiveAIPromptModal({
 				});
 			}
 		} catch (err: any) {
-			setError(err.message);
+			if (err.name === "AbortError") {
+				return;
+			}
+			setError(err instanceof Error ? err.message : String(err));
 		} finally {
 			setIsLoading(false);
+			setAbortController(null);
 		}
 	};
 
 	return (
-		<Dialog open={open} onOpenChange={setOpen}>
+		<Dialog open={isOpen} onOpenChange={setIsOpen}>
 			<DialogTrigger asChild>
 				<Button variant="neutral" size="sm" className="h-8 gap-2">
 					<Sparkles className="size-4" />
@@ -224,7 +288,7 @@ export function InteractiveAIPromptModal({
 					<div className="flex items-center gap-2 mt-2">
 						<span className="text-sm font-medium">Provider:</span>
 						<Select
-							value={selectedProvider}
+							value={currentProvider}
 							onValueChange={(val) => setSelectedProvider(val as AIProvider)}
 						>
 							<SelectTrigger className="w-[180px] h-8">
@@ -253,19 +317,48 @@ export function InteractiveAIPromptModal({
 					<div className="w-1/2 flex flex-col bg-white">
 						<div className="flex-1 overflow-y-auto p-4 space-y-4">
 							{messages.length === 0 && (
-								<div className="text-center text-muted-foreground mt-10">
-									Ask the AI to generate or improve your bullet points!
+								<div className="flex flex-col items-center justify-center h-full text-center p-8">
+									<div className="size-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+										<Sparkles className="size-6 text-primary" />
+									</div>
+									<h3 className="font-semibold text-lg mb-2">
+										AI Writing Assistant
+									</h3>
+									<p className="text-sm text-muted-foreground mb-6 max-w-sm">
+										Chat with the AI resume coach to draft and refine your
+										bullet points. Once you are happy with the suggestions, ask
+										the AI to apply them!
+									</p>
 								</div>
 							)}
-							{messages.map((m: any, i) => (
+							{messages.map((m, i) => (
 								<div
+									// biome-ignore lint/suspicious/noArrayIndexKey: order is stable
 									key={i}
 									className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
 								>
 									<div
-										className={`max-w-[85%] p-3 rounded-lg ${m.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"}`}
+										className={cn(
+											"max-w-[85%] p-3 text-sm shadow-sm",
+											m.role === "user"
+												? "bg-primary text-primary-foreground rounded-2xl rounded-tr-none"
+												: "bg-muted text-foreground rounded-2xl rounded-tl-none",
+										)}
 									>
-										{typeof m.content === "string" && m.content}
+										{typeof m.content === "string" && (
+											<div
+												className={cn(
+													"prose prose-sm max-w-none text-current prose-p:my-1 prose-ul:my-1 prose-li:my-0 prose-ul:ml-4 prose-ol:my-1 prose-ol:ml-4 prose-a:text-current prose-strong:text-current prose-strong:font-semibold prose-code:text-current",
+													m.role === "user" ? "prose-invert" : "",
+												)}
+												// biome-ignore lint/security/noDangerouslySetInnerHtml: sanitized with DOMPurify
+												dangerouslySetInnerHTML={{
+													__html: DOMPurify.sanitize(
+														marked.parse(m.content as string) as string,
+													),
+												}}
+											/>
+										)}
 										{m._toolCalls?.map((tool: any) => {
 											if (
 												tool.toolName === "propose_resume_update" &&
@@ -283,6 +376,7 @@ export function InteractiveAIPromptModal({
 															<ul className="list-disc pl-5 space-y-1">
 																{tool.args.bullets?.map(
 																	(b: string, idx: number) => (
+																		// biome-ignore lint/suspicious/noArrayIndexKey: order is stable
 																		<li key={idx}>{b}</li>
 																	),
 																)}
@@ -294,7 +388,7 @@ export function InteractiveAIPromptModal({
 															onClick={() => {
 																const html = `<ul>${tool.args.bullets?.map((b: string) => `<li>${b}</li>`).join("")}</ul>`;
 																onApply(html);
-																setOpen(false);
+																setIsOpen(false);
 															}}
 														>
 															<Check className="size-4" /> Apply Changes
@@ -308,8 +402,21 @@ export function InteractiveAIPromptModal({
 								</div>
 							))}
 							{isLoading && (
-								<div className="text-muted-foreground flex gap-2 items-center">
-									<Loader2 className="size-4 animate-spin" /> AI is thinking...
+								<div className="space-y-2">
+									<div className="text-muted-foreground flex gap-2 items-center">
+										<Loader2 className="size-4 animate-spin" /> AI is
+										thinking...
+									</div>
+									<div className="flex justify-center p-2">
+										<Button
+											variant="neutral"
+											size="sm"
+											onClick={handleStop}
+											className="gap-2 text-xs"
+										>
+											<Square className="size-3 fill-current" /> Stop generating
+										</Button>
+									</div>
 								</div>
 							)}
 							{error && (
@@ -320,6 +427,20 @@ export function InteractiveAIPromptModal({
 							<div ref={chatEndRef} />
 						</div>
 
+						<div className="flex gap-2 p-2 overflow-x-auto no-scrollbar border-t">
+							{suggestions.map((s) => (
+								<Button
+									key={s.label}
+									variant="neutral"
+									size="sm"
+									className="rounded-full whitespace-nowrap text-xs h-7"
+									onClick={() => handleSubmit(undefined, s.prompt)}
+									disabled={isLoading}
+								>
+									{s.label}
+								</Button>
+							))}
+						</div>
 						<form
 							onSubmit={handleSubmit}
 							className="p-4 border-t shrink-0 flex gap-2"

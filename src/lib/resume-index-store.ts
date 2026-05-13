@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { devtools } from "zustand/middleware";
 
 export interface ResumeIndexEntry {
 	id: string;
@@ -52,29 +53,35 @@ const getInitialIndexState = (): { resumes: ResumeIndexEntry[] } => {
 	return { resumes: [] };
 };
 
-export const useResumeIndexStore = create<ResumeIndexState>((set) => ({
-	...getInitialIndexState(),
-	createResumeIndexEntry: (id, name, templateId) =>
-		set((state) => ({
-			resumes: [
-				...state.resumes,
-				{ id, name, templateId, lastModified: Date.now() },
-			],
-		})),
-	updateResumeIndexModified: (id) =>
-		set((state) => ({
-			resumes: state.resumes.map((r) =>
-				r.id === id ? { ...r, lastModified: Date.now() } : r,
-			),
-		})),
-	deleteResumeIndexEntry: (id) =>
-		set((state) => {
-			if (typeof window !== "undefined") {
-				localStorage.removeItem(`resume-${id}`);
-			}
-			return { resumes: state.resumes.filter((r) => r.id !== id) };
+export const useResumeIndexStore = create<ResumeIndexState>()(
+	devtools(
+		(set) => ({
+			...getInitialIndexState(),
+			createResumeIndexEntry: (id, name, templateId) => {
+				return set((state) => ({
+					resumes: [
+						...state.resumes,
+						{ id, name, templateId, lastModified: Date.now() },
+					],
+				}));
+			},
+			updateResumeIndexModified: (id) =>
+				set((state) => ({
+					resumes: state.resumes.map((r) =>
+						r.id === id ? { ...r, lastModified: Date.now() } : r,
+					),
+				})),
+			deleteResumeIndexEntry: (id) =>
+				set((state) => {
+					if (typeof window !== "undefined") {
+						localStorage.removeItem(`resume-${id}`);
+					}
+					return { resumes: state.resumes.filter((r) => r.id !== id) };
+				}),
 		}),
-}));
+		{ name: "resume-index-store" },
+	),
+);
 
 if (typeof window !== "undefined") {
 	useResumeIndexStore.subscribe((state) => {

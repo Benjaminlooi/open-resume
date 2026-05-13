@@ -85,8 +85,13 @@ function SortableItem(props: {
 }
 
 export default function SectionList() {
-	const { sections, activeSection, reorderSections, addSection } =
-		useResumeStore();
+	const {
+		sections,
+		activeSection,
+		reorderSections,
+		addSection,
+		setActiveSection,
+	} = useResumeStore();
 
 	const sensors = useSensors(
 		useSensor(PointerSensor, {

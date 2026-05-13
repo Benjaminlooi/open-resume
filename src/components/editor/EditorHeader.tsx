@@ -1,12 +1,11 @@
 import { Download, Moon } from "lucide-react";
-import { useState } from "react";
 import { AVAILABLE_TEMPLATES, useResumeStore } from "#/lib/resume-store";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { GlobalSettingsModal } from "./GlobalSettingsModal";
 
 export default function EditorHeader() {
-	const [resumeName] = useState("test resume");
+	const resumeName = useResumeStore((state) => state.name);
 	const templateId = useResumeStore((state) => state.templateId);
 	const setTemplateId = useResumeStore((state) => state.setTemplateId);
 

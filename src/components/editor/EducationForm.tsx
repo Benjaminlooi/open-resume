@@ -152,12 +152,10 @@ function EducationFields({
 					</label>
 					{!hideAITrigger && (
 						<InteractiveAIPromptModal
-							role={edu.degree || ""}
-							company={edu.institution || ""}
-							currentDescription={edu.description || ""}
-							onApply={(newHtml) => {
-								updateEducation(id, { description: newHtml });
-							}}
+							context={edu}
+							onApply={(newHtml) =>
+								updateEducation(edu.id, { description: newHtml })
+							}
 						>
 							<EducationFields id={id} hideAITrigger />
 						</InteractiveAIPromptModal>
