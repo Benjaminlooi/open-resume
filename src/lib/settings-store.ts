@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { devtools } from "zustand/middleware";
 
 export type AIProvider =
 	| "openai"
@@ -52,25 +53,30 @@ const getInitialState = (): Omit<
 	};
 };
 
-export const useSettingsStore = create<SettingsState>((set) => ({
-	...getInitialState(),
-	updateAPIKey: (provider, key) =>
-		set((state) => ({
-			apiKeys: { ...state.apiKeys, [provider]: key },
-		})),
-	setDefaultProvider: (provider) =>
-		set({
-			defaultProvider: provider,
+export const useSettingsStore = create<SettingsState>()(
+	devtools(
+		(set) => ({
+			...getInitialState(),
+			updateAPIKey: (provider, key) =>
+				set((state) => ({
+					apiKeys: { ...state.apiKeys, [provider]: key },
+				})),
+			setDefaultProvider: (provider) =>
+				set({
+					defaultProvider: provider,
+				}),
+			updateBaseUrl: (provider, url) =>
+				set((state) => ({
+					baseUrls: { ...state.baseUrls, [provider]: url },
+				})),
+			updateSelectedModel: (provider, model) =>
+				set((state) => ({
+					selectedModels: { ...state.selectedModels, [provider]: model },
+				})),
 		}),
-	updateBaseUrl: (provider, url) =>
-		set((state) => ({
-			baseUrls: { ...state.baseUrls, [provider]: url },
-		})),
-	updateSelectedModel: (provider, model) =>
-		set((state) => ({
-			selectedModels: { ...state.selectedModels, [provider]: model },
-		})),
-}));
+		{ name: "settings-store" },
+	),
+);
 
 // Persistence subscription
 if (typeof window !== "undefined") {
