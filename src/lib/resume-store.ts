@@ -21,43 +21,43 @@ export type EditorState = Resume & {
 };
 
 export interface ResumeActions {
-		loadResume: (id: string) => boolean;
-		initNewResume: (id: string, name: string, templateId: string) => void;
-		setActiveSection: (id: string) => void;
-		setTemplateId: (id: string) => void;
-		updatePersonalInfo: (field: keyof PersonalInfo, value: string) => void;
-		reorderSections: (startIndex: number, endIndex: number) => void;
-		toggleSectionVisibility: (id: string) => void;
-		addExperience: (item: Experience) => void;
-		updateExperience: (id: string, updatedItem: Partial<Experience>) => void;
-		deleteExperience: (id: string) => void;
-		reorderExperience: (startIndex: number, endIndex: number) => void;
-		addEducation: (item: Education) => void;
-		updateEducation: (id: string, updatedItem: Partial<Education>) => void;
-		deleteEducation: (id: string) => void;
-		reorderEducation: (startIndex: number, endIndex: number) => void;
-		addSkillGroup: (item: SkillGroup) => void;
-		updateSkillGroup: (id: string, updatedItem: Partial<SkillGroup>) => void;
-		deleteSkillGroup: (id: string) => void;
-		reorderSkills: (startIndex: number, endIndex: number) => void;
-		addSection: (id: string, name: string) => void;
-		removeSection: (id: string) => void;
-		addProject: (item: Project) => void;
-		updateProject: (id: string, updatedItem: Partial<Project>) => void;
-		deleteProject: (id: string) => void;
-		reorderProjects: (startIndex: number, endIndex: number) => void;
-		addCertification: (item: Certification) => void;
-		updateCertification: (
-			id: string,
-			updatedItem: Partial<Certification>,
-		) => void;
-		deleteCertification: (id: string) => void;
-		reorderCertifications: (startIndex: number, endIndex: number) => void;
-		addLanguage: (item: Language) => void;
-		updateLanguage: (id: string, updatedItem: Partial<Language>) => void;
-		deleteLanguage: (id: string) => void;
-		reorderLanguages: (startIndex: number, endIndex: number) => void;
-	}
+	loadResume: (id: string) => boolean;
+	initNewResume: (id: string, name: string, templateId: string) => void;
+	setActiveSection: (id: string) => void;
+	setTemplateId: (id: string) => void;
+	updatePersonalInfo: (field: keyof PersonalInfo, value: string) => void;
+	reorderSections: (startIndex: number, endIndex: number) => void;
+	toggleSectionVisibility: (id: string) => void;
+	addExperience: (item: Experience) => void;
+	updateExperience: (id: string, updatedItem: Partial<Experience>) => void;
+	deleteExperience: (id: string) => void;
+	reorderExperience: (startIndex: number, endIndex: number) => void;
+	addEducation: (item: Education) => void;
+	updateEducation: (id: string, updatedItem: Partial<Education>) => void;
+	deleteEducation: (id: string) => void;
+	reorderEducation: (startIndex: number, endIndex: number) => void;
+	addSkillGroup: (item: SkillGroup) => void;
+	updateSkillGroup: (id: string, updatedItem: Partial<SkillGroup>) => void;
+	deleteSkillGroup: (id: string) => void;
+	reorderSkills: (startIndex: number, endIndex: number) => void;
+	addSection: (id: string, name: string) => void;
+	removeSection: (id: string) => void;
+	addProject: (item: Project) => void;
+	updateProject: (id: string, updatedItem: Partial<Project>) => void;
+	deleteProject: (id: string) => void;
+	reorderProjects: (startIndex: number, endIndex: number) => void;
+	addCertification: (item: Certification) => void;
+	updateCertification: (
+		id: string,
+		updatedItem: Partial<Certification>,
+	) => void;
+	deleteCertification: (id: string) => void;
+	reorderCertifications: (startIndex: number, endIndex: number) => void;
+	addLanguage: (item: Language) => void;
+	updateLanguage: (id: string, updatedItem: Partial<Language>) => void;
+	deleteLanguage: (id: string) => void;
+	reorderLanguages: (startIndex: number, endIndex: number) => void;
+}
 
 export type ResumeStore = EditorState & ResumeActions;
 

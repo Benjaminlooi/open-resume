@@ -1,5 +1,4 @@
 import { Download, Moon } from "lucide-react";
-import { useState } from "react";
 import { AVAILABLE_TEMPLATES, useResumeStore } from "#/lib/resume-store";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
