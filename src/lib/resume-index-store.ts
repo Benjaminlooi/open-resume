@@ -23,7 +23,6 @@ const getInitialIndexState = (): { resumes: ResumeIndexEntry[] } => {
 	if (typeof window !== "undefined") {
 		const saved = localStorage.getItem("resume-index");
 		if (saved) {
-			console.log(saved);
 			try {
 				return JSON.parse(saved) as { resumes: ResumeIndexEntry[] };
 			} catch (e) {
@@ -59,7 +58,6 @@ export const useResumeIndexStore = create<ResumeIndexState>()(
 		(set) => ({
 			...getInitialIndexState(),
 			createResumeIndexEntry: (id, name, templateId) => {
-				console.log("Creating resume index entry", { id, name, templateId });
 				return set((state) => ({
 					resumes: [
 						...state.resumes,
