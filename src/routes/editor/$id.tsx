@@ -17,6 +17,7 @@ import {
 	ResizablePanelGroup,
 } from "#/components/ui/resizable";
 import { useResumeStore } from "#/lib/resume-store";
+import { useResumeIndexStore } from "#/lib/resume-index-store";
 
 export const Route = createFileRoute("/editor/$id")({
 	component: RouteComponent,
@@ -31,11 +32,13 @@ function RouteComponent() {
 	useEffect(() => {
 		const success = loadResume(id);
 		if (!success) {
-			// Initialize new resume state
-			useResumeStore.setState((state) => ({
-				...state,
-				id: id,
-			}));
+			// Initialize new resume state from the index if available
+			const indexEntry = useResumeIndexStore.getState().resumes.find(r => r.id === id);
+			useResumeStore.getState().initNewResume(
+				id,
+				indexEntry?.name || "My Resume",
+				indexEntry?.templateId || "demo"
+			);
 		}
 		setIsLoading(false);
 	}, [id, loadResume]);
