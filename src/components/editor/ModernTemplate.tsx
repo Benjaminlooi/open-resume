@@ -31,8 +31,8 @@ export default function ModernTemplate({ resume }: { resume?: EditorState }) {
 		switch (id) {
 			case "experience":
 				return (
-					<section key={id} className="break-inside-avoid mb-6">
-						<h2 className="text-xl font-extrabold uppercase text-indigo-700 tracking-wider mb-4 flex items-center gap-4">
+					<section key={id} className="mb-6">
+						<h2 className="text-xl font-extrabold uppercase text-indigo-700 tracking-wider mb-4 flex items-center gap-4 break-after-avoid">
 							Experience
 							<div className="flex-1 h-px bg-indigo-200"></div>
 						</h2>
@@ -40,7 +40,7 @@ export default function ModernTemplate({ resume }: { resume?: EditorState }) {
 							{experience.map((item) => (
 								<div
 									key={item.id}
-									className="relative pl-4 border-l-2 border-indigo-200"
+									className="relative pl-4 border-l-2 border-indigo-200 break-inside-avoid"
 								>
 									<div className="absolute w-2.5 h-2.5 bg-indigo-600 rounded-full -left-[6px] top-1.5"></div>
 									<div className="flex justify-between items-baseline mb-1">
@@ -70,14 +70,14 @@ export default function ModernTemplate({ resume }: { resume?: EditorState }) {
 				);
 			case "education":
 				return (
-					<section key={id} className="break-inside-avoid mb-6">
-						<h2 className="text-xl font-extrabold uppercase text-indigo-700 tracking-wider mb-4 flex items-center gap-4">
+					<section key={id} className="mb-6">
+						<h2 className="text-xl font-extrabold uppercase text-indigo-700 tracking-wider mb-4 flex items-center gap-4 break-after-avoid">
 							Education
 							<div className="flex-1 h-px bg-indigo-200"></div>
 						</h2>
 						<div className="flex flex-col gap-4">
 							{education.map((item) => (
-								<div key={item.id} className="bg-gray-50 rounded-lg p-4">
+								<div key={item.id} className="bg-gray-50 rounded-lg p-4 break-inside-avoid">
 									<div className="flex justify-between items-baseline mb-1">
 										<h3 className="font-bold text-lg text-gray-900">
 											{item.institution}
@@ -108,14 +108,14 @@ export default function ModernTemplate({ resume }: { resume?: EditorState }) {
 				);
 			case "skills":
 				return (
-					<section key={id} className="break-inside-avoid mb-6">
-						<h2 className="text-xl font-extrabold uppercase text-indigo-700 tracking-wider mb-4 flex items-center gap-4">
+					<section key={id} className="mb-6">
+						<h2 className="text-xl font-extrabold uppercase text-indigo-700 tracking-wider mb-4 flex items-center gap-4 break-after-avoid">
 							Skills
 							<div className="flex-1 h-px bg-indigo-200"></div>
 						</h2>
 						<div className="grid grid-cols-1 gap-3">
 							{skills.map((item) => (
-								<div key={item.id}>
+								<div key={item.id} className="break-inside-avoid">
 									<div className="font-semibold text-gray-900 mb-1.5">
 										{item.category}
 									</div>
@@ -137,14 +137,14 @@ export default function ModernTemplate({ resume }: { resume?: EditorState }) {
 			case "projects":
 				if (projects.length === 0) return null;
 				return (
-					<section key={id} className="break-inside-avoid mb-6">
-						<h2 className="text-xl font-extrabold uppercase text-indigo-700 tracking-wider mb-4 flex items-center gap-4">
+					<section key={id} className="mb-6">
+						<h2 className="text-xl font-extrabold uppercase text-indigo-700 tracking-wider mb-4 flex items-center gap-4 break-after-avoid">
 							Projects
 							<div className="flex-1 h-px bg-indigo-200"></div>
 						</h2>
 						<div className="flex flex-col gap-4">
 							{projects.map((item) => (
-								<div key={item.id}>
+								<div key={item.id} className="break-inside-avoid">
 									<div className="flex justify-between items-baseline mb-1">
 										<h3 className="font-bold text-lg text-gray-900">
 											{item.name}
@@ -174,8 +174,8 @@ export default function ModernTemplate({ resume }: { resume?: EditorState }) {
 			case "certifications":
 				if (certifications.length === 0) return null;
 				return (
-					<section key={id} className="break-inside-avoid mb-6">
-						<h2 className="text-xl font-extrabold uppercase text-indigo-700 tracking-wider mb-4 flex items-center gap-4">
+					<section key={id} className="mb-6">
+						<h2 className="text-xl font-extrabold uppercase text-indigo-700 tracking-wider mb-4 flex items-center gap-4 break-after-avoid">
 							Certifications
 							<div className="flex-1 h-px bg-indigo-200"></div>
 						</h2>
@@ -183,7 +183,7 @@ export default function ModernTemplate({ resume }: { resume?: EditorState }) {
 							{certifications.map((item) => (
 								<div
 									key={item.id}
-									className="flex justify-between items-baseline"
+									className="flex justify-between items-baseline break-inside-avoid"
 								>
 									<div>
 										<span className="font-bold text-md text-gray-900">
@@ -207,14 +207,14 @@ export default function ModernTemplate({ resume }: { resume?: EditorState }) {
 			case "languages":
 				if (languages.length === 0) return null;
 				return (
-					<section key={id} className="break-inside-avoid mb-6">
-						<h2 className="text-xl font-extrabold uppercase text-indigo-700 tracking-wider mb-4 flex items-center gap-4">
+					<section key={id} className="mb-6">
+						<h2 className="text-xl font-extrabold uppercase text-indigo-700 tracking-wider mb-4 flex items-center gap-4 break-after-avoid">
 							Languages
 							<div className="flex-1 h-px bg-indigo-200"></div>
 						</h2>
 						<div className="flex flex-wrap gap-4 text-sm">
 							{languages.map((item) => (
-								<div key={item.id} className="flex items-center gap-2">
+								<div key={item.id} className="flex items-center gap-2 break-inside-avoid">
 									<strong className="text-gray-900">{item.language}</strong>
 									{item.proficiency && (
 										<span className="text-gray-600 bg-gray-100 px-2 py-0.5 rounded-sm">
@@ -232,7 +232,7 @@ export default function ModernTemplate({ resume }: { resume?: EditorState }) {
 	};
 
 	return (
-		<div className="flex flex-col p-8 min-h-full bg-white text-gray-800 font-sans">
+		<div className="flex flex-col px-8 py-[12mm] print:py-0 min-h-full bg-white text-gray-800 font-sans">
 			<header className="mb-8 text-center">
 				<h1 className="text-4xl font-black uppercase tracking-tight text-indigo-900 mb-3">
 					{personalInfo.fullName || "Your Name"}

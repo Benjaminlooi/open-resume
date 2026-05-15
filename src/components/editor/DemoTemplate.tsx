@@ -27,13 +27,13 @@ export default function DemoTemplate({ resume }: { resume?: EditorState }) {
 		switch (id) {
 			case "experience":
 				return (
-					<section key={id} className="break-inside-avoid">
-						<h2 className="text-xl font-bold uppercase border-b border-black/20 mb-3 pb-1 text-black/90">
+					<section key={id} className="mb-4">
+						<h2 className="text-xl font-bold uppercase border-b border-black/20 mb-3 pb-1 text-black/90 break-after-avoid">
 							Experience
 						</h2>
 						<div className="flex flex-col gap-4">
 							{experience.map((item) => (
-								<div key={item.id}>
+								<div key={item.id} className="break-inside-avoid">
 									<div className="flex justify-between items-baseline mb-1">
 										<h3 className="font-bold text-lg">{item.role}</h3>
 										<span className="text-sm font-medium text-black/80">
@@ -57,13 +57,13 @@ export default function DemoTemplate({ resume }: { resume?: EditorState }) {
 				);
 			case "education":
 				return (
-					<section key={id} className="break-inside-avoid">
-						<h2 className="text-xl font-bold uppercase border-b border-black/20 mb-3 pb-1 text-black/90">
+					<section key={id} className="mb-4">
+						<h2 className="text-xl font-bold uppercase border-b border-black/20 mb-3 pb-1 text-black/90 break-after-avoid">
 							Education
 						</h2>
 						<div className="flex flex-col gap-4">
 							{education.map((item) => (
-								<div key={item.id}>
+								<div key={item.id} className="break-inside-avoid">
 									<div className="flex justify-between items-baseline mb-1">
 										<h3 className="font-bold text-lg">{item.institution}</h3>
 										<span className="text-sm font-medium text-black/80">
@@ -92,8 +92,8 @@ export default function DemoTemplate({ resume }: { resume?: EditorState }) {
 				);
 			case "skills":
 				return (
-					<section key={id} className="break-inside-avoid">
-						<h2 className="text-xl font-bold uppercase border-b border-black/20 mb-3 pb-1 text-black/90">
+					<section key={id} className="mb-4">
+						<h2 className="text-xl font-bold uppercase border-b border-black/20 mb-3 pb-1 text-black/90 break-after-avoid">
 							Skills
 						</h2>
 						<div className="text-sm text-black/80 space-y-1">
@@ -109,13 +109,13 @@ export default function DemoTemplate({ resume }: { resume?: EditorState }) {
 			case "projects":
 				if (projects.length === 0) return null;
 				return (
-					<section key={id} className="break-inside-avoid">
-						<h2 className="text-xl font-bold uppercase border-b border-black/20 mb-3 pb-1 text-black/90">
+					<section key={id} className="mb-4">
+						<h2 className="text-xl font-bold uppercase border-b border-black/20 mb-3 pb-1 text-black/90 break-after-avoid">
 							Projects
 						</h2>
 						<div className="flex flex-col gap-4">
 							{projects.map((item) => (
-								<div key={item.id}>
+								<div key={item.id} className="break-inside-avoid">
 									<div className="flex justify-between items-baseline mb-1">
 										<h3 className="font-bold text-lg">{item.name}</h3>
 										<span className="text-sm font-medium text-black/80">
@@ -143,8 +143,8 @@ export default function DemoTemplate({ resume }: { resume?: EditorState }) {
 			case "certifications":
 				if (certifications.length === 0) return null;
 				return (
-					<section key={id} className="break-inside-avoid">
-						<h2 className="text-xl font-bold uppercase border-b border-black/20 mb-3 pb-1 text-black/90">
+					<section key={id} className="mb-4">
+						<h2 className="text-xl font-bold uppercase border-b border-black/20 mb-3 pb-1 text-black/90 break-after-avoid">
 							Certifications
 						</h2>
 						<div className="flex flex-col gap-3">
@@ -173,13 +173,13 @@ export default function DemoTemplate({ resume }: { resume?: EditorState }) {
 			case "languages":
 				if (languages.length === 0) return null;
 				return (
-					<section key={id} className="break-inside-avoid">
-						<h2 className="text-xl font-bold uppercase border-b border-black/20 mb-3 pb-1 text-black/90">
+					<section key={id} className="mb-4">
+						<h2 className="text-xl font-bold uppercase border-b border-black/20 mb-3 pb-1 text-black/90 break-after-avoid">
 							Languages
 						</h2>
 						<div className="flex flex-wrap gap-4 text-sm text-black/80">
 							{languages.map((item) => (
-								<div key={item.id}>
+								<div key={item.id} className="break-inside-avoid">
 									<strong className="text-black">{item.language}</strong>
 									{item.proficiency && `: ${item.proficiency}`}
 								</div>
@@ -193,7 +193,7 @@ export default function DemoTemplate({ resume }: { resume?: EditorState }) {
 	};
 
 	return (
-		<div className="flex flex-col gap-6 p-8 min-h-full bg-white text-black font-sans">
+		<div className="flex flex-col gap-6 px-8 py-[12mm] print:py-0 min-h-full bg-white text-black font-sans">
 			<header className="border-b-2 border-black pb-4">
 				<h1 className="text-4xl font-bold uppercase tracking-tight">
 					{personalInfo.fullName || "Your Name"}
