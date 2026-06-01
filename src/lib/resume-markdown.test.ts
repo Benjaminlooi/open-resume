@@ -1,0 +1,202 @@
+import { describe, expect, it } from "vitest";
+import { dummyResumeData } from "./dummy-resume";
+import { exportResumeToMarkdown, parseResumeMarkdown } from "./resume-markdown";
+import type { EditorState } from "./resume-store";
+
+const editorResume: EditorState = {
+	id: "resume-1",
+	name: "Ignored Name",
+	activeSection: "skills",
+	templateId: "modern",
+	...dummyResumeData,
+	personalInfo: {
+		fullName: "Ada Lovelace",
+		email: "ada@example.com",
+		phone: "555-0100",
+		location: "London, UK",
+		website: "https://ada.example.com",
+	},
+	sections: [
+		{ id: "experience", name: "Experience", visible: true },
+		{ id: "education", name: "Education", visible: true },
+		{ id: "skills", name: "Skills", visible: true },
+		{ id: "projects", name: "Projects", visible: false },
+		{ id: "certifications", name: "Certifications", visible: true },
+		{ id: "languages", name: "Languages", visible: true },
+	],
+	experience: [
+		{
+			id: "exp-1",
+			role: "Analyst",
+			company: "Babbage Labs",
+			startDate: "Jan 1842",
+			endDate: "Dec 1843",
+			location: "London",
+			description:
+				"<p>Translated technical notes.</p><ul><li>Documented the first algorithm</li><li><strong>Explained</strong> machine potential</li></ul>",
+		},
+	],
+	education: [
+		{
+			id: "edu-1",
+			institution: "University of London",
+			degree: "Mathematics",
+			startDate: "1835",
+			endDate: "1839",
+			location: "London",
+			gpa: "First",
+			description: "<p>Studied symbolic logic.</p>",
+		},
+	],
+	skills: [
+		{
+			id: "skill-1",
+			category: "Technical",
+			items: "Mathematics, Algorithms, Writing",
+		},
+	],
+	projects: [
+		{
+			id: "project-1",
+			name: "Hidden Project",
+			url: "https://hidden.example.com",
+			date: "1843",
+			description: "Should not export",
+		},
+	],
+	certifications: [
+		{
+			id: "cert-1",
+			name: "Analytical Engine Fellow",
+			issuer: "Royal Society",
+			date: "1843",
+		},
+	],
+	languages: [
+		{
+			id: "lang-1",
+			language: "English",
+			proficiency: "Native",
+		},
+	],
+};
+
+describe("resume markdown conversion", () => {
+	it("exports visible resume content as readable markdown without app metadata", () => {
+		const markdown = exportResumeToMarkdown(editorResume);
+
+		expect(markdown).toContain("# Ada Lovelace");
+		expect(markdown).toContain("Email: ada@example.com");
+		expect(markdown).toContain("## Experience");
+		expect(markdown).toContain("### Analyst, Babbage Labs");
+		expect(markdown).toContain("- Documented the first algorithm");
+		expect(markdown).toContain("- **Explained** machine potential");
+		expect(markdown).toContain("## Certifications");
+		expect(markdown).not.toContain("templateId");
+		expect(markdown).not.toContain("resume-1");
+		expect(markdown).not.toContain("## Projects");
+		expect(markdown).not.toContain("Hidden Project");
+	});
+
+	it("parses readable markdown into resume content with generated ids and visible imported sections", () => {
+		const parsed = parseResumeMarkdown(`# Grace Hopper
+
+Email: grace@example.com
+Phone: 555-0123
+Location: Arlington, VA
+Website: https://grace.example.com
+
+## Experience
+
+### Computer Scientist, Navy
+
+Dates: 1943 - 1986
+Location: United States
+
+- Built compiler systems
+- Popularized debugging
+
+## Skills
+
+### Languages
+
+COBOL, FORTRAN, English
+
+## Projects
+
+### FLOW-MATIC
+
+Date: 1955
+URL: https://example.com/flow-matic
+
+Business-oriented programming language.
+`);
+
+		expect(parsed.warnings).toEqual([]);
+		expect(parsed.resume.personalInfo.fullName).toBe("Grace Hopper");
+		expect(parsed.resume.experience).toHaveLength(1);
+		expect(parsed.resume.experience[0]).toMatchObject({
+			role: "Computer Scientist",
+			company: "Navy",
+			startDate: "1943",
+			endDate: "1986",
+			location: "United States",
+		});
+		expect(parsed.resume.experience[0].id).toMatch(/^experience-/);
+		expect(parsed.resume.experience[0].description).toContain(
+			"<li>Built compiler systems</li>",
+		);
+		expect(parsed.resume.skills[0]).toMatchObject({
+			category: "Languages",
+			items: "COBOL, FORTRAN, English",
+		});
+		expect(parsed.resume.projects?.[0]).toMatchObject({
+			name: "FLOW-MATIC",
+			date: "1955",
+			url: "https://example.com/flow-matic",
+		});
+		expect(
+			parsed.resume.sections.find((section) => section.id === "projects")
+				?.visible,
+		).toBe(true);
+		expect(
+			parsed.resume.sections.find((section) => section.id === "education")
+				?.visible,
+		).toBe(false);
+	});
+
+	it("round-trips exported markdown back into equivalent resume content", () => {
+		const parsed = parseResumeMarkdown(exportResumeToMarkdown(editorResume));
+
+		expect(parsed.resume.personalInfo).toEqual(editorResume.personalInfo);
+		expect(parsed.resume.experience[0]).toMatchObject({
+			role: "Analyst",
+			company: "Babbage Labs",
+			startDate: "Jan 1842",
+			endDate: "Dec 1843",
+			location: "London",
+		});
+		expect(parsed.resume.education[0]).toMatchObject({
+			institution: "University of London",
+			degree: "Mathematics",
+			startDate: "1835",
+			endDate: "1839",
+			location: "London",
+			gpa: "First",
+		});
+		expect(parsed.resume.skills[0]).toMatchObject({
+			category: "Technical",
+			items: "Mathematics, Algorithms, Writing",
+		});
+		expect(parsed.resume.projects).toEqual([]);
+		expect(parsed.resume.certifications?.[0]).toMatchObject({
+			name: "Analytical Engine Fellow",
+			issuer: "Royal Society",
+			date: "1843",
+		});
+		expect(parsed.resume.languages?.[0]).toMatchObject({
+			language: "English",
+			proficiency: "Native",
+		});
+	});
+});

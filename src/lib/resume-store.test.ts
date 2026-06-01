@@ -72,6 +72,44 @@ describe("resumeStore", () => {
 		expect(state.personalInfo.fullName).toBe("John Doe"); // blankResumeState defaults to John Doe
 	});
 
+	it("replaces resume content without replacing editor metadata", () => {
+		useResumeStore
+			.getState()
+			.initNewResume("current-id", "Current Name", "modern");
+		useResumeStore.getState().replaceResumeContent({
+			personalInfo: {
+				fullName: "Imported Person",
+				email: "imported@example.com",
+				phone: "",
+				location: "",
+				website: "",
+			},
+			sections: [
+				{ id: "experience", name: "Experience", visible: true },
+				{ id: "education", name: "Education", visible: false },
+				{ id: "skills", name: "Skills", visible: false },
+				{ id: "projects", name: "Projects", visible: false },
+				{ id: "certifications", name: "Certifications", visible: false },
+				{ id: "languages", name: "Languages", visible: false },
+			],
+			experience: [],
+			education: [],
+			skills: [],
+			projects: [],
+			certifications: [],
+			languages: [],
+		});
+
+		const state = useResumeStore.getState();
+
+		expect(state.id).toBe("current-id");
+		expect(state.name).toBe("Current Name");
+		expect(state.templateId).toBe("modern");
+		expect(state.activeSection).toBe("personalInfo");
+		expect(state.personalInfo.fullName).toBe("Imported Person");
+		expect(state.personalInfo.email).toBe("imported@example.com");
+	});
+
 	describe("experience array mutations", () => {
 		it("adds an experience", () => {
 			const newItem = {

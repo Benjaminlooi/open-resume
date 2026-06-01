@@ -23,6 +23,7 @@ export type EditorState = Resume & {
 export interface ResumeActions {
 	loadResume: (id: string) => boolean;
 	initNewResume: (id: string, name: string, templateId: string) => void;
+	replaceResumeContent: (content: Resume) => void;
 	setActiveSection: (id: string) => void;
 	setTemplateId: (id: string) => void;
 	updatePersonalInfo: (field: keyof PersonalInfo, value: string) => void;
@@ -161,6 +162,12 @@ export const useResumeStore = create<ResumeStore>()(
 					templateId,
 				}));
 			},
+
+			replaceResumeContent: (content) =>
+				set(() => ({
+					...content,
+					activeSection: "personalInfo",
+				})),
 
 			setActiveSection: (id) =>
 				set((_state) => ({
@@ -385,6 +392,7 @@ if (typeof window !== "undefined") {
 			const {
 				loadResume,
 				setActiveSection,
+				replaceResumeContent,
 				setTemplateId,
 				updatePersonalInfo,
 				reorderSections,
