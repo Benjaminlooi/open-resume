@@ -14,7 +14,18 @@ const editorResume: EditorState = {
 		email: "ada@example.com",
 		phone: "555-0100",
 		location: "London, UK",
-		website: "https://ada.example.com",
+		contactLinks: [
+			{
+				id: "contact-website",
+				label: "Website",
+				url: "https://ada.example.com",
+			},
+			{
+				id: "contact-github",
+				label: "GitHub",
+				url: "https://github.com/ada",
+			},
+		],
 	},
 	sections: [
 		{ id: "experience", name: "Experience", visible: true },
@@ -87,6 +98,8 @@ describe("resume markdown conversion", () => {
 
 		expect(markdown).toContain("# Ada Lovelace");
 		expect(markdown).toContain("Email: ada@example.com");
+		expect(markdown).toContain("Website: https://ada.example.com");
+		expect(markdown).toContain("GitHub: https://github.com/ada");
 		expect(markdown).toContain("## Experience");
 		expect(markdown).toContain("### Analyst, Babbage Labs");
 		expect(markdown).toContain("- Documented the first algorithm");
@@ -105,6 +118,8 @@ Email: grace@example.com
 Phone: 555-0123
 Location: Arlington, VA
 Website: https://grace.example.com
+GitHub: https://github.com/gracehopper
+LinkedIn: https://linkedin.com/in/gracehopper
 
 ## Experience
 
@@ -134,6 +149,23 @@ Business-oriented programming language.
 
 		expect(parsed.warnings).toEqual([]);
 		expect(parsed.resume.personalInfo.fullName).toBe("Grace Hopper");
+		expect(parsed.resume.personalInfo.contactLinks).toEqual([
+			{
+				id: "contact-1",
+				label: "Website",
+				url: "https://grace.example.com",
+			},
+			{
+				id: "contact-2",
+				label: "GitHub",
+				url: "https://github.com/gracehopper",
+			},
+			{
+				id: "contact-3",
+				label: "LinkedIn",
+				url: "https://linkedin.com/in/gracehopper",
+			},
+		]);
 		expect(parsed.resume.experience).toHaveLength(1);
 		expect(parsed.resume.experience[0]).toMatchObject({
 			role: "Computer Scientist",
@@ -168,7 +200,23 @@ Business-oriented programming language.
 	it("round-trips exported markdown back into equivalent resume content", () => {
 		const parsed = parseResumeMarkdown(exportResumeToMarkdown(editorResume));
 
-		expect(parsed.resume.personalInfo).toEqual(editorResume.personalInfo);
+		expect(parsed.resume.personalInfo).toMatchObject({
+			fullName: editorResume.personalInfo.fullName,
+			email: editorResume.personalInfo.email,
+			phone: editorResume.personalInfo.phone,
+			location: editorResume.personalInfo.location,
+		});
+		expect(
+			parsed.resume.personalInfo.contactLinks.map(({ label, url }) => ({
+				label,
+				url,
+			})),
+		).toEqual(
+			editorResume.personalInfo.contactLinks.map(({ label, url }) => ({
+				label,
+				url,
+			})),
+		);
 		expect(parsed.resume.experience[0]).toMatchObject({
 			role: "Analyst",
 			company: "Babbage Labs",

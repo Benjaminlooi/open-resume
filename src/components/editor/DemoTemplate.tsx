@@ -22,6 +22,20 @@ export default function DemoTemplate({ resume }: { resume?: EditorState }) {
 		? resume.certifications || []
 		: globalCertifications;
 	const languages = resume ? resume.languages || [] : globalLanguages;
+	const contactItems: Array<{
+		id: string;
+		type: "text" | "link";
+		value: string;
+	}> = [
+		{ id: "email", type: "text", value: personalInfo.email },
+		{ id: "phone", type: "text", value: personalInfo.phone },
+		{ id: "location", type: "text", value: personalInfo.location },
+		...personalInfo.contactLinks.map((link) => ({
+			id: link.id,
+			type: "link" as const,
+			value: link.url,
+		})),
+	].filter((item) => item.value.trim());
 
 	const renderSection = (id: string) => {
 		switch (id) {
@@ -199,36 +213,26 @@ export default function DemoTemplate({ resume }: { resume?: EditorState }) {
 					{personalInfo.fullName || "Your Name"}
 				</h1>
 				<div className="flex flex-wrap gap-x-4 gap-y-2 mt-2 text-sm text-black/80">
-					{personalInfo.email && (
-						<>
-							<span>{personalInfo.email}</span>
-							<span>•</span>
-						</>
-					)}
-					{personalInfo.phone && (
-						<>
-							<span>{personalInfo.phone}</span>
-							<span>•</span>
-						</>
-					)}
-					{personalInfo.location && (
-						<>
-							<span>{personalInfo.location}</span>
-							<span>•</span>
-						</>
-					)}
-					{personalInfo.website && (
-						<a
-							href={`https://${personalInfo.website.replace(/^https?:\/\//, "")}`}
-							className="underline"
-						>
-							{personalInfo.website}
-						</a>
-					)}
+					{contactItems.map((item, index) => (
+						<span key={item.id} className="flex items-center gap-4">
+							{item.type === "link" ? (
+								<a href={formatContactHref(item.value)} className="underline">
+									{item.value}
+								</a>
+							) : (
+								<span>{item.value}</span>
+							)}
+							{index < contactItems.length - 1 && <span>•</span>}
+						</span>
+					))}
 				</div>
 			</header>
 
 			{sections.filter((s) => s.visible).map((s) => renderSection(s.id))}
 		</div>
 	);
+}
+
+function formatContactHref(value: string) {
+	return `https://${value.replace(/^https?:\/\//, "")}`;
 }

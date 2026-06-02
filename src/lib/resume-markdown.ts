@@ -1,5 +1,6 @@
 import type {
 	Certification,
+	ContactLink,
 	Education,
 	Experience,
 	Language,
@@ -63,7 +64,9 @@ export function exportResumeToMarkdown(resume: Resume): string {
 	addContactLine(lines, "Email", resume.personalInfo.email);
 	addContactLine(lines, "Phone", resume.personalInfo.phone);
 	addContactLine(lines, "Location", resume.personalInfo.location);
-	addContactLine(lines, "Website", resume.personalInfo.website);
+	for (const link of resume.personalInfo.contactLinks) {
+		addContactLine(lines, link.label, link.url);
+	}
 
 	const visibleSectionIds = resume.sections
 		.filter((section) => section.visible)
@@ -93,6 +96,7 @@ export function parseResumeMarkdown(markdown: string): ParsedResumeMarkdown {
 		firstSectionIndex >= 0 ? firstSectionIndex : lines.length,
 	);
 	const contacts = parseLabels(contactLines.join("\n"));
+	const contactLinks = parseContactLinks(contacts);
 	const parsedSections = parseSections(lines, warnings);
 	const nextId = makeIdFactory();
 	const importedSectionIds = new Set(
@@ -105,7 +109,7 @@ export function parseResumeMarkdown(markdown: string): ParsedResumeMarkdown {
 			email: contacts.Email ?? "",
 			phone: contacts.Phone ?? "",
 			location: contacts.Location ?? "",
-			website: contacts.Website ?? "",
+			contactLinks,
 		},
 		sections: buildSections(importedSectionIds),
 		experience: [],
@@ -388,6 +392,17 @@ function parseLabels(body: string) {
 	return labels;
 }
 
+function parseContactLinks(contacts: Record<string, string>): ContactLink[] {
+	const contactFields = new Set(["Email", "Phone", "Location"]);
+	return Object.entries(contacts)
+		.filter(([label, url]) => !contactFields.has(label) && url.trim())
+		.map(([label, url], index) => ({
+			id: `contact-${index + 1}`,
+			label,
+			url,
+		}));
+}
+
 function buildSections(importedSectionIds: Set<SupportedSectionId>): Section[] {
 	return SECTION_IDS.map((id) => ({
 		id,
@@ -460,7 +475,11 @@ function htmlToMarkdownLines(html?: string): string[] {
 }
 
 function addContactLine(lines: string[], label: string, value: string) {
-	if (value.trim()) lines.push(`${label}: ${value.trim()}`);
+	const trimmedLabel = label.trim();
+	const trimmedValue = value.trim();
+	if (trimmedLabel && trimmedValue) {
+		lines.push(`${trimmedLabel}: ${trimmedValue}`);
+	}
 }
 
 function joinTitleParts(primary: string, secondary: string) {

@@ -3,6 +3,7 @@ import { devtools } from "zustand/middleware";
 import { blankResumeState, dummyResumeData } from "./dummy-resume";
 import type {
 	Certification,
+	ContactLink,
 	Education,
 	Experience,
 	Language,
@@ -26,7 +27,13 @@ export interface ResumeActions {
 	replaceResumeContent: (content: Resume) => void;
 	setActiveSection: (id: string) => void;
 	setTemplateId: (id: string) => void;
-	updatePersonalInfo: (field: keyof PersonalInfo, value: string) => void;
+	updatePersonalInfo: (
+		field: Exclude<keyof PersonalInfo, "contactLinks">,
+		value: string,
+	) => void;
+	addContactLink: () => void;
+	updateContactLink: (id: string, updatedItem: Partial<ContactLink>) => void;
+	deleteContactLink: (id: string) => void;
 	reorderSections: (startIndex: number, endIndex: number) => void;
 	toggleSectionVisibility: (id: string) => void;
 	addExperience: (item: Experience) => void;
@@ -103,12 +110,69 @@ const migrateBullets = (items: any[]) => {
 	);
 };
 
+const createContactLinkId = () => {
+	return globalThis.crypto?.randomUUID?.() ?? `contact-${Date.now()}`;
+};
+
+type LegacyPersonalInfo = Partial<
+	Omit<PersonalInfo, "contactLinks"> & {
+		contactLinks: unknown;
+		website: unknown;
+	}
+>;
+
+type LegacyEditorState = Partial<EditorState> & {
+	personalInfo?: LegacyPersonalInfo;
+};
+
+const normalizePersonalInfo = (
+	personalInfo: LegacyPersonalInfo = {},
+): PersonalInfo => {
+	const { website, contactLinks, ...rest } = personalInfo;
+	const normalizedLinks = Array.isArray(contactLinks)
+		? contactLinks
+				.filter((link) => link && typeof link === "object")
+				.map((link, index) => ({
+					id: String(
+						"id" in link
+							? link.id || `contact-${index + 1}`
+							: `contact-${index + 1}`,
+					),
+					label: String("label" in link ? link.label || "Website" : "Website"),
+					url: String("url" in link ? link.url || "" : ""),
+				}))
+		: [];
+
+	if (website && !normalizedLinks.some((link) => link.url === website)) {
+		normalizedLinks.push({
+			id: "contact-website",
+			label: "Website",
+			url: String(website),
+		});
+	}
+
+	return {
+		fullName: String(rest.fullName ?? ""),
+		email: String(rest.email ?? ""),
+		phone: String(rest.phone ?? ""),
+		location: String(rest.location ?? ""),
+		contactLinks: normalizedLinks,
+	};
+};
+
+const migrateResume = (resume: LegacyEditorState): EditorState => {
+	return {
+		...resume,
+		personalInfo: normalizePersonalInfo(resume.personalInfo),
+	} as EditorState;
+};
+
 export const getResumeData = (id: string): EditorState | null => {
 	if (typeof window !== "undefined") {
 		const saved = localStorage.getItem(`resume-${id}`);
 		if (saved) {
 			try {
-				const parsed = JSON.parse(saved) as any;
+				const parsed = JSON.parse(saved) as LegacyEditorState;
 
 				if (parsed.experience)
 					parsed.experience = migrateBullets(parsed.experience);
@@ -116,7 +180,7 @@ export const getResumeData = (id: string): EditorState | null => {
 					parsed.education = migrateBullets(parsed.education);
 				if (parsed.projects) parsed.projects = migrateBullets(parsed.projects);
 
-				return parsed as EditorState;
+				return migrateResume(parsed);
 			} catch (e) {
 				console.error("Failed to parse saved resume state", e);
 			}
@@ -135,7 +199,7 @@ export const useResumeStore = create<ResumeStore>()(
 					const saved = localStorage.getItem(`resume-${id}`);
 					if (saved) {
 						try {
-							const parsed = JSON.parse(saved) as any;
+							const parsed = JSON.parse(saved) as LegacyEditorState;
 
 							if (parsed.experience)
 								parsed.experience = migrateBullets(parsed.experience);
@@ -144,7 +208,7 @@ export const useResumeStore = create<ResumeStore>()(
 							if (parsed.projects)
 								parsed.projects = migrateBullets(parsed.projects);
 
-							set(() => parsed as EditorState);
+							set(() => migrateResume(parsed));
 							return true;
 						} catch (e) {
 							console.error("Failed to parse saved resume state", e);
@@ -164,8 +228,12 @@ export const useResumeStore = create<ResumeStore>()(
 			},
 
 			replaceResumeContent: (content) =>
-				set(() => ({
+				set((state) => ({
 					...content,
+					id: state.id,
+					name: state.name,
+					templateId: state.templateId,
+					personalInfo: normalizePersonalInfo(content.personalInfo),
 					activeSection: "personalInfo",
 				})),
 
@@ -184,6 +252,37 @@ export const useResumeStore = create<ResumeStore>()(
 					personalInfo: {
 						...state.personalInfo,
 						[field]: value,
+					},
+				})),
+
+			addContactLink: () =>
+				set((state) => ({
+					personalInfo: {
+						...state.personalInfo,
+						contactLinks: [
+							...state.personalInfo.contactLinks,
+							{ id: createContactLinkId(), label: "Website", url: "" },
+						],
+					},
+				})),
+
+			updateContactLink: (id, updatedItem) =>
+				set((state) => ({
+					personalInfo: {
+						...state.personalInfo,
+						contactLinks: state.personalInfo.contactLinks.map((link) =>
+							link.id === id ? { ...link, ...updatedItem } : link,
+						),
+					},
+				})),
+
+			deleteContactLink: (id) =>
+				set((state) => ({
+					personalInfo: {
+						...state.personalInfo,
+						contactLinks: state.personalInfo.contactLinks.filter(
+							(link) => link.id !== id,
+						),
 					},
 				})),
 
@@ -395,6 +494,9 @@ if (typeof window !== "undefined") {
 				replaceResumeContent,
 				setTemplateId,
 				updatePersonalInfo,
+				addContactLink,
+				updateContactLink,
+				deleteContactLink,
 				reorderSections,
 				toggleSectionVisibility,
 				addExperience,

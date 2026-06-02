@@ -10,7 +10,18 @@ export const dummyResumeData: Omit<
 		email: "john.doe@example.com",
 		phone: "(555) 123-4567",
 		location: "San Francisco, CA",
-		website: "linkedin.com/in/johndoe",
+		contactLinks: [
+			{
+				id: "contact-linkedin",
+				label: "LinkedIn",
+				url: "linkedin.com/in/johndoe",
+			},
+			{
+				id: "contact-github",
+				label: "GitHub",
+				url: "github.com/johndoe",
+			},
+		],
 	},
 	sections: [
 		{ id: "experience", name: "Experience", visible: true },

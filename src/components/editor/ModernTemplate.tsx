@@ -26,6 +26,20 @@ export default function ModernTemplate({ resume }: { resume?: EditorState }) {
 		? resume.certifications || []
 		: globalCertifications;
 	const languages = resume ? resume.languages || [] : globalLanguages;
+	const contactItems: Array<{
+		id: string;
+		type: "text" | "link";
+		value: string;
+	}> = [
+		{ id: "email", type: "text", value: personalInfo.email },
+		{ id: "phone", type: "text", value: personalInfo.phone },
+		{ id: "location", type: "text", value: personalInfo.location },
+		...personalInfo.contactLinks.map((link) => ({
+			id: link.id,
+			type: "link" as const,
+			value: link.url,
+		})),
+	].filter((item) => item.value.trim());
 
 	const renderSection = (id: string) => {
 		switch (id) {
@@ -77,7 +91,10 @@ export default function ModernTemplate({ resume }: { resume?: EditorState }) {
 						</h2>
 						<div className="flex flex-col gap-4">
 							{education.map((item) => (
-								<div key={item.id} className="bg-gray-50 rounded-lg p-4 break-inside-avoid">
+								<div
+									key={item.id}
+									className="bg-gray-50 rounded-lg p-4 break-inside-avoid"
+								>
 									<div className="flex justify-between items-baseline mb-1">
 										<h3 className="font-bold text-lg text-gray-900">
 											{item.institution}
@@ -214,7 +231,10 @@ export default function ModernTemplate({ resume }: { resume?: EditorState }) {
 						</h2>
 						<div className="flex flex-wrap gap-4 text-sm">
 							{languages.map((item) => (
-								<div key={item.id} className="flex items-center gap-2 break-inside-avoid">
+								<div
+									key={item.id}
+									className="flex items-center gap-2 break-inside-avoid"
+								>
 									<strong className="text-gray-900">{item.language}</strong>
 									{item.proficiency && (
 										<span className="text-gray-600 bg-gray-100 px-2 py-0.5 rounded-sm">
@@ -238,35 +258,33 @@ export default function ModernTemplate({ resume }: { resume?: EditorState }) {
 					{personalInfo.fullName || "Your Name"}
 				</h1>
 				<div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-2 text-sm text-gray-600 font-medium">
-					{personalInfo.email && (
-						<span className="flex items-center gap-1">
-							{personalInfo.email}
+					{contactItems.map((item, index) => (
+						<span
+							key={item.id}
+							className={`flex items-center gap-1 ${
+								index > 0 ? "border-l pl-4 border-gray-300" : ""
+							}`}
+						>
+							{item.type === "link" ? (
+								<a
+									href={formatContactHref(item.value)}
+									className="text-indigo-600 hover:underline"
+								>
+									{item.value}
+								</a>
+							) : (
+								item.value
+							)}
 						</span>
-					)}
-					{personalInfo.phone && (
-						<span className="flex items-center gap-1 border-l pl-4 border-gray-300">
-							{personalInfo.phone}
-						</span>
-					)}
-					{personalInfo.location && (
-						<span className="flex items-center gap-1 border-l pl-4 border-gray-300">
-							{personalInfo.location}
-						</span>
-					)}
-					{personalInfo.website && (
-						<span className="flex items-center gap-1 border-l pl-4 border-gray-300">
-							<a
-								href={`https://${personalInfo.website.replace(/^https?:\/\//, "")}`}
-								className="text-indigo-600 hover:underline"
-							>
-								{personalInfo.website}
-							</a>
-						</span>
-					)}
+					))}
 				</div>
 			</header>
 
 			{sections.filter((s) => s.visible).map((s) => renderSection(s.id))}
 		</div>
 	);
+}
+
+function formatContactHref(value: string) {
+	return `https://${value.replace(/^https?:\/\//, "")}`;
 }

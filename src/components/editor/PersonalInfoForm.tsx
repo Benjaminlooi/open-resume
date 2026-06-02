@@ -1,11 +1,23 @@
+import { Plus, Trash2 } from "lucide-react";
+
+import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
 import { useResumeStore } from "#/lib/resume-store";
 
 export default function PersonalInfoForm() {
-	const { personalInfo, updatePersonalInfo } = useResumeStore();
+	const {
+		personalInfo,
+		updatePersonalInfo,
+		addContactLink,
+		updateContactLink,
+		deleteContactLink,
+	} = useResumeStore();
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const { name, value } = e.target;
-		updatePersonalInfo(name as keyof typeof personalInfo, value);
+		updatePersonalInfo(
+			name as Exclude<keyof typeof personalInfo, "contactLinks">,
+			value,
+		);
 	};
 
 	return (
@@ -64,17 +76,69 @@ export default function PersonalInfoForm() {
 				/>
 			</div>
 
-			<div className="space-y-2">
-				<label htmlFor="website" className="text-sm font-medium leading-none">
-					Website / LinkedIn
-				</label>
-				<Input
-					id="website"
-					name="website"
-					value={personalInfo.website}
-					onChange={handleChange}
-					placeholder="linkedin.com/in/janedoe"
-				/>
+			<div className="space-y-3">
+				<div className="flex items-center justify-between gap-3">
+					<div className="text-sm font-medium leading-none">Contact Links</div>
+					<Button
+						type="button"
+						variant="neutral"
+						size="sm"
+						onClick={addContactLink}
+					>
+						<Plus />
+						Add
+					</Button>
+				</div>
+
+				{personalInfo.contactLinks.map((link, index) => (
+					<div
+						key={link.id}
+						className="grid grid-cols-[minmax(7rem,10rem)_minmax(0,1fr)_2.5rem] gap-2 items-end"
+					>
+						<div className="space-y-2">
+							<label
+								htmlFor={`contact-label-${link.id}`}
+								className="text-xs font-medium leading-none"
+							>
+								Label
+							</label>
+							<Input
+								id={`contact-label-${link.id}`}
+								value={link.label}
+								onChange={(event) =>
+									updateContactLink(link.id, { label: event.target.value })
+								}
+								placeholder={index === 0 ? "Website" : "GitHub"}
+							/>
+						</div>
+						<div className="space-y-2">
+							<label
+								htmlFor={`contact-url-${link.id}`}
+								className="text-xs font-medium leading-none"
+							>
+								URL
+							</label>
+							<Input
+								id={`contact-url-${link.id}`}
+								value={link.url}
+								onChange={(event) =>
+									updateContactLink(link.id, { url: event.target.value })
+								}
+								placeholder={index === 0 ? "janedoe.com" : "github.com/janedoe"}
+							/>
+						</div>
+						<Button
+							type="button"
+							variant="neutral"
+							size="icon"
+							onClick={() => deleteContactLink(link.id)}
+							aria-label={`Remove ${link.label || "contact link"}`}
+							title={`Remove ${link.label || "contact link"}`}
+						>
+							<Trash2 />
+						</Button>
+					</div>
+				))}
 			</div>
 		</div>
 	);

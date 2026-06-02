@@ -82,7 +82,7 @@ describe("resumeStore", () => {
 				email: "imported@example.com",
 				phone: "",
 				location: "",
-				website: "",
+				contactLinks: [],
 			},
 			sections: [
 				{ id: "experience", name: "Experience", visible: true },
@@ -108,6 +108,34 @@ describe("resumeStore", () => {
 		expect(state.activeSection).toBe("personalInfo");
 		expect(state.personalInfo.fullName).toBe("Imported Person");
 		expect(state.personalInfo.email).toBe("imported@example.com");
+	});
+
+	it("adds, updates, and deletes personal contact links", () => {
+		useResumeStore.getState().addContactLink();
+
+		const addedLink = useResumeStore
+			.getState()
+			.personalInfo.contactLinks.at(-1);
+		expect(addedLink).toMatchObject({ label: "Website", url: "" });
+
+		useResumeStore.getState().updateContactLink(addedLink?.id ?? "", {
+			label: "GitHub",
+			url: "github.com/rick",
+		});
+
+		expect(
+			useResumeStore
+				.getState()
+				.personalInfo.contactLinks.find((link) => link.id === addedLink?.id),
+		).toMatchObject({ label: "GitHub", url: "github.com/rick" });
+
+		useResumeStore.getState().deleteContactLink(addedLink?.id ?? "");
+
+		expect(
+			useResumeStore
+				.getState()
+				.personalInfo.contactLinks.find((link) => link.id === addedLink?.id),
+		).toBeUndefined();
 	});
 
 	describe("experience array mutations", () => {
@@ -452,6 +480,34 @@ describe("resumeStore", () => {
 			expect(
 				(useResumeStore.getState().experience[0] as any).bullets,
 			).toBeUndefined();
+		});
+
+		it("migrates a legacy website field into contact links", async () => {
+			const legacyState = {
+				personalInfo: {
+					fullName: "Legacy Person",
+					email: "legacy@example.com",
+					phone: "",
+					location: "",
+					website: "legacy.example.com",
+				},
+			};
+			(globalThis.window.localStorage.getItem as any).mockReturnValue(
+				JSON.stringify(legacyState),
+			);
+
+			vi.resetModules();
+			const { useResumeStore } = await import("./resume-store");
+
+			useResumeStore.getState().loadResume("default");
+
+			expect(useResumeStore.getState().personalInfo.contactLinks).toEqual([
+				{
+					id: "contact-website",
+					label: "Website",
+					url: "legacy.example.com",
+				},
+			]);
 		});
 
 		it("saves state to localStorage on store update", async () => {
