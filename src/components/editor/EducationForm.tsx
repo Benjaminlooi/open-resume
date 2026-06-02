@@ -164,6 +164,7 @@ function EducationFields({
 				<RichTextEditor
 					value={edu.description || ""}
 					onChange={(val) => updateEducation(id, { description: val })}
+					placeholder="Add awards, coursework, activities, or academic achievements."
 				/>
 			</div>
 		</div>

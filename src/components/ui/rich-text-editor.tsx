@@ -1,4 +1,5 @@
 import Link from "@tiptap/extension-link";
+import Placeholder from "@tiptap/extension-placeholder";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import {
@@ -15,12 +16,14 @@ import { cn } from "#/lib/utils";
 interface RichTextEditorProps {
 	value: string;
 	onChange: (value: string) => void;
+	placeholder?: string;
 	className?: string;
 }
 
 export function RichTextEditor({
 	value,
 	onChange,
+	placeholder,
 	className,
 }: RichTextEditorProps) {
 	const editor = useEditor({
@@ -28,6 +31,9 @@ export function RichTextEditor({
 			StarterKit,
 			Link.configure({
 				openOnClick: false,
+			}),
+			Placeholder.configure({
+				placeholder,
 			}),
 		],
 		content: value,
@@ -152,7 +158,10 @@ export function RichTextEditor({
 					<Unlink size={16} />
 				</button>
 			</div>
-			<EditorContent editor={editor} className="overflow-hidden" />
+			<EditorContent
+				editor={editor}
+				className="overflow-hidden [&_.is-editor-empty:first-child::before]:float-left [&_.is-editor-empty:first-child::before]:h-0 [&_.is-editor-empty:first-child::before]:text-foreground/40 [&_.is-editor-empty:first-child::before]:content-[attr(data-placeholder)]"
+			/>
 		</div>
 	);
 }

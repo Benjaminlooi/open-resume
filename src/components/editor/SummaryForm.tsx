@@ -14,6 +14,7 @@ export default function SummaryForm() {
 				<RichTextEditor
 					value={summary}
 					onChange={updateSummary}
+					placeholder="Write a concise introduction that highlights your role, strengths, and career focus."
 				/>
 			</div>
 		</div>

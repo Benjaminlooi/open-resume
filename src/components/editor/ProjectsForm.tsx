@@ -124,6 +124,7 @@ function ProjectItem({ id }: { id: string }) {
 						<RichTextEditor
 							value={project.description || ""}
 							onChange={(val) => updateProject(id, { description: val })}
+							placeholder="Summarize the project, your role, tech stack, and measurable results."
 						/>
 					</div>
 				</div>
