@@ -12,6 +12,8 @@
     "deploy": "pnpm build && wrangler deploy",
     "cf-typegen": "wrangler types",
     "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "verify": "pnpm typecheck && pnpm test && pnpm build",
     "format": "biome format",
     "lint": "biome lint",
     "check": "biome check"

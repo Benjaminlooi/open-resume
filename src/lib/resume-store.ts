@@ -31,6 +31,7 @@ export interface ResumeActions {
 		field: Exclude<keyof PersonalInfo, "contactLinks">,
 		value: string,
 	) => void;
+	updateSummary: (value: string) => void;
 	addContactLink: () => void;
 	updateContactLink: (id: string, updatedItem: Partial<ContactLink>) => void;
 	deleteContactLink: (id: string) => void;
@@ -70,6 +71,7 @@ export interface ResumeActions {
 export type ResumeStore = EditorState & ResumeActions;
 
 export const AVAILABLE_SECTIONS = [
+	{ id: "summary", name: "Summary" },
 	{ id: "experience", name: "Experience" },
 	{ id: "education", name: "Education" },
 	{ id: "skills", name: "Skills" },
@@ -164,6 +166,7 @@ const migrateResume = (resume: LegacyEditorState): EditorState => {
 	return {
 		...resume,
 		personalInfo: normalizePersonalInfo(resume.personalInfo),
+		summary: String(resume.summary ?? ""),
 	} as EditorState;
 };
 
@@ -253,6 +256,11 @@ export const useResumeStore = create<ResumeStore>()(
 						...state.personalInfo,
 						[field]: value,
 					},
+				})),
+
+			updateSummary: (value) =>
+				set((_state) => ({
+					summary: value,
 				})),
 
 			addContactLink: () =>
@@ -494,6 +502,7 @@ if (typeof window !== "undefined") {
 				replaceResumeContent,
 				setTemplateId,
 				updatePersonalInfo,
+				updateSummary,
 				addContactLink,
 				updateContactLink,
 				deleteContactLink,

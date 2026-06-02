@@ -29,6 +29,13 @@ describe("resumeStore", () => {
 		expect(state.personalInfo.phone).toBe(initialState.personalInfo.phone);
 	});
 
+	it("updates summary correctly", () => {
+		useResumeStore.getState().updateSummary("<p>Focused product engineer.</p>");
+
+		const state = useResumeStore.getState();
+		expect(state.summary).toBe("<p>Focused product engineer.</p>");
+	});
+
 	it("sets active section correctly", () => {
 		useResumeStore.getState().setActiveSection("education");
 
@@ -84,7 +91,9 @@ describe("resumeStore", () => {
 				location: "",
 				contactLinks: [],
 			},
+			summary: "<p>Imported summary.</p>",
 			sections: [
+				{ id: "summary", name: "Summary", visible: true },
 				{ id: "experience", name: "Experience", visible: true },
 				{ id: "education", name: "Education", visible: false },
 				{ id: "skills", name: "Skills", visible: false },
@@ -108,6 +117,7 @@ describe("resumeStore", () => {
 		expect(state.activeSection).toBe("personalInfo");
 		expect(state.personalInfo.fullName).toBe("Imported Person");
 		expect(state.personalInfo.email).toBe("imported@example.com");
+		expect(state.summary).toBe("<p>Imported summary.</p>");
 	});
 
 	it("adds, updates, and deletes personal contact links", () => {

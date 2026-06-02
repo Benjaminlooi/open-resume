@@ -89,6 +89,7 @@ export type Language = z.infer<typeof languageSchema>;
 
 export const resumeSchema = z.object({
 	personalInfo: personalInfoSchema,
+	summary: z.string().optional().default(""),
 	sections: z.array(sectionSchema),
 	experience: z.array(experienceSchema),
 	education: z.array(educationSchema),

@@ -11,6 +11,7 @@ import type {
 } from "./resume-schema";
 
 type SupportedSectionId =
+	| "summary"
 	| "experience"
 	| "education"
 	| "skills"
@@ -26,6 +27,7 @@ type MarkdownEntry = {
 type ParsedMarkdownSection = {
 	id: SupportedSectionId;
 	entries: MarkdownEntry[];
+	body: string;
 };
 
 export type ParsedResumeMarkdown = {
@@ -34,6 +36,7 @@ export type ParsedResumeMarkdown = {
 };
 
 const SECTION_LABELS: Record<SupportedSectionId, string> = {
+	summary: "Summary",
 	experience: "Experience",
 	education: "Education",
 	skills: "Skills",
@@ -112,6 +115,7 @@ export function parseResumeMarkdown(markdown: string): ParsedResumeMarkdown {
 			contactLinks,
 		},
 		sections: buildSections(importedSectionIds),
+		summary: "",
 		experience: [],
 		education: [],
 		skills: [],
@@ -121,6 +125,11 @@ export function parseResumeMarkdown(markdown: string): ParsedResumeMarkdown {
 	};
 
 	for (const section of parsedSections) {
+		if (section.id === "summary") {
+			resume.summary = markdownToHtml(section.body);
+			continue;
+		}
+
 		for (const entry of section.entries) {
 			switch (section.id) {
 				case "experience":
@@ -153,6 +162,8 @@ function exportSection(
 	resume: Resume,
 ): string[] {
 	switch (sectionId) {
+		case "summary":
+			return htmlToMarkdownLines(resume.summary);
 		case "experience":
 			return resume.experience.flatMap(exportExperience);
 		case "education":
@@ -257,7 +268,7 @@ function parseSections(
 				currentSection = null;
 				continue;
 			}
-			currentSection = { id, entries: [] };
+			currentSection = { id, entries: [], body: "" };
 			sections.push(currentSection);
 			continue;
 		}
@@ -269,7 +280,14 @@ function parseSections(
 			continue;
 		}
 
-		if (currentEntry) currentEntry.lines.push(line);
+		if (currentEntry) {
+			currentEntry.lines.push(line);
+		} else if (currentSection?.id === "summary") {
+			currentSection.body = trimBlankLines([
+				...currentSection.body.split("\n"),
+				line,
+			]).join("\n");
+		}
 	}
 
 	flushEntry();

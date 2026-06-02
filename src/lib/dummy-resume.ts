@@ -24,6 +24,7 @@ export const dummyResumeData: Omit<
 		],
 	},
 	sections: [
+		{ id: "summary", name: "Summary", visible: true },
 		{ id: "experience", name: "Experience", visible: true },
 		{ id: "education", name: "Education", visible: true },
 		{ id: "skills", name: "Skills", visible: true },
@@ -31,6 +32,8 @@ export const dummyResumeData: Omit<
 		{ id: "certifications", name: "Certifications", visible: true },
 		{ id: "languages", name: "Languages", visible: true },
 	],
+	summary:
+		"<p>Senior software engineer with experience building scalable web applications, cloud infrastructure, and high-performing product teams.</p>",
 	experience: [
 		{
 			id: "exp-1",

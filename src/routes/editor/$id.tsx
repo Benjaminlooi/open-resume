@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import CertificationsForm from "#/components/editor/CertificationsForm";
 import DemoTemplate from "#/components/editor/DemoTemplate";
@@ -11,6 +11,7 @@ import ProjectsForm from "#/components/editor/ProjectsForm";
 import ResumePreview from "#/components/editor/ResumePreview";
 import SectionList from "#/components/editor/SectionList";
 import SkillsForm from "#/components/editor/SkillsForm";
+import SummaryForm from "#/components/editor/SummaryForm";
 import {
 	ResizableHandle,
 	ResizablePanel,
@@ -27,7 +28,6 @@ function RouteComponent() {
 	const { id } = Route.useParams();
 	const { activeSection, loadResume } = useResumeStore();
 	const [isLoading, setIsLoading] = useState(true);
-	const _navigate = useNavigate();
 
 	useEffect(() => {
 		const success = loadResume(id);
@@ -58,6 +58,8 @@ function RouteComponent() {
 		switch (activeSection) {
 			case "personalInfo":
 				return <PersonalInfoForm />;
+			case "summary":
+				return <SummaryForm />;
 			case "experience":
 				return <ExperienceForm />;
 			case "education":
@@ -83,6 +85,8 @@ function RouteComponent() {
 		switch (activeSection) {
 			case "personalInfo":
 				return "Personal Info";
+			case "summary":
+				return "Summary";
 			case "experience":
 				return "Experience";
 			case "education":

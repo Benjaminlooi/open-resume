@@ -28,6 +28,7 @@ const editorResume: EditorState = {
 		],
 	},
 	sections: [
+		{ id: "summary", name: "Summary", visible: true },
 		{ id: "experience", name: "Experience", visible: true },
 		{ id: "education", name: "Education", visible: true },
 		{ id: "skills", name: "Skills", visible: true },
@@ -35,6 +36,8 @@ const editorResume: EditorState = {
 		{ id: "certifications", name: "Certifications", visible: true },
 		{ id: "languages", name: "Languages", visible: true },
 	],
+	summary:
+		"<p>Pioneering computing collaborator focused on translating complex technical systems into practical programs.</p>",
 	experience: [
 		{
 			id: "exp-1",
@@ -100,6 +103,10 @@ describe("resume markdown conversion", () => {
 		expect(markdown).toContain("Email: ada@example.com");
 		expect(markdown).toContain("Website: https://ada.example.com");
 		expect(markdown).toContain("GitHub: https://github.com/ada");
+		expect(markdown).toContain("## Summary");
+		expect(markdown).toContain(
+			"Pioneering computing collaborator focused on translating complex technical systems into practical programs.",
+		);
 		expect(markdown).toContain("## Experience");
 		expect(markdown).toContain("### Analyst, Babbage Labs");
 		expect(markdown).toContain("- Documented the first algorithm");
@@ -120,6 +127,10 @@ Location: Arlington, VA
 Website: https://grace.example.com
 GitHub: https://github.com/gracehopper
 LinkedIn: https://linkedin.com/in/gracehopper
+
+## Summary
+
+Computer scientist and naval officer known for compiler leadership and practical programming systems.
 
 ## Experience
 
@@ -149,6 +160,9 @@ Business-oriented programming language.
 
 		expect(parsed.warnings).toEqual([]);
 		expect(parsed.resume.personalInfo.fullName).toBe("Grace Hopper");
+		expect(parsed.resume.summary).toBe(
+			"<p>Computer scientist and naval officer known for compiler leadership and practical programming systems.</p>",
+		);
 		expect(parsed.resume.personalInfo.contactLinks).toEqual([
 			{
 				id: "contact-1",
@@ -192,6 +206,10 @@ Business-oriented programming language.
 				?.visible,
 		).toBe(true);
 		expect(
+			parsed.resume.sections.find((section) => section.id === "summary")
+				?.visible,
+		).toBe(true);
+		expect(
 			parsed.resume.sections.find((section) => section.id === "education")
 				?.visible,
 		).toBe(false);
@@ -206,6 +224,7 @@ Business-oriented programming language.
 			phone: editorResume.personalInfo.phone,
 			location: editorResume.personalInfo.location,
 		});
+		expect(parsed.resume.summary).toBe(editorResume.summary);
 		expect(
 			parsed.resume.personalInfo.contactLinks.map(({ label, url }) => ({
 				label,

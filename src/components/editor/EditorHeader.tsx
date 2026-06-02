@@ -26,6 +26,7 @@ export default function EditorHeader() {
 		const state = useResumeStore.getState();
 		const resumeContent = {
 			personalInfo: state.personalInfo,
+			summary: state.summary,
 			sections: state.sections,
 			experience: state.experience,
 			education: state.education,
