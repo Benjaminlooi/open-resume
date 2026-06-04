@@ -24,11 +24,7 @@ export default function DemoTemplate({ resume }: { resume?: EditorState }) {
 		? resume.certifications || []
 		: globalCertifications;
 	const languages = resume ? resume.languages || [] : globalLanguages;
-	const contactItems: Array<{
-		id: string;
-		type: "text" | "link";
-		value: string;
-	}> = [
+	const contactItems = [
 		{ id: "email", type: "text" as const, value: personalInfo.email },
 		{ id: "phone", type: "text" as const, value: personalInfo.phone },
 		{ id: "location", type: "text" as const, value: personalInfo.location },
@@ -44,177 +40,154 @@ export default function DemoTemplate({ resume }: { resume?: EditorState }) {
 			case "summary":
 				if (!summary) return null;
 				return (
-					<section key={id} className="mb-4">
-						<h2 className="text-xl font-bold uppercase border-b border-black/20 mb-3 pb-1 text-black/90 break-after-avoid">
-							Summary
-						</h2>
-						<SummaryHtml
+					<section key={id} className="break-inside-avoid">
+						<RichText
 							html={summary}
-							className="prose prose-sm max-w-none text-black/80 prose-resume"
+							className="border-t border-[#8a8a8a] pt-1.5 text-[15px] font-semibold leading-[1.42] text-black [&_p]:m-0"
 						/>
 					</section>
 				);
 			case "experience":
 				return (
-					<section key={id} className="mb-4">
-						<h2 className="text-xl font-bold uppercase border-b border-black/20 mb-3 pb-1 text-black/90 break-after-avoid">
-							Experience
-						</h2>
-						<div className="flex flex-col gap-4">
+					<ResumeSection key={id} title="WORK EXPERIENCE">
+						<div className="space-y-6">
 							{experience.map((item) => (
-								<div key={item.id} className="break-inside-avoid">
-									<div className="flex justify-between items-baseline mb-1">
-										<h3 className="font-bold text-lg">{item.role}</h3>
-										<span className="text-sm font-medium text-black/80">
-											{item.startDate} - {item.endDate}
-										</span>
-									</div>
-									<div className="flex justify-between items-baseline mb-2 text-black/80">
-										<span className="text-md italic">{item.company}</span>
-										<span className="text-sm">{item.location}</span>
+								<div key={item.id}>
+									<div className="break-inside-avoid break-after-avoid">
+										<div className="grid grid-cols-[1fr_auto] gap-6">
+											<div className="text-[16px] font-bold leading-tight">
+												{item.company}
+											</div>
+											<div className="whitespace-nowrap text-right text-[16px] font-bold leading-tight">
+												{item.startDate} - {item.endDate}
+											</div>
+										</div>
+										<div className="mt-0.5 grid grid-cols-[1fr_auto] gap-6 text-[14px] italic leading-tight">
+											<div>{item.role}</div>
+											<div className="whitespace-nowrap text-right">
+												{item.location}
+											</div>
+										</div>
 									</div>
 									{item.description && (
-										<div
-											className="prose prose-sm max-w-none text-black/80 mt-1 prose-resume"
-											dangerouslySetInnerHTML={{ __html: item.description }}
+										<RichText
+											html={item.description}
+											className="mt-1 text-[15px] leading-[1.35] text-black [&_li]:pl-1 [&_p]:m-0 [&_ul]:m-0 [&_ul]:list-disc [&_ul]:space-y-0.5 [&_ul]:pl-8"
 										/>
 									)}
 								</div>
 							))}
 						</div>
-					</section>
+					</ResumeSection>
 				);
 			case "education":
 				return (
-					<section key={id} className="mb-4">
-						<h2 className="text-xl font-bold uppercase border-b border-black/20 mb-3 pb-1 text-black/90 break-after-avoid">
-							Education
-						</h2>
-						<div className="flex flex-col gap-4">
+					<ResumeSection key={id} title="EDUCATION">
+						<div className="space-y-1">
 							{education.map((item) => (
 								<div key={item.id} className="break-inside-avoid">
-									<div className="flex justify-between items-baseline mb-1">
-										<h3 className="font-bold text-lg">{item.institution}</h3>
-										<span className="text-sm font-medium text-black/80">
-											{item.startDate
-												? `${item.startDate} - ${item.endDate}`
-												: item.endDate}
-										</span>
+									<div className="grid grid-cols-[1fr_auto] gap-6">
+										<div className="text-[16px] font-bold leading-tight">
+											{item.degree}
+											{item.gpa && <span> | {item.gpa}</span>}
+										</div>
+										<div className="whitespace-nowrap text-right text-[16px] font-bold leading-tight">
+											{item.startDate} - {item.endDate}
+										</div>
 									</div>
-									<div className="flex justify-between items-baseline text-black/80">
-										<span className="text-md italic">{item.degree}</span>
-										<span className="text-sm">
+									<div className="mt-0.5 grid grid-cols-[1fr_auto] gap-6 text-[14px] italic leading-tight">
+										<div>{item.institution}</div>
+										<div className="whitespace-nowrap text-right">
 											{item.location}
-											{item.gpa && ` | GPA: ${item.gpa}`}
-										</span>
+										</div>
 									</div>
 									{item.description && (
-										<div
-											className="prose prose-sm max-w-none text-black/80 mt-2 prose-resume"
-											dangerouslySetInnerHTML={{ __html: item.description }}
+										<RichText
+											html={item.description}
+											className="mt-1 text-[15px] leading-[1.35] text-black [&_li]:pl-1 [&_p]:m-0 [&_ul]:m-0 [&_ul]:list-disc [&_ul]:space-y-0.5 [&_ul]:pl-8"
 										/>
 									)}
 								</div>
 							))}
 						</div>
-					</section>
+					</ResumeSection>
 				);
 			case "skills":
 				return (
-					<section key={id} className="mb-4">
-						<h2 className="text-xl font-bold uppercase border-b border-black/20 mb-3 pb-1 text-black/90 break-after-avoid">
-							Skills
-						</h2>
-						<div className="text-sm text-black/80 space-y-1">
+					<ResumeSection key={id} title="SKILLS">
+						<div className="space-y-1 text-[15px] leading-[1.4]">
 							{skills.map((item) => (
 								<p key={item.id}>
-									<strong className="text-black">{item.category}:</strong>{" "}
-									{item.items}
+									<strong>{item.category}:</strong> {item.items}
 								</p>
 							))}
 						</div>
-					</section>
+					</ResumeSection>
 				);
 			case "projects":
 				if (projects.length === 0) return null;
 				return (
-					<section key={id} className="mb-4">
-						<h2 className="text-xl font-bold uppercase border-b border-black/20 mb-3 pb-1 text-black/90 break-after-avoid">
-							Projects
-						</h2>
-						<div className="flex flex-col gap-4">
+					<ResumeSection key={id} title="PROJECTS">
+						<div className="space-y-3">
 							{projects.map((item) => (
-								<div key={item.id} className="break-inside-avoid">
-									<div className="flex justify-between items-baseline mb-1">
-										<h3 className="font-bold text-lg">{item.name}</h3>
-										<span className="text-sm font-medium text-black/80">
-											{item.date}
-										</span>
-									</div>
-									<div className="mb-2 text-black/80">
+								<div key={item.id} className="break-inside-avoid text-[15px]">
+									<p className="leading-[1.35]">
+										<strong>{item.name}</strong>
 										{item.url && (
-											<a href={item.url} className="text-sm italic underline">
-												{item.url}
-											</a>
+											<>
+												{" "}
+												—{" "}
+												<a
+													href={formatContactHref(item.url)}
+													className="text-[#1155cc] underline"
+												>
+													{item.url}
+												</a>
+											</>
 										)}
-									</div>
+										{item.date && <> — {item.date}</>}
+									</p>
 									{item.description && (
-										<div
-											className="prose prose-sm max-w-none text-black/80 mt-2 prose-resume"
-											dangerouslySetInnerHTML={{ __html: item.description }}
+										<RichText
+											html={item.description}
+											className="mt-0.5 leading-[1.35] text-black [&_p]:m-0"
 										/>
 									)}
 								</div>
 							))}
 						</div>
-					</section>
+					</ResumeSection>
 				);
 			case "certifications":
 				if (certifications.length === 0) return null;
 				return (
-					<section key={id} className="mb-4">
-						<h2 className="text-xl font-bold uppercase border-b border-black/20 mb-3 pb-1 text-black/90 break-after-avoid">
-							Certifications
-						</h2>
-						<div className="flex flex-col gap-3">
+					<ResumeSection key={id} title="CERTIFICATIONS">
+						<div className="space-y-1 text-[15px]">
 							{certifications.map((item) => (
-								<div
-									key={item.id}
-									className="flex justify-between items-baseline"
-								>
+								<div key={item.id} className="grid grid-cols-[1fr_auto] gap-6">
 									<div>
-										<span className="font-bold text-md">{item.name}</span>
-										{item.issuer && (
-											<span className="text-sm italic text-black/80">
-												{" "}
-												- {item.issuer}
-											</span>
-										)}
+										<strong>{item.name}</strong>
+										{item.issuer && <span> - {item.issuer}</span>}
 									</div>
-									<span className="text-sm font-medium text-black/80">
-										{item.date}
-									</span>
+									<div>{item.date}</div>
 								</div>
 							))}
 						</div>
-					</section>
+					</ResumeSection>
 				);
 			case "languages":
 				if (languages.length === 0) return null;
 				return (
-					<section key={id} className="mb-4">
-						<h2 className="text-xl font-bold uppercase border-b border-black/20 mb-3 pb-1 text-black/90 break-after-avoid">
-							Languages
-						</h2>
-						<div className="flex flex-wrap gap-4 text-sm text-black/80">
+					<ResumeSection key={id} title="LANGUAGES">
+						<div className="flex flex-wrap gap-x-4 gap-y-1 text-[15px]">
 							{languages.map((item) => (
-								<div key={item.id} className="break-inside-avoid">
-									<strong className="text-black">{item.language}</strong>
+								<div key={item.id}>
+									<strong>{item.language}</strong>
 									{item.proficiency && `: ${item.proficiency}`}
 								</div>
 							))}
 						</div>
-					</section>
+					</ResumeSection>
 				);
 			default:
 				return null;
@@ -222,16 +195,19 @@ export default function DemoTemplate({ resume }: { resume?: EditorState }) {
 	};
 
 	return (
-		<div className="flex flex-col gap-6 px-8 py-[12mm] print:py-0 min-h-full bg-white text-black font-sans">
-			<header className="border-b-2 border-black pb-4">
-				<h1 className="text-4xl font-bold uppercase tracking-tight">
+		<div className="min-h-full bg-white px-[12mm] py-[17mm] font-sans text-black print:py-0">
+			<header className="mb-7 text-left">
+				<h1 className="text-[32px] font-extrabold leading-tight tracking-normal">
 					{personalInfo.fullName || "Your Name"}
 				</h1>
-				<div className="flex flex-wrap gap-x-4 gap-y-2 mt-2 text-sm text-black/80">
+				<div className="mt-3 flex flex-wrap gap-x-1.5 gap-y-0.5 text-[15px] leading-[1.35]">
 					{contactItems.map((item, index) => (
-						<span key={item.id} className="flex items-center gap-4">
+						<span key={item.id} className="contents">
 							{item.type === "link" ? (
-								<a href={formatContactHref(item.value)} className="underline">
+								<a
+									href={formatContactHref(item.value)}
+									className="text-[#1155cc] underline"
+								>
 									{item.value}
 								</a>
 							) : (
@@ -243,8 +219,29 @@ export default function DemoTemplate({ resume }: { resume?: EditorState }) {
 				</div>
 			</header>
 
-			{sections.filter((s) => s.visible).map((s) => renderSection(s.id))}
+			<div className="space-y-7">
+				{sections
+					.filter((section) => section.visible)
+					.map((s) => renderSection(s.id))}
+			</div>
 		</div>
+	);
+}
+
+function ResumeSection({
+	title,
+	children,
+}: {
+	title: string;
+	children: React.ReactNode;
+}) {
+	return (
+		<section>
+			<h2 className="mb-3 border-b border-[#8a8a8a] pb-3 text-[21px] font-extrabold leading-tight tracking-normal">
+				{title}
+			</h2>
+			{children}
+		</section>
 	);
 }
 
@@ -252,7 +249,9 @@ function formatContactHref(value: string) {
 	return `https://${value.replace(/^https?:\/\//, "")}`;
 }
 
-function SummaryHtml({ html, className }: { html: string; className: string }) {
-	// biome-ignore lint/security/noDangerouslySetInnerHtml: Summary content is generated by the local rich text editor.
-	return <div className={className} dangerouslySetInnerHTML={{ __html: html }} />;
+function RichText({ html, className }: { html: string; className: string }) {
+	// biome-ignore lint/security/noDangerouslySetInnerHtml: Resume content is generated by the local rich text editor.
+	return (
+		<div className={className} dangerouslySetInnerHTML={{ __html: html }} />
+	);
 }

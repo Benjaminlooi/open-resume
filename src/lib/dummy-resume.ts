@@ -6,175 +6,142 @@ export const dummyResumeData: Omit<
 	"id" | "name" | "activeSection" | "templateId"
 > = {
 	personalInfo: {
-		fullName: "John Doe",
-		email: "john.doe@example.com",
-		phone: "(555) 123-4567",
-		location: "San Francisco, CA",
+		fullName: "Benjamin Looi",
+		email: "benjaminlooi97@gmail.com",
+		phone: "+60 12-4065-711",
+		location: "Based in Phnom Penh, Cambodia • From Malaysia",
 		contactLinks: [
-			{
-				id: "contact-linkedin",
-				label: "LinkedIn",
-				url: "linkedin.com/in/johndoe",
-			},
 			{
 				id: "contact-github",
 				label: "GitHub",
-				url: "github.com/johndoe",
+				url: "github.com/benjaminlooi",
+			},
+			{
+				id: "contact-website",
+				label: "Website",
+				url: "benjaminlooi.dev",
 			},
 		],
 	},
 	sections: [
 		{ id: "summary", name: "Summary", visible: true },
-		{ id: "experience", name: "Experience", visible: true },
 		{ id: "education", name: "Education", visible: true },
-		{ id: "skills", name: "Skills", visible: true },
+		{ id: "experience", name: "Experience", visible: true },
 		{ id: "projects", name: "Projects", visible: true },
-		{ id: "certifications", name: "Certifications", visible: true },
-		{ id: "languages", name: "Languages", visible: true },
+		{ id: "skills", name: "Skills", visible: true },
+		{ id: "certifications", name: "Certifications", visible: false },
+		{ id: "languages", name: "Languages", visible: false },
 	],
 	summary:
-		"<p>Senior software engineer with experience building scalable web applications, cloud infrastructure, and high-performing product teams.</p>",
-	experience: [
-		{
-			id: "exp-1",
-			company: "Tech Innovations Inc.",
-			role: "Senior Software Engineer",
-			startDate: "Jan 2022",
-			endDate: "Present",
-			location: "San Francisco, CA",
-			description:
-				"<ul><li>Led development of a high-performance React application serving 1M+ MAU.</li><li>Architected and implemented a microservices backend using Node.js and Go.</li><li>Mentored a team of 5 junior developers, improving code review turnaround by 30%.</li><li>Spearheaded the migration from a monolithic architecture to containerized microservices, reducing deployment time by 40%.</li><li>Implemented comprehensive CI/CD pipelines using GitHub Actions, increasing release frequency from bi-weekly to daily.</li></ul>",
-		},
-		{
-			id: "exp-2",
-			company: "Web Solutions Corp",
-			role: "Software Engineer",
-			startDate: "Jun 2019",
-			endDate: "Dec 2021",
-			location: "Seattle, WA",
-			description:
-				"<ul><li>Developed RESTful APIs handling 50k requests per minute.</li><li>Optimized database queries, reducing average response time by 40%.</li><li>Collaborated with design and product teams to deliver 10+ major features.</li><li>Introduced automated end-to-end testing with Cypress, improving test coverage to 85%.</li></ul>",
-		},
-		{
-			id: "exp-3",
-			company: "Startup Hub",
-			role: "Junior Developer",
-			startDate: "Jan 2018",
-			endDate: "May 2019",
-			location: "Austin, TX",
-			description:
-				"<ul><li>Assisted in the development of the company's flagship mobile application using React Native.</li><li>Integrated third-party APIs for payment processing and user authentication.</li><li>Participated in daily stand-ups and agile sprint planning sessions.</li></ul>",
-		},
-		{
-			id: "exp-4",
-			company: "Global Tech",
-			role: "Intern",
-			startDate: "May 2017",
-			endDate: "Aug 2017",
-			location: "New York, NY",
-			description:
-				"<ul><li>Developed internal tools for data analysis using Python and Pandas.</li><li>Created documentation for legacy systems to aid in future migrations.</li></ul>",
-		},
-	],
+		"<p>Product-minded Full Stack Engineer with 5+ years of experience shipping web and mobile applications for real businesses. Specializing in TypeScript, React/Next.js ecosystem, and Node.js. Proven track record of modernizing legacy systems, optimizing CI/CD pipelines, and building complex tools (like dual-currency POS systems and HRMS platforms) that solve actual user pain points.</p>",
 	education: [
 		{
 			id: "edu-1",
-			institution: "University of Technology",
-			degree: "Master of Science in Software Engineering",
-			startDate: "Aug 2019",
-			endDate: "May 2021",
-			location: "San Francisco, CA",
-			gpa: "3.9/4.0",
+			institution: "Uniten, University Tenaga National",
+			degree: "Diploma, Computer Science",
+			startDate: "Jun. 2017",
+			endDate: "Sept. 2019",
+			location: "Putrajaya, Malaysia",
+			gpa: "3.94/4.0 CGPA",
 			description:
-				"<ul><li>Specialized in distributed systems and cloud computing.</li><li>Thesis: Evaluating consistency models in edge databases.</li></ul>",
+				"<ul><li>Dean's List Honoree (All Semesters)</li><li>Introduced and integrated e-gaming initiatives within the educational environment and organized and ensured smooth execution of e-gaming events.</li></ul>",
+		},
+	],
+	experience: [
+		{
+			id: "exp-1",
+			company: "Sokha Tech",
+			role: "Independent Consultant",
+			startDate: "Jul. 2025",
+			endDate: "Present",
+			location: "Phnom Penh, Cambodia",
+			description:
+				"<ul><li>Architected and developed Baguette POS, a pre-launch point-of-sale system designed to solve regional pain points, featuring dual-currency (USD/KHR) handling and real-time table management.</li><li>Implemented offline-first ordering capabilities and designed a fully bilingual (English/Khmer) marketing platform from the ground up to support future client onboarding.</li></ul>",
 		},
 		{
-			id: "edu-2",
-			institution: "University of Technology",
-			degree: "Bachelor of Science in Computer Science",
-			startDate: "Aug 2015",
-			endDate: "May 2019",
-			location: "New York, NY",
-			gpa: "3.8/4.0",
+			id: "exp-2",
+			company: "TalentCloud AI",
+			role: "Senior Full Stack Developer",
+			startDate: "Jul. 2022",
+			endDate: "Jul. 2025",
+			location: "Remote • Kuala Lumpur",
 			description:
-				"<ul><li>Minor in Mathematics.</li><li>President of the Computer Science Society.</li></ul>",
+				"<ul><li>Led the migration of a legacy HRMS front-end to a Nuxt.js monorepo (Turborepo), implementing a modular component library that slashed feature deployment time by 25% and reduced code redundancy by 40%.</li><li>Spearheaded the development of complex HR modules, including an Excel-like click-to-assign shift management system that reduced manual scheduling errors by 30%.</li><li>Standardized code quality by configuring ESLint/Prettier across 3+ projects and optimizing front-end performance, cutting code review time by 20% and production bugs by 30%.</li><li>Optimized the BitBucket CI/CD pipeline by removing redundant assets and refining the build process, enabling zero-downtime AWS deployments and boosting overall developer efficiency.</li><li>Resolved over 100 client-reported bugs and delivered 15+ tailored enterprise customisations (e.g., pre-planned Overtime engines), directly contributing to a 25% improvement in client retention.</li><li>Collaborated cross-functionally to integrate Laravel and Node.js backend systems, while actively mentoring junior developers to foster team growth.</li></ul>",
+		},
+		{
+			id: "exp-3",
+			company: "OpensoftHR",
+			role: "Frontend Developer",
+			startDate: "Jun. 2021",
+			endDate: "Jul. 2022",
+			location: "Remote • Kuala Lumpur",
+			description:
+				"<ul><li>Redesigned and modernized the legacy HRMS front-end using Angular, delivering the project ahead of schedule and significantly improving overall UX and performance.</li><li>Re-engineered core administrative pages, forms, and dashboards, ensuring seamless REST API interactions with existing backend architecture.</li><li>Introduced modern front-end tooling and development practices, successfully reducing technical debt and driving a surge in new client acquisition due to the platform's upgraded design and functionality.</li></ul>",
+		},
+		{
+			id: "exp-4",
+			company: "Platinum Code",
+			role: "Full Stack Developer",
+			startDate: "Aug. 2020",
+			endDate: "Jun. 2021",
+			location: "Remote • Kuala Lumpur",
+			description:
+				"<ul><li>Acted as the sole Front-End Developer to architect and build a large-scale Point-of-Sale (POS) system for the F&B industry using React.</li><li>Developed and launched multiple customized client applications, collaborating heavily with backend engineers to integrate Laravel RESTful APIs and real-time WebSockets.</li><li>Standardized the team's development environment by introducing Docker, completely eliminating cross-developer setup inconsistencies and accelerating onboarding.</li></ul>",
+		},
+		{
+			id: "exp-5",
+			company: "Plentisoft Sdn. Bhd",
+			role: "Intern Software Developer",
+			startDate: "Feb. 2019",
+			endDate: "May. 2019",
+			location: "Kuala Lumpur",
+			description:
+				"<ul><li>Developed, documented, and deployed over 50 news media web applications using Angular and Firebase.</li><li>Maintained existing WordPress web applications, developing new pages and swiftly resolving critical UI/UX bugs.</li></ul>",
 		},
 	],
 	skills: [
 		{
 			id: "skill-1",
 			category: "Languages",
-			items: "JavaScript, TypeScript, Python, Go, HTML, CSS, Rust, Java",
+			items: "JavaScript, TypeScript, PHP",
 		},
 		{
 			id: "skill-2",
-			category: "Frameworks",
+			category: "Frontend",
 			items:
-				"React, Next.js, Express, Tailwind CSS, Vue.js, Django, Spring Boot",
+				"React, Next.js, Vue.js, Nuxt.js, Angular, React Native, Tailwind CSS",
 		},
 		{
 			id: "skill-3",
-			category: "Tools",
-			items: "Git, Docker, AWS, CI/CD, Jest, Kubernetes, Terraform, Prometheus",
+			category: "Backend",
+			items: "Node.js, Laravel, MySQL",
 		},
 		{
 			id: "skill-4",
-			category: "Databases",
-			items: "PostgreSQL, MongoDB, Redis, Elasticsearch, DynamoDB",
+			category: "Tools & DevOps",
+			items: "AWS, Vercel, Firebase, Git, Docker, Turborepo, CI/CD Pipelines",
 		},
 	],
 	projects: [
 		{
 			id: "proj-1",
-			name: "Open Source E-commerce Platform",
-			date: "2023",
-			url: "github.com/johndoe/ecommerce",
+			name: "Baguette POS",
+			date: "",
+			url: "pos.sokha.tech",
 			description:
-				"<ul><li>Created a fully functional e-commerce platform using Next.js and Stripe.</li><li>Achieved over 1,000 stars on GitHub and 50+ active contributors.</li></ul>",
+				"<p>A zero-hardware-lock-in POS system for Cambodian restaurants with dual-currency (USD/KHR) payments, offline-first ordering, and drag-and-drop table management. Built with React, Vite, TypeScript, Tailwind CSS and Laravel.</p>",
 		},
 		{
 			id: "proj-2",
-			name: "Real-time Chat Application",
-			date: "2021",
-			url: "github.com/johndoe/chat-app",
+			name: "WOLE",
+			date: "",
+			url: "github.com/Benjaminlooi/WOLE",
 			description:
-				"<ul><li>Built a scalable chat application utilizing WebSockets and Redis.</li><li>Implemented end-to-end encryption for secure messaging.</li></ul>",
-		},
-		{
-			id: "proj-3",
-			name: "Personal Finance Tracker",
-			date: "2020",
-			url: "",
-			description:
-				"<ul><li>Developed a mobile-first web app to track expenses and budget goals.</li><li>Integrated Plaid API for real-time bank transaction sync.</li></ul>",
+				"<p>An Android app that transforms a phone into a persistent Wake-on-LAN relay via foreground service, with a built-in web dashboard for device management. Built with Expo, React Native, and native Java modules.</p>",
 		},
 	],
-	certifications: [
-		{
-			id: "cert-1",
-			name: "AWS Certified Solutions Architect",
-			issuer: "Amazon Web Services",
-			date: "2022",
-		},
-		{
-			id: "cert-2",
-			name: "Certified Kubernetes Administrator (CKA)",
-			issuer: "Cloud Native Computing Foundation",
-			date: "2023",
-		},
-		{
-			id: "cert-3",
-			name: "Google Cloud Professional Developer",
-			issuer: "Google",
-			date: "2021",
-		},
-	],
-	languages: [
-		{ id: "lang-1", language: "English", proficiency: "Native" },
-		{ id: "lang-2", language: "Spanish", proficiency: "Fluent" },
-		{ id: "lang-3", language: "Mandarin", proficiency: "Conversational" },
-		{ id: "lang-4", language: "French", proficiency: "Basic" },
-	],
+	certifications: [],
+	languages: [],
 };
 
 export const blankResumeState: EditorState = {

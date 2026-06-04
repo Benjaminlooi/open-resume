@@ -13,7 +13,7 @@ describe("resumeStore", () => {
 		const state = useResumeStore.getState();
 
 		expect(state.activeSection).toBe("personalInfo");
-		expect(state.personalInfo.fullName).toBe("John Doe");
+		expect(state.personalInfo.fullName).toBe("Benjamin Looi");
 		expect(state.sections.length).toBeGreaterThan(0);
 		expect(state.experience.length).toBeGreaterThan(0);
 	});
@@ -76,7 +76,7 @@ describe("resumeStore", () => {
 		expect(state.name).toBe("New Name");
 		expect(state.templateId).toBe("modern");
 		// Ensure dirty state is cleared by checking against dummy/blank resume
-		expect(state.personalInfo.fullName).toBe("John Doe"); // blankResumeState defaults to John Doe
+		expect(state.personalInfo.fullName).toBe("Benjamin Looi"); // blankResumeState defaults to Benjamin's resume
 	});
 
 	it("replaces resume content without replacing editor metadata", () => {
@@ -229,6 +229,15 @@ describe("resumeStore", () => {
 		});
 
 		it("reorders education", () => {
+			useResumeStore.getState().addEducation({
+				id: "reorder-edu",
+				institution: "Second School",
+				degree: "Certificate",
+				startDate: "2020",
+				endDate: "2021",
+				location: "Remote",
+				description: "",
+			});
 			const initialOrder = useResumeStore.getState().education.map((e) => e.id);
 			useResumeStore.getState().reorderEducation(0, 1);
 			const state = useResumeStore.getState();
@@ -337,6 +346,12 @@ describe("resumeStore", () => {
 		});
 
 		it("updates a certification", () => {
+			useResumeStore.getState().addCertification({
+				id: "cert-to-update",
+				name: "Certified Developer",
+				issuer: "Acme",
+				date: "2024",
+			});
 			const idToUpdate = useResumeStore.getState().certifications?.[0].id;
 			useResumeStore
 				.getState()
@@ -348,6 +363,12 @@ describe("resumeStore", () => {
 		});
 
 		it("deletes a certification", () => {
+			useResumeStore.getState().addCertification({
+				id: "cert-to-delete",
+				name: "Certified Developer",
+				issuer: "Acme",
+				date: "2024",
+			});
 			const idToDelete = useResumeStore.getState().certifications?.[0].id;
 			const initialLength = useResumeStore.getState().certifications?.length;
 			useResumeStore.getState().deleteCertification(idToDelete);
@@ -359,6 +380,18 @@ describe("resumeStore", () => {
 		});
 
 		it("reorders certifications", () => {
+			useResumeStore.getState().addCertification({
+				id: "cert-first",
+				name: "First Cert",
+				issuer: "Acme",
+				date: "2023",
+			});
+			useResumeStore.getState().addCertification({
+				id: "cert-second",
+				name: "Second Cert",
+				issuer: "Acme",
+				date: "2024",
+			});
 			const initialOrder = useResumeStore
 				.getState()
 				.certifications?.map((e) => e.id);
@@ -382,6 +415,11 @@ describe("resumeStore", () => {
 		});
 
 		it("updates a language", () => {
+			useResumeStore.getState().addLanguage({
+				id: "lang-to-update",
+				language: "German",
+				proficiency: "Beginner",
+			});
 			const idToUpdate = useResumeStore.getState().languages?.[0].id;
 			useResumeStore
 				.getState()
@@ -393,6 +431,11 @@ describe("resumeStore", () => {
 		});
 
 		it("deletes a language", () => {
+			useResumeStore.getState().addLanguage({
+				id: "lang-to-delete",
+				language: "German",
+				proficiency: "Beginner",
+			});
 			const idToDelete = useResumeStore.getState().languages?.[0].id;
 			const initialLength = useResumeStore.getState().languages?.length;
 			useResumeStore.getState().deleteLanguage(idToDelete);
@@ -402,6 +445,16 @@ describe("resumeStore", () => {
 		});
 
 		it("reorders languages", () => {
+			useResumeStore.getState().addLanguage({
+				id: "lang-first",
+				language: "German",
+				proficiency: "Beginner",
+			});
+			useResumeStore.getState().addLanguage({
+				id: "lang-second",
+				language: "French",
+				proficiency: "Beginner",
+			});
 			const initialOrder = useResumeStore
 				.getState()
 				.languages?.map((e) => e.id);
