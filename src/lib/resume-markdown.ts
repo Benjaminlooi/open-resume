@@ -51,6 +51,8 @@ const SECTION_BY_HEADING = new Map(
 	SECTION_IDS.map((id) => [SECTION_LABELS[id].toLowerCase(), id]),
 );
 
+const ALLOWED_LINK_PROTOCOLS = new Set(["http:", "https:", "mailto:", "tel:"]);
+
 const makeIdFactory = () => {
 	const counts: Partial<Record<SupportedSectionId, number>> = {};
 	return (sectionId: SupportedSectionId) => {
@@ -463,9 +465,23 @@ function markdownToHtml(markdown: string): string {
 
 function markdownInlineToHtml(value: string): string {
 	return escapeHtml(value)
-		.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>')
+		.replace(
+			/\[([^\]]+)\]\(((?:[^()]|\([^)]*\))+)\)/g,
+			(_match, label, url) =>
+				isSafeLinkUrl(url) ? `<a href="${url}">${label}</a>` : label,
+		)
 		.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
 		.replace(/\*([^*]+)\*/g, "<em>$1</em>");
+}
+
+function isSafeLinkUrl(value: string) {
+	const trimmed = decodeHtml(value).trim();
+	if (!trimmed) return false;
+	try {
+		return ALLOWED_LINK_PROTOCOLS.has(new URL(trimmed).protocol);
+	} catch {
+		return false;
+	}
 }
 
 function htmlToMarkdownLines(html?: string): string[] {

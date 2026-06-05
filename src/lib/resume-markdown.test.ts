@@ -215,6 +215,44 @@ Business-oriented programming language.
 		).toBe(false);
 	});
 
+	it("sanitizes unsafe markdown link protocols before storing rich text html", () => {
+		const parsed = parseResumeMarkdown(`# Security Test
+
+## Summary
+
+See [profile](javascript:alert(1)), [website](https://example.com), [email](mailto:me@example.com), and [phone](tel:+15550123).
+
+## Experience
+
+### Engineer, Example
+
+- Block [mixed case](JaVaScRiPt:alert(1))
+- Keep [docs](http://docs.example.com)
+`);
+
+		expect(parsed.resume.summary).not.toContain("javascript:");
+		expect(parsed.resume.summary).not.toContain("<a href=\"javascript:");
+		expect(parsed.resume.summary).toContain("See profile,");
+		expect(parsed.resume.summary).toContain(
+			'<a href="https://example.com">website</a>',
+		);
+		expect(parsed.resume.summary).toContain(
+			'<a href="mailto:me@example.com">email</a>',
+		);
+		expect(parsed.resume.summary).toContain(
+			'<a href="tel:+15550123">phone</a>',
+		);
+		expect(parsed.resume.experience[0].description).not.toContain(
+			"JaVaScRiPt:",
+		);
+		expect(parsed.resume.experience[0].description).toContain(
+			"<li>Block mixed case</li>",
+		);
+		expect(parsed.resume.experience[0].description).toContain(
+			'<a href="http://docs.example.com">docs</a>',
+		);
+	});
+
 	it("round-trips exported markdown back into equivalent resume content", () => {
 		const parsed = parseResumeMarkdown(exportResumeToMarkdown(editorResume));
 
