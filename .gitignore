@@ -15,3 +15,10 @@ todos.json
 routeTree.gen.ts
 .worktrees/
 .superpowers/
+
+# Dependency directories
+.pnpm-store/
+
+# Python cache
+__pycache__/
+*.pyc
