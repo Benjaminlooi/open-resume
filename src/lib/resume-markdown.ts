@@ -104,9 +104,7 @@ export function parseResumeMarkdown(markdown: string): ParsedResumeMarkdown {
 	const contactLinks = parseContactLinks(contacts);
 	const parsedSections = parseSections(lines, warnings);
 	const nextId = makeIdFactory();
-	const importedSectionIds = new Set(
-		parsedSections.map((section) => section.id),
-	);
+	const importedSectionIds = parsedSections.map((section) => section.id);
 
 	const resume: Resume = {
 		personalInfo: {
@@ -423,11 +421,17 @@ function parseContactLinks(contacts: Record<string, string>): ContactLink[] {
 		}));
 }
 
-function buildSections(importedSectionIds: Set<SupportedSectionId>): Section[] {
-	return SECTION_IDS.map((id) => ({
+function buildSections(importedSectionIds: SupportedSectionId[]): Section[] {
+	const sectionIds = [...new Set(importedSectionIds)];
+	for (const id of SECTION_IDS) {
+		if (!sectionIds.includes(id)) sectionIds.push(id);
+	}
+
+	const visibleSectionIds = new Set(importedSectionIds);
+	return sectionIds.map((id) => ({
 		id,
 		name: SECTION_LABELS[id],
-		visible: importedSectionIds.has(id),
+		visible: visibleSectionIds.has(id),
 	}));
 }
 

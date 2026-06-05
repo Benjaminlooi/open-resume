@@ -215,6 +215,50 @@ Business-oriented programming language.
 		).toBe(false);
 	});
 
+	it("keeps imported resume sections in the same order as markdown headings", () => {
+		const parsed = parseResumeMarkdown(`# Ada Lovelace
+
+## Summary
+
+Computing pioneer.
+
+## Education
+
+### Mathematics, University of London
+
+Dates: 1835 - 1839
+Location: London
+
+## Experience
+
+### Analyst, Babbage Labs
+
+Dates: 1842 - 1843
+Location: London
+
+## Skills
+
+### Technical
+
+Algorithms, Writing
+`);
+
+		expect(parsed.resume.sections.map((section) => section.id)).toEqual([
+			"summary",
+			"education",
+			"experience",
+			"skills",
+			"projects",
+			"certifications",
+			"languages",
+		]);
+		expect(
+			parsed.resume.sections
+				.filter((section) => section.visible)
+				.map((section) => section.id),
+		).toEqual(["summary", "education", "experience", "skills"]);
+	});
+
 	it("sanitizes unsafe markdown link protocols before storing rich text html", () => {
 		const parsed = parseResumeMarkdown(`# Security Test
 
