@@ -140,6 +140,7 @@ function ExperienceFields({
 				<RichTextEditor
 					value={exp.description || ""}
 					onChange={(val) => updateExperience(id, { description: val })}
+					placeholder="Describe your impact with concise bullets, metrics, and outcomes."
 				/>
 			</div>
 		</div>

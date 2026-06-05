@@ -13,7 +13,7 @@ describe("resumeStore", () => {
 		const state = useResumeStore.getState();
 
 		expect(state.activeSection).toBe("personalInfo");
-		expect(state.personalInfo.fullName).toBe("John Doe");
+		expect(state.personalInfo.fullName).toBe("Benjamin Looi");
 		expect(state.sections.length).toBeGreaterThan(0);
 		expect(state.experience.length).toBeGreaterThan(0);
 	});
@@ -27,6 +27,13 @@ describe("resumeStore", () => {
 		expect(state.personalInfo.email).toBe("rick@citadel.com");
 		// Ensure other state is intact
 		expect(state.personalInfo.phone).toBe(initialState.personalInfo.phone);
+	});
+
+	it("updates summary correctly", () => {
+		useResumeStore.getState().updateSummary("<p>Focused product engineer.</p>");
+
+		const state = useResumeStore.getState();
+		expect(state.summary).toBe("<p>Focused product engineer.</p>");
 	});
 
 	it("sets active section correctly", () => {
@@ -69,7 +76,76 @@ describe("resumeStore", () => {
 		expect(state.name).toBe("New Name");
 		expect(state.templateId).toBe("modern");
 		// Ensure dirty state is cleared by checking against dummy/blank resume
-		expect(state.personalInfo.fullName).toBe("John Doe"); // blankResumeState defaults to John Doe
+		expect(state.personalInfo.fullName).toBe("Benjamin Looi"); // blankResumeState defaults to Benjamin's resume
+	});
+
+	it("replaces resume content without replacing editor metadata", () => {
+		useResumeStore
+			.getState()
+			.initNewResume("current-id", "Current Name", "modern");
+		useResumeStore.getState().replaceResumeContent({
+			personalInfo: {
+				fullName: "Imported Person",
+				email: "imported@example.com",
+				phone: "",
+				location: "",
+				contactLinks: [],
+			},
+			summary: "<p>Imported summary.</p>",
+			sections: [
+				{ id: "summary", name: "Summary", visible: true },
+				{ id: "experience", name: "Experience", visible: true },
+				{ id: "education", name: "Education", visible: false },
+				{ id: "skills", name: "Skills", visible: false },
+				{ id: "projects", name: "Projects", visible: false },
+				{ id: "certifications", name: "Certifications", visible: false },
+				{ id: "languages", name: "Languages", visible: false },
+			],
+			experience: [],
+			education: [],
+			skills: [],
+			projects: [],
+			certifications: [],
+			languages: [],
+		});
+
+		const state = useResumeStore.getState();
+
+		expect(state.id).toBe("current-id");
+		expect(state.name).toBe("Current Name");
+		expect(state.templateId).toBe("modern");
+		expect(state.activeSection).toBe("personalInfo");
+		expect(state.personalInfo.fullName).toBe("Imported Person");
+		expect(state.personalInfo.email).toBe("imported@example.com");
+		expect(state.summary).toBe("<p>Imported summary.</p>");
+	});
+
+	it("adds, updates, and deletes personal contact links", () => {
+		useResumeStore.getState().addContactLink();
+
+		const addedLink = useResumeStore
+			.getState()
+			.personalInfo.contactLinks.at(-1);
+		expect(addedLink).toMatchObject({ label: "Website", url: "" });
+
+		useResumeStore.getState().updateContactLink(addedLink?.id ?? "", {
+			label: "GitHub",
+			url: "github.com/rick",
+		});
+
+		expect(
+			useResumeStore
+				.getState()
+				.personalInfo.contactLinks.find((link) => link.id === addedLink?.id),
+		).toMatchObject({ label: "GitHub", url: "github.com/rick" });
+
+		useResumeStore.getState().deleteContactLink(addedLink?.id ?? "");
+
+		expect(
+			useResumeStore
+				.getState()
+				.personalInfo.contactLinks.find((link) => link.id === addedLink?.id),
+		).toBeUndefined();
 	});
 
 	describe("experience array mutations", () => {
@@ -153,6 +229,15 @@ describe("resumeStore", () => {
 		});
 
 		it("reorders education", () => {
+			useResumeStore.getState().addEducation({
+				id: "reorder-edu",
+				institution: "Second School",
+				degree: "Certificate",
+				startDate: "2020",
+				endDate: "2021",
+				location: "Remote",
+				description: "",
+			});
 			const initialOrder = useResumeStore.getState().education.map((e) => e.id);
 			useResumeStore.getState().reorderEducation(0, 1);
 			const state = useResumeStore.getState();
@@ -261,6 +346,12 @@ describe("resumeStore", () => {
 		});
 
 		it("updates a certification", () => {
+			useResumeStore.getState().addCertification({
+				id: "cert-to-update",
+				name: "Certified Developer",
+				issuer: "Acme",
+				date: "2024",
+			});
 			const idToUpdate = useResumeStore.getState().certifications?.[0].id;
 			useResumeStore
 				.getState()
@@ -272,6 +363,12 @@ describe("resumeStore", () => {
 		});
 
 		it("deletes a certification", () => {
+			useResumeStore.getState().addCertification({
+				id: "cert-to-delete",
+				name: "Certified Developer",
+				issuer: "Acme",
+				date: "2024",
+			});
 			const idToDelete = useResumeStore.getState().certifications?.[0].id;
 			const initialLength = useResumeStore.getState().certifications?.length;
 			useResumeStore.getState().deleteCertification(idToDelete);
@@ -283,6 +380,18 @@ describe("resumeStore", () => {
 		});
 
 		it("reorders certifications", () => {
+			useResumeStore.getState().addCertification({
+				id: "cert-first",
+				name: "First Cert",
+				issuer: "Acme",
+				date: "2023",
+			});
+			useResumeStore.getState().addCertification({
+				id: "cert-second",
+				name: "Second Cert",
+				issuer: "Acme",
+				date: "2024",
+			});
 			const initialOrder = useResumeStore
 				.getState()
 				.certifications?.map((e) => e.id);
@@ -306,6 +415,11 @@ describe("resumeStore", () => {
 		});
 
 		it("updates a language", () => {
+			useResumeStore.getState().addLanguage({
+				id: "lang-to-update",
+				language: "German",
+				proficiency: "Beginner",
+			});
 			const idToUpdate = useResumeStore.getState().languages?.[0].id;
 			useResumeStore
 				.getState()
@@ -317,6 +431,11 @@ describe("resumeStore", () => {
 		});
 
 		it("deletes a language", () => {
+			useResumeStore.getState().addLanguage({
+				id: "lang-to-delete",
+				language: "German",
+				proficiency: "Beginner",
+			});
 			const idToDelete = useResumeStore.getState().languages?.[0].id;
 			const initialLength = useResumeStore.getState().languages?.length;
 			useResumeStore.getState().deleteLanguage(idToDelete);
@@ -326,6 +445,16 @@ describe("resumeStore", () => {
 		});
 
 		it("reorders languages", () => {
+			useResumeStore.getState().addLanguage({
+				id: "lang-first",
+				language: "German",
+				proficiency: "Beginner",
+			});
+			useResumeStore.getState().addLanguage({
+				id: "lang-second",
+				language: "French",
+				proficiency: "Beginner",
+			});
 			const initialOrder = useResumeStore
 				.getState()
 				.languages?.map((e) => e.id);
@@ -414,6 +543,34 @@ describe("resumeStore", () => {
 			expect(
 				(useResumeStore.getState().experience[0] as any).bullets,
 			).toBeUndefined();
+		});
+
+		it("migrates a legacy website field into contact links", async () => {
+			const legacyState = {
+				personalInfo: {
+					fullName: "Legacy Person",
+					email: "legacy@example.com",
+					phone: "",
+					location: "",
+					website: "legacy.example.com",
+				},
+			};
+			(globalThis.window.localStorage.getItem as any).mockReturnValue(
+				JSON.stringify(legacyState),
+			);
+
+			vi.resetModules();
+			const { useResumeStore } = await import("./resume-store");
+
+			useResumeStore.getState().loadResume("default");
+
+			expect(useResumeStore.getState().personalInfo.contactLinks).toEqual([
+				{
+					id: "contact-website",
+					label: "Website",
+					url: "legacy.example.com",
+				},
+			]);
 		});
 
 		it("saves state to localStorage on store update", async () => {

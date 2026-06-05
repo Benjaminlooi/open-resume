@@ -12,6 +12,8 @@ Use `pnpm` for all package operations.
 - `pnpm build`: create a production build.
 - `pnpm preview`: serve the production build locally.
 - `pnpm test`: run Vitest once.
+- `pnpm typecheck`: run `tsc --noEmit` for TypeScript semantic checks.
+- `pnpm verify`: run typecheck, tests, and production build.
 - `pnpm lint`: run Biome lint rules.
 - `pnpm format`: format files with Biome.
 - `pnpm check`: run Biome checks for formatting and linting.
@@ -25,6 +27,8 @@ TypeScript is strict and uses `noUnusedLocals` and `noUnusedParameters`; keep im
 ## Testing Guidelines
 
 Vitest is the active test framework. Keep unit tests close to the code they cover, as in `src/lib/resume-store.test.ts` and `src/lib/settings-store.test.ts`. Reset singleton Zustand stores between tests with `beforeEach` when state can leak. Run `pnpm test` before changing store logic, schema behavior, or route data flow.
+
+Run `pnpm typecheck` for TypeScript or React prop/interface changes; Biome and Vite builds do not perform TypeScript semantic checking. Prefer `pnpm verify` before handing off feature work because it runs `pnpm typecheck`, `pnpm test`, and `pnpm build`. `pnpm lint` currently reports existing repository-wide Biome diagnostics, so treat lint output separately unless the task is explicitly to clean up lint.
 
 ## Commit & Pull Request Guidelines
 

@@ -1,16 +1,26 @@
 import { GripVertical } from "lucide-react";
 import type * as React from "react";
 import * as ResizablePrimitive from "react-resizable-panels";
+import type {
+	GroupProps,
+	SeparatorProps,
+} from "react-resizable-panels";
 
 import { cn } from "#/lib/utils";
 
+type ResizablePanelGroupProps = Omit<GroupProps, "orientation"> & {
+	direction?: GroupProps["orientation"];
+};
+
 function ResizablePanelGroup({
 	className,
+	direction,
 	...props
-}: React.ComponentProps<typeof ResizablePrimitive.PanelGroup>) {
+}: ResizablePanelGroupProps) {
 	return (
 		<ResizablePrimitive.Group
 			data-slot="resizable-panel-group"
+			orientation={direction}
 			className={cn(
 				"flex h-full w-full font-base data-[panel-group-direction=vertical]:flex-col",
 				className,
@@ -37,7 +47,7 @@ function ResizableHandle({
 	withHandle,
 	className,
 	...props
-}: React.ComponentProps<typeof ResizablePrimitive.SeparatorProps> & {
+}: SeparatorProps & {
 	withHandle?: boolean;
 }) {
 	return (

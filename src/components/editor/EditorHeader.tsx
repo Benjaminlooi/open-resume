@@ -1,16 +1,61 @@
-import { Download, Moon } from "lucide-react";
+import { Download, FileDown, FileUp, Moon } from "lucide-react";
+import { type ChangeEvent, useRef } from "react";
+import {
+	exportResumeToMarkdown,
+	parseResumeMarkdown,
+} from "#/lib/resume-markdown";
 import { AVAILABLE_TEMPLATES, useResumeStore } from "#/lib/resume-store";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { GlobalSettingsModal } from "./GlobalSettingsModal";
 
 export default function EditorHeader() {
+	const fileInputRef = useRef<HTMLInputElement>(null);
 	const resumeName = useResumeStore((state) => state.name);
 	const templateId = useResumeStore((state) => state.templateId);
 	const setTemplateId = useResumeStore((state) => state.setTemplateId);
+	const replaceResumeContent = useResumeStore(
+		(state) => state.replaceResumeContent,
+	);
 
 	const handleDownloadPdf = () => {
 		window.print();
+	};
+
+	const handleExportMarkdown = () => {
+		const state = useResumeStore.getState();
+		const resumeContent = {
+			personalInfo: state.personalInfo,
+			summary: state.summary,
+			sections: state.sections,
+			experience: state.experience,
+			education: state.education,
+			skills: state.skills,
+			projects: state.projects,
+			certifications: state.certifications,
+			languages: state.languages,
+		};
+		const markdown = exportResumeToMarkdown(resumeContent);
+		const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
+		const url = URL.createObjectURL(blob);
+		const link = document.createElement("a");
+		link.href = url;
+		link.download = `${toFilename(resumeName)}.md`;
+		link.click();
+		URL.revokeObjectURL(url);
+	};
+
+	const handleImportMarkdown = async (event: ChangeEvent<HTMLInputElement>) => {
+		const file = event.target.files?.[0];
+		event.target.value = "";
+		if (!file) return;
+
+		const markdown = await file.text();
+		const parsed = parseResumeMarkdown(markdown);
+		replaceResumeContent(parsed.resume);
+		if (parsed.warnings.length > 0) {
+			window.alert(`Imported with warnings:\n${parsed.warnings.join("\n")}`);
+		}
 	};
 
 	return (
@@ -29,6 +74,7 @@ export default function EditorHeader() {
 						<Input
 							type="text"
 							value={resumeName}
+							readOnly
 							className="max-w-[200px] hidden md:inline-flex"
 						/>
 						<div className="flex items-center justify-end gap-4">
@@ -43,6 +89,29 @@ export default function EditorHeader() {
 									</option>
 								))}
 							</select>
+							<input
+								ref={fileInputRef}
+								type="file"
+								accept=".md,.markdown,text/markdown,text/plain"
+								className="hidden"
+								onChange={handleImportMarkdown}
+							/>
+							<Button
+								type="button"
+								onClick={() => fileInputRef.current?.click()}
+								className="gap-2"
+							>
+								<FileUp className="size-4" />
+								<span className="hidden sm:inline">Import MD</span>
+							</Button>
+							<Button
+								type="button"
+								onClick={handleExportMarkdown}
+								className="gap-2"
+							>
+								<FileDown className="size-4" />
+								<span className="hidden sm:inline">Export MD</span>
+							</Button>
 							<Button onClick={handleDownloadPdf} className="gap-2">
 								<Download className="size-4" />
 								<span className="hidden sm:inline">Download PDF</span>
@@ -51,7 +120,9 @@ export default function EditorHeader() {
 							<Button>
 								<p className="font-semibold sm:inline hidden">3.2k</p>
 								<svg
+									aria-hidden="true"
 									className="size-5"
+									focusable="false"
 									xmlns="http://www.w3.org/2000/svg"
 									viewBox="0 0 496 512"
 								>
@@ -71,4 +142,13 @@ export default function EditorHeader() {
 			</nav>
 		</header>
 	);
+}
+
+function toFilename(value: string) {
+	const filename = value
+		.trim()
+		.toLowerCase()
+		.replace(/[^a-z0-9]+/g, "-")
+		.replace(/^-+|-+$/g, "");
+	return filename || "resume";
 }

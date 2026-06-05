@@ -5,10 +5,17 @@ export const personalInfoSchema = z.object({
 	email: z.string().email("Invalid email address").or(z.literal("")),
 	phone: z.string(),
 	location: z.string(),
-	website: z.string(),
+	contactLinks: z.array(
+		z.object({
+			id: z.string(),
+			label: z.string(),
+			url: z.string(),
+		}),
+	),
 });
 
 export type PersonalInfo = z.infer<typeof personalInfoSchema>;
+export type ContactLink = PersonalInfo["contactLinks"][number];
 
 export const sectionSchema = z.object({
 	id: z.string(),
@@ -82,6 +89,7 @@ export type Language = z.infer<typeof languageSchema>;
 
 export const resumeSchema = z.object({
 	personalInfo: personalInfoSchema,
+	summary: z.string().optional().default(""),
 	sections: z.array(sectionSchema),
 	experience: z.array(experienceSchema),
 	education: z.array(educationSchema),

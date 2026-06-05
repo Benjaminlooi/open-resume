@@ -4,6 +4,7 @@ import { useResumeStore } from "#/lib/resume-store";
 export default function ModernTemplate({ resume }: { resume?: EditorState }) {
 	const {
 		personalInfo: globalPersonalInfo,
+		summary: globalSummary,
 		sections: globalSections,
 		experience: globalExperience,
 		education: globalEducation,
@@ -17,6 +18,7 @@ export default function ModernTemplate({ resume }: { resume?: EditorState }) {
 	const globalCertifications = globalCertificationsRaw || [];
 	const globalLanguages = globalLanguagesRaw || [];
 	const personalInfo = resume ? resume.personalInfo : globalPersonalInfo;
+	const summary = resume ? resume.summary : globalSummary;
 	const sections = resume ? resume.sections : globalSections;
 	const experience = resume ? resume.experience : globalExperience;
 	const education = resume ? resume.education : globalEducation;
@@ -26,9 +28,37 @@ export default function ModernTemplate({ resume }: { resume?: EditorState }) {
 		? resume.certifications || []
 		: globalCertifications;
 	const languages = resume ? resume.languages || [] : globalLanguages;
+	const contactItems: Array<{
+		id: string;
+		type: "text" | "link";
+		value: string;
+	}> = [
+		{ id: "email", type: "text" as const, value: personalInfo.email },
+		{ id: "phone", type: "text" as const, value: personalInfo.phone },
+		{ id: "location", type: "text" as const, value: personalInfo.location },
+		...personalInfo.contactLinks.map((link) => ({
+			id: link.id,
+			type: "link" as const,
+			value: link.url,
+		})),
+	].filter((item) => item.value.trim());
 
 	const renderSection = (id: string) => {
 		switch (id) {
+			case "summary":
+				if (!summary) return null;
+				return (
+					<section key={id} className="mb-6">
+						<h2 className="text-xl font-extrabold uppercase text-indigo-700 tracking-wider mb-4 flex items-center gap-4 break-after-avoid">
+							Summary
+							<div className="flex-1 h-px bg-indigo-200"></div>
+						</h2>
+						<SummaryHtml
+							html={summary}
+							className="prose prose-sm max-w-none text-gray-700 prose-resume"
+						/>
+					</section>
+				);
 			case "experience":
 				return (
 					<section key={id} className="mb-6">
@@ -77,7 +107,10 @@ export default function ModernTemplate({ resume }: { resume?: EditorState }) {
 						</h2>
 						<div className="flex flex-col gap-4">
 							{education.map((item) => (
-								<div key={item.id} className="bg-gray-50 rounded-lg p-4 break-inside-avoid">
+								<div
+									key={item.id}
+									className="bg-gray-50 rounded-lg p-4 break-inside-avoid"
+								>
 									<div className="flex justify-between items-baseline mb-1">
 										<h3 className="font-bold text-lg text-gray-900">
 											{item.institution}
@@ -214,7 +247,10 @@ export default function ModernTemplate({ resume }: { resume?: EditorState }) {
 						</h2>
 						<div className="flex flex-wrap gap-4 text-sm">
 							{languages.map((item) => (
-								<div key={item.id} className="flex items-center gap-2 break-inside-avoid">
+								<div
+									key={item.id}
+									className="flex items-center gap-2 break-inside-avoid"
+								>
 									<strong className="text-gray-900">{item.language}</strong>
 									{item.proficiency && (
 										<span className="text-gray-600 bg-gray-100 px-2 py-0.5 rounded-sm">
@@ -238,35 +274,38 @@ export default function ModernTemplate({ resume }: { resume?: EditorState }) {
 					{personalInfo.fullName || "Your Name"}
 				</h1>
 				<div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-2 text-sm text-gray-600 font-medium">
-					{personalInfo.email && (
-						<span className="flex items-center gap-1">
-							{personalInfo.email}
+					{contactItems.map((item, index) => (
+						<span
+							key={item.id}
+							className={`flex items-center gap-1 ${
+								index > 0 ? "border-l pl-4 border-gray-300" : ""
+							}`}
+						>
+							{item.type === "link" ? (
+								<a
+									href={formatContactHref(item.value)}
+									className="text-indigo-600 hover:underline"
+								>
+									{item.value}
+								</a>
+							) : (
+								item.value
+							)}
 						</span>
-					)}
-					{personalInfo.phone && (
-						<span className="flex items-center gap-1 border-l pl-4 border-gray-300">
-							{personalInfo.phone}
-						</span>
-					)}
-					{personalInfo.location && (
-						<span className="flex items-center gap-1 border-l pl-4 border-gray-300">
-							{personalInfo.location}
-						</span>
-					)}
-					{personalInfo.website && (
-						<span className="flex items-center gap-1 border-l pl-4 border-gray-300">
-							<a
-								href={`https://${personalInfo.website.replace(/^https?:\/\//, "")}`}
-								className="text-indigo-600 hover:underline"
-							>
-								{personalInfo.website}
-							</a>
-						</span>
-					)}
+					))}
 				</div>
 			</header>
 
 			{sections.filter((s) => s.visible).map((s) => renderSection(s.id))}
 		</div>
 	);
+}
+
+function formatContactHref(value: string) {
+	return `https://${value.replace(/^https?:\/\//, "")}`;
+}
+
+function SummaryHtml({ html, className }: { html: string; className: string }) {
+	// biome-ignore lint/security/noDangerouslySetInnerHtml: Summary content is generated by the local rich text editor.
+	return <div className={className} dangerouslySetInnerHTML={{ __html: html }} />;
 }
