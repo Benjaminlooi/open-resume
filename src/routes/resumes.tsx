@@ -14,8 +14,13 @@ export const Route = createFileRoute("/resumes")({
 function ResumesDashboard() {
 	const navigate = useNavigate();
 	const importInputRef = useRef<HTMLInputElement>(null);
-	const { resumes, createResumeIndexEntry, deleteResumeIndexEntry } =
-		useResumeIndexStore();
+	const {
+		resumes,
+		defaultResumeId,
+		createResumeIndexEntry,
+		deleteResumeIndexEntry,
+		setDefaultResumeId,
+	} = useResumeIndexStore();
 	const [isModalOpen, setIsModalOpen] = useState(false);
 
 	const handleImportMarkdown = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -76,7 +81,9 @@ function ResumesDashboard() {
 					<ResumeCard
 						key={resume.id}
 						resumeIndex={resume}
+						isDefault={resume.id === defaultResumeId}
 						onDelete={deleteResumeIndexEntry}
+						onSetDefault={setDefaultResumeId}
 					/>
 				))}
 			</div>

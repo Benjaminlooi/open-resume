@@ -10,6 +10,7 @@ export interface ResumeIndexEntry {
 
 interface ResumeIndexState {
 	resumes: ResumeIndexEntry[];
+	defaultResumeId: string | null;
 	createResumeIndexEntry: (
 		id: string,
 		name: string,
@@ -17,14 +18,25 @@ interface ResumeIndexState {
 	) => void;
 	updateResumeIndexModified: (id: string) => void;
 	deleteResumeIndexEntry: (id: string) => void;
+	setDefaultResumeId: (id: string | null) => void;
 }
 
-const getInitialIndexState = (): { resumes: ResumeIndexEntry[] } => {
+const getInitialIndexState = (): {
+	resumes: ResumeIndexEntry[];
+	defaultResumeId: string | null;
+} => {
 	if (typeof window !== "undefined") {
 		const saved = localStorage.getItem("resume-index");
 		if (saved) {
 			try {
-				return JSON.parse(saved) as { resumes: ResumeIndexEntry[] };
+				const parsed = JSON.parse(saved) as {
+					resumes?: ResumeIndexEntry[];
+					defaultResumeId?: string | null;
+				};
+				return {
+					resumes: parsed.resumes ?? [],
+					defaultResumeId: parsed.defaultResumeId ?? null,
+				};
 			} catch (e) {
 				console.error("Failed to parse resume index", e);
 			}
@@ -38,6 +50,7 @@ const getInitialIndexState = (): { resumes: ResumeIndexEntry[] } => {
 				const legacyId = "default";
 				localStorage.setItem(`resume-${legacyId}`, legacySaved);
 				return {
+					defaultResumeId: legacyId,
 					resumes: [
 						{
 							id: legacyId,
@@ -50,7 +63,7 @@ const getInitialIndexState = (): { resumes: ResumeIndexEntry[] } => {
 			} catch (_e) {}
 		}
 	}
-	return { resumes: [] };
+	return { resumes: [], defaultResumeId: null };
 };
 
 export const useResumeIndexStore = create<ResumeIndexState>()(
@@ -76,8 +89,17 @@ export const useResumeIndexStore = create<ResumeIndexState>()(
 					if (typeof window !== "undefined") {
 						localStorage.removeItem(`resume-${id}`);
 					}
-					return { resumes: state.resumes.filter((r) => r.id !== id) };
+					return {
+						resumes: state.resumes.filter((r) => r.id !== id),
+						defaultResumeId:
+							state.defaultResumeId === id ? null : state.defaultResumeId,
+					};
 				}),
+			setDefaultResumeId: (id) =>
+				set((state) => ({
+					defaultResumeId:
+						id && state.resumes.some((resume) => resume.id === id) ? id : null,
+				})),
 		}),
 		{ name: "resume-index-store" },
 	),
@@ -85,7 +107,10 @@ export const useResumeIndexStore = create<ResumeIndexState>()(
 
 if (typeof window !== "undefined") {
 	useResumeIndexStore.subscribe((state) => {
-		const { resumes } = state;
-		localStorage.setItem("resume-index", JSON.stringify({ resumes }));
+		const { resumes, defaultResumeId } = state;
+		localStorage.setItem(
+			"resume-index",
+			JSON.stringify({ resumes, defaultResumeId }),
+		);
 	});
 }

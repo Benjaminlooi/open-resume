@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import {
 	ArrowRight,
 	Bot,
+	BriefcaseBusiness,
 	Check,
 	FileText,
 	LayoutTemplate,
@@ -75,6 +76,9 @@ function LandingPage() {
 						>
 							Workflow
 						</a>
+						<Link className="transition-colors hover:text-[#0EA5E9]" to="/jobs">
+							Jobs
+						</Link>
 					</div>
 					<Button asChild className="cursor-pointer bg-[#F97316]">
 						<Link to="/resumes">
@@ -117,7 +121,10 @@ function LandingPage() {
 								variant="neutral"
 								className="h-12 cursor-pointer border-[#082F49] bg-white px-6 text-base"
 							>
-								<a href="#workflow">See workflow</a>
+								<Link to="/jobs">
+									<BriefcaseBusiness aria-hidden="true" />
+									Track jobs
+								</Link>
 							</Button>
 						</div>
 						<div className="mt-10 grid max-w-xl grid-cols-3 gap-4 border-[#BAE6FD] border-t pt-6">

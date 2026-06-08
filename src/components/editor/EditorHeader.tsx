@@ -1,4 +1,5 @@
-import { Download, FileDown, FileUp, Moon } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { BriefcaseBusiness, Download, FileDown, FileUp, Moon } from "lucide-react";
 import { type ChangeEvent, useRef } from "react";
 import {
 	exportResumeToMarkdown,
@@ -115,6 +116,12 @@ export default function EditorHeader() {
 							<Button onClick={handleDownloadPdf} className="gap-2">
 								<Download className="size-4" />
 								<span className="hidden sm:inline">Download PDF</span>
+							</Button>
+							<Button asChild variant="neutral" className="gap-2">
+								<Link to="/jobs">
+									<BriefcaseBusiness className="size-4" aria-hidden="true" />
+									<span className="hidden sm:inline">Jobs</span>
+								</Link>
 							</Button>
 							<GlobalSettingsModal />
 							<Button>

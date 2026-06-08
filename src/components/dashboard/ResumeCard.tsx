@@ -11,10 +11,17 @@ interface ResumeCardProps {
 		templateId: string;
 		lastModified: number;
 	};
+	isDefault: boolean;
 	onDelete: (id: string) => void;
+	onSetDefault: (id: string) => void;
 }
 
-export default function ResumeCard({ resumeIndex, onDelete }: ResumeCardProps) {
+export default function ResumeCard({
+	resumeIndex,
+	isDefault,
+	onDelete,
+	onSetDefault,
+}: ResumeCardProps) {
 	const [fullResume, setFullResume] = useState<EditorState | null>(null);
 	const [isHovering, setIsHovering] = useState(false);
 	const popoverRef = useRef<HTMLDivElement>(null);
@@ -117,8 +124,13 @@ export default function ResumeCard({ resumeIndex, onDelete }: ResumeCardProps) {
 
 				{/* Bottom Half: Info and Actions */}
 				<div className="p-4 flex flex-col gap-2 bg-white relative z-20 h-[116px]">
-					<div className="font-heading text-lg truncate">
-						{resumeIndex.name}
+					<div className="flex items-center justify-between gap-2">
+						<div className="font-heading text-lg truncate">{resumeIndex.name}</div>
+						{isDefault && (
+							<span className="shrink-0 rounded-base border-2 border-border bg-main px-2 py-0.5 font-bold text-[11px] text-main-foreground">
+								Default
+							</span>
+						)}
 					</div>
 					<div className="text-sm text-muted-foreground">
 						Edited: {new Date(resumeIndex.lastModified).toLocaleDateString()}
@@ -137,6 +149,14 @@ export default function ResumeCard({ resumeIndex, onDelete }: ResumeCardProps) {
 							className="bg-red-200 text-red-900 border-2 border-border rounded-base px-2 py-1 font-bold text-sm hover:translate-x-boxShadowX hover:translate-y-boxShadowY hover:shadow-none transition-all shadow-shadow"
 						>
 							Delete
+						</button>
+						<button
+							type="button"
+							disabled={isDefault}
+							onClick={() => onSetDefault(resumeIndex.id)}
+							className="border-2 border-border rounded-base px-2 py-1 font-bold text-sm shadow-shadow transition-all hover:translate-x-boxShadowX hover:translate-y-boxShadowY hover:shadow-none disabled:cursor-default disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none disabled:hover:translate-x-0 disabled:hover:translate-y-0"
+						>
+							Set default
 						</button>
 					</div>
 				</div>
