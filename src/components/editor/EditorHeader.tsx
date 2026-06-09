@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { Download, FileDown, FileUp, Moon } from "lucide-react";
 import { type ChangeEvent, useRef } from "react";
 import {
@@ -63,12 +64,18 @@ export default function EditorHeader() {
 			<nav className="fixed left-0 top-0 z-20 mx-auto flex h-[70px] w-full items-center border-b-4 border-border bg-secondary-background px-5">
 				<div className="mx-auto flex w-[1300px] text-foreground max-w-full items-center justify-between">
 					<div className="flex items-center xl:gap-10 gap-10">
-						<a
+						<Link
 							className="text-[22px] px-3 rounded-base flex bg-main text-main-foreground border-2 border-black items-center justify-center font-heading"
-							href="/"
+							to="/"
 						>
 							Open Resume
-						</a>
+						</Link>
+						<Link
+							to="/jobs"
+							className="font-bold text-sm hover:underline text-foreground"
+						>
+							My Jobs
+						</Link>
 					</div>
 					<div className="flex items-center gap-4">
 						<Input

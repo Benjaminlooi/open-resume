@@ -75,6 +75,9 @@ function LandingPage() {
 						>
 							Workflow
 						</a>
+						<Link to="/jobs" className="transition-colors hover:text-[#0EA5E9]">
+							Jobs
+						</Link>
 					</div>
 					<Button asChild className="cursor-pointer bg-[#F97316]">
 						<Link to="/resumes">
@@ -285,6 +288,7 @@ function LandingPage() {
 								"Saved resume dashboard",
 								"Modern preview templates",
 								"Interactive AI writing prompts",
+								"Jobs & application tracker",
 							].map((item) => (
 								<li className="flex items-center gap-3" key={item}>
 									<Check className="size-5 text-[#F97316]" aria-hidden="true" />
@@ -292,16 +296,29 @@ function LandingPage() {
 								</li>
 							))}
 						</ul>
-						<Button
-							asChild
-							size="lg"
-							className="mt-6 h-12 w-full cursor-pointer bg-[#F97316] text-base"
-						>
-							<Link to="/resumes">
-								Open dashboard
-								<ArrowRight aria-hidden="true" />
-							</Link>
-						</Button>
+						<div className="mt-6 flex flex-col sm:flex-row gap-3">
+							<Button
+								asChild
+								size="lg"
+								className="flex-1 h-12 cursor-pointer bg-[#F97316] text-base"
+							>
+								<Link to="/resumes">
+									Resumes
+									<ArrowRight aria-hidden="true" />
+								</Link>
+							</Button>
+							<Button
+								asChild
+								size="lg"
+								variant="neutral"
+								className="flex-1 h-12 cursor-pointer border-[#082F49] bg-white text-base"
+							>
+								<Link to="/jobs">
+									Jobs Tracker
+									<ArrowRight aria-hidden="true" />
+								</Link>
+							</Button>
+						</div>
 					</div>
 				</div>
 			</section>
