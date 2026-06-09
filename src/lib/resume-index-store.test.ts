@@ -1,0 +1,173 @@
+import {
+	afterAll,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from "vitest";
+
+describe("resumeIndexStore", () => {
+	let originalWindow: any;
+	let originalLocalStorage: any;
+	const mockStorage: Record<string, string> = {};
+	let useResumeIndexStore: any;
+	let getInitialIndexState: any;
+
+	beforeAll(async () => {
+		originalWindow = globalThis.window;
+		originalLocalStorage = (globalThis as any).localStorage;
+
+		const storageMock = {
+			getItem: vi.fn((key: string) => mockStorage[key] || null),
+			setItem: vi.fn((key: string, value: string) => {
+				mockStorage[key] = value;
+			}),
+			removeItem: vi.fn((key: string) => {
+				delete mockStorage[key];
+			}),
+			clear: vi.fn(() => {
+				for (const key of Object.keys(mockStorage)) {
+					delete mockStorage[key];
+				}
+			}),
+			length: 0,
+			key: vi.fn(),
+		};
+
+		globalThis.window = {
+			localStorage: storageMock,
+		} as any;
+		(globalThis as any).localStorage = storageMock;
+
+		// Dynamically import AFTER global mocks are set up, so ESM hoisting doesn't bypass them
+		const storeModule = await import("./resume-index-store");
+		useResumeIndexStore = storeModule.useResumeIndexStore;
+		getInitialIndexState = storeModule.getInitialIndexState;
+	});
+
+	beforeEach(() => {
+		// Reset mockStorage keys between tests
+		for (const key of Object.keys(mockStorage)) {
+			delete mockStorage[key];
+		}
+
+		// Reset singleton store state manually
+		useResumeIndexStore.setState({
+			resumes: [],
+			defaultResumeId: null,
+		});
+
+		vi.clearAllMocks();
+	});
+
+	afterAll(() => {
+		globalThis.window = originalWindow;
+		(globalThis as any).localStorage = originalLocalStorage;
+		vi.restoreAllMocks();
+	});
+
+	it("initializes with empty resumes and null defaultResumeId by default", () => {
+		const state = useResumeIndexStore.getState();
+		expect(state.resumes).toEqual([]);
+		expect(state.defaultResumeId).toBeNull();
+	});
+
+	it("creates a resume index entry and updates state", () => {
+		useResumeIndexStore
+			.getState()
+			.createResumeIndexEntry("resume-1", "My Resume", "modern");
+
+		const state = useResumeIndexStore.getState();
+		expect(state.resumes).toHaveLength(1);
+		expect(state.resumes[0]).toMatchObject({
+			id: "resume-1",
+			name: "My Resume",
+			templateId: "modern",
+		});
+	});
+
+	it("sets and gets the default resume ID", () => {
+		useResumeIndexStore.getState().setDefaultResumeId("resume-1");
+		expect(useResumeIndexStore.getState().defaultResumeId).toBe("resume-1");
+
+		useResumeIndexStore.getState().setDefaultResumeId(null);
+		expect(useResumeIndexStore.getState().defaultResumeId).toBeNull();
+	});
+
+	it("clears defaultResumeId when the default resume is deleted", () => {
+		useResumeIndexStore
+			.getState()
+			.createResumeIndexEntry("resume-1", "Resume 1", "modern");
+		useResumeIndexStore
+			.getState()
+			.createResumeIndexEntry("resume-2", "Resume 2", "demo");
+
+		useResumeIndexStore.getState().setDefaultResumeId("resume-1");
+		expect(useResumeIndexStore.getState().defaultResumeId).toBe("resume-1");
+
+		// Delete a non-default resume
+		useResumeIndexStore.getState().deleteResumeIndexEntry("resume-2");
+		expect(useResumeIndexStore.getState().defaultResumeId).toBe("resume-1");
+		expect(useResumeIndexStore.getState().resumes).toHaveLength(1);
+
+		// Delete the default resume
+		useResumeIndexStore.getState().deleteResumeIndexEntry("resume-1");
+		expect(useResumeIndexStore.getState().defaultResumeId).toBeNull();
+		expect(useResumeIndexStore.getState().resumes).toHaveLength(0);
+	});
+
+	it("persists resumes and defaultResumeId to localStorage on change", () => {
+		useResumeIndexStore
+			.getState()
+			.createResumeIndexEntry("resume-1", "Resume 1", "modern");
+		useResumeIndexStore.getState().setDefaultResumeId("resume-1");
+
+		const saved = localStorage.getItem("resume-index");
+		expect(saved).not.toBeNull();
+		const parsed = JSON.parse(saved!);
+		expect(parsed.resumes).toHaveLength(1);
+		expect(parsed.resumes[0].id).toBe("resume-1");
+		expect(parsed.defaultResumeId).toBe("resume-1");
+	});
+
+	it("loads initial state from localStorage during module import", () => {
+		// Prepare localStorage with existing state
+		const savedState = {
+			resumes: [
+				{
+					id: "resume-abc",
+					name: "Saved Resume",
+					lastModified: Date.now(),
+					templateId: "modern",
+				},
+			],
+			defaultResumeId: "resume-abc",
+		};
+		mockStorage["resume-index"] = JSON.stringify(savedState);
+		// Delete any index created by store subscriber during beforeEach
+		delete mockStorage["resume-index-builder-state"]; // just in case
+
+		const state = getInitialIndexState();
+		expect(state.resumes).toHaveLength(1);
+		expect(state.resumes[0].id).toBe("resume-abc");
+		expect(state.defaultResumeId).toBe("resume-abc");
+	});
+
+	it("handles legacy migration from resume-builder-state", () => {
+		// Prepare legacy state
+		const legacyState = {
+			templateId: "demo",
+		};
+		mockStorage["resume-builder-state"] = JSON.stringify(legacyState);
+		// Delete the resume-index generated by beforeEach's store.setState
+		delete mockStorage["resume-index"];
+
+		const state = getInitialIndexState();
+		expect(state.resumes).toHaveLength(1);
+		expect(state.resumes[0].id).toBe("default");
+		expect(state.defaultResumeId).toBeNull();
+		expect(mockStorage["resume-default"]).toBe(JSON.stringify(legacyState));
+	});
+});

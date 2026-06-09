@@ -1,7 +1,10 @@
 import { Link } from "@tanstack/react-router";
+import { Star } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useResumeIndexStore } from "#/lib/resume-index-store";
 import { type EditorState, getResumeData } from "#/lib/resume-store";
+import { cn } from "#/lib/utils";
 import ResumeThumbnail from "./ResumeThumbnail";
 
 interface ResumeCardProps {
@@ -18,6 +21,12 @@ export default function ResumeCard({ resumeIndex, onDelete }: ResumeCardProps) {
 	const [fullResume, setFullResume] = useState<EditorState | null>(null);
 	const [isHovering, setIsHovering] = useState(false);
 	const popoverRef = useRef<HTMLDivElement>(null);
+
+	const defaultResumeId = useResumeIndexStore((state) => state.defaultResumeId);
+	const setDefaultResumeId = useResumeIndexStore(
+		(state) => state.setDefaultResumeId,
+	);
+	const isDefault = defaultResumeId === resumeIndex.id;
 
 	useEffect(() => {
 		const data = getResumeData(resumeIndex.id);
@@ -100,6 +109,29 @@ export default function ResumeCard({ resumeIndex, onDelete }: ResumeCardProps) {
 					onMouseEnter={handleMouseEnter}
 					onMouseLeave={handleMouseLeave}
 				>
+					<button
+						type="button"
+						onClick={(e) => {
+							e.stopPropagation();
+							e.preventDefault();
+							setDefaultResumeId(isDefault ? null : resumeIndex.id);
+						}}
+						className={cn(
+							"absolute top-2 right-2 z-30 p-1.5 rounded-full border-2 border-border bg-white text-main hover:scale-110 active:scale-95 transition-all shadow-shadow flex items-center justify-center cursor-pointer",
+							isDefault ? "opacity-100" : "opacity-75 hover:opacity-100",
+						)}
+						title={isDefault ? "Remove default" : "Set as default"}
+					>
+						<Star
+							className={cn(
+								"size-4",
+								isDefault
+									? "fill-yellow-400 text-yellow-500"
+									: "text-muted-foreground",
+							)}
+						/>
+					</button>
+
 					{fullResume ? (
 						<ResumeThumbnail
 							templateId={resumeIndex.templateId}

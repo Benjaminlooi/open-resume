@@ -10,6 +10,8 @@ export interface ResumeIndexEntry {
 
 interface ResumeIndexState {
 	resumes: ResumeIndexEntry[];
+	defaultResumeId: string | null;
+	setDefaultResumeId: (id: string | null) => void;
 	createResumeIndexEntry: (
 		id: string,
 		name: string,
@@ -19,12 +21,19 @@ interface ResumeIndexState {
 	deleteResumeIndexEntry: (id: string) => void;
 }
 
-const getInitialIndexState = (): { resumes: ResumeIndexEntry[] } => {
+export const getInitialIndexState = (): {
+	resumes: ResumeIndexEntry[];
+	defaultResumeId: string | null;
+} => {
 	if (typeof window !== "undefined") {
 		const saved = localStorage.getItem("resume-index");
 		if (saved) {
 			try {
-				return JSON.parse(saved) as { resumes: ResumeIndexEntry[] };
+				const parsed = JSON.parse(saved);
+				return {
+					resumes: parsed.resumes || [],
+					defaultResumeId: parsed.defaultResumeId ?? null,
+				};
 			} catch (e) {
 				console.error("Failed to parse resume index", e);
 			}
@@ -46,17 +55,22 @@ const getInitialIndexState = (): { resumes: ResumeIndexEntry[] } => {
 							templateId: parsedLegacy.templateId || "demo",
 						},
 					],
+					defaultResumeId: null,
 				};
 			} catch (_e) {}
 		}
 	}
-	return { resumes: [] };
+	return { resumes: [], defaultResumeId: null };
 };
 
 export const useResumeIndexStore = create<ResumeIndexState>()(
 	devtools(
 		(set) => ({
 			...getInitialIndexState(),
+			setDefaultResumeId: (id) =>
+				set(() => ({
+					defaultResumeId: id,
+				})),
 			createResumeIndexEntry: (id, name, templateId) => {
 				return set((state) => ({
 					resumes: [
@@ -76,7 +90,11 @@ export const useResumeIndexStore = create<ResumeIndexState>()(
 					if (typeof window !== "undefined") {
 						localStorage.removeItem(`resume-${id}`);
 					}
-					return { resumes: state.resumes.filter((r) => r.id !== id) };
+					return {
+						resumes: state.resumes.filter((r) => r.id !== id),
+						defaultResumeId:
+							state.defaultResumeId === id ? null : state.defaultResumeId,
+					};
 				}),
 		}),
 		{ name: "resume-index-store" },
@@ -85,7 +103,10 @@ export const useResumeIndexStore = create<ResumeIndexState>()(
 
 if (typeof window !== "undefined") {
 	useResumeIndexStore.subscribe((state) => {
-		const { resumes } = state;
-		localStorage.setItem("resume-index", JSON.stringify({ resumes }));
+		const { resumes, defaultResumeId } = state;
+		localStorage.setItem(
+			"resume-index",
+			JSON.stringify({ resumes, defaultResumeId }),
+		);
 	});
 }
