@@ -389,6 +389,9 @@ describe("jobApplicationStore", () => {
 		expect(app.tailoredResume.experience[0].bullets[0]).toBe(
 			"Super awesome bullet 1",
 		);
+		expect(app.tailoredResume.experience[0].description).toBe(
+			"<ul><li>Super awesome bullet 1</li></ul>",
+		);
 		expect(app.tailoredResume.skills[0].items).toBe("TS, JS, Python");
 		expect(app.tailoredResume.projects[0].description).toBe(
 			"Tailored project A description",

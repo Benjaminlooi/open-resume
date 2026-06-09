@@ -224,8 +224,24 @@ export const useJobApplicationStore = create<JobApplicationState>()(
 									) {
 										exp[target.field] = suggestedText;
 									} else if (target.field === "bullet") {
-										if (!exp.bullets) exp.bullets = [];
-										exp.bullets[target.bulletIndex] = suggestedText;
+										let bulletsList: string[] = [];
+										const desc = exp.description || "";
+										const matches = [...desc.matchAll(/<li>(.*?)<\/li>/g)];
+										if (matches.length > 0) {
+											bulletsList = matches.map((m) => m[1]);
+										} else if (desc.trim() !== "") {
+											bulletsList = [desc];
+										}
+
+										while (bulletsList.length <= target.bulletIndex) {
+											bulletsList.push("");
+										}
+										bulletsList[target.bulletIndex] = suggestedText;
+
+										exp.description = `<ul>${bulletsList
+											.map((b) => `<li>${b}</li>`)
+											.join("")}</ul>`;
+										exp.bullets = bulletsList;
 									}
 								}
 							} else if (target.section === "skills") {
