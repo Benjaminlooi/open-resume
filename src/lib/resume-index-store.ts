@@ -46,7 +46,7 @@ export const getInitialIndexState = (): {
 				const parsedLegacy = JSON.parse(legacySaved);
 				const legacyId = "default";
 				localStorage.setItem(`resume-${legacyId}`, legacySaved);
-				return {
+				const initialIndex = {
 					resumes: [
 						{
 							id: legacyId,
@@ -57,6 +57,9 @@ export const getInitialIndexState = (): {
 					],
 					defaultResumeId: null,
 				};
+				localStorage.setItem("resume-index", JSON.stringify(initialIndex));
+				localStorage.removeItem("resume-builder-state");
+				return initialIndex;
 			} catch (_e) {}
 		}
 	}

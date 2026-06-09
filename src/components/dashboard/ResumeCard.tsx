@@ -176,11 +176,12 @@ export default function ResumeCard({ resumeIndex, onDelete }: ResumeCardProps) {
 
 			{/* Hover Popover */}
 			{fullResume &&
+				isHovering &&
 				typeof document !== "undefined" &&
 				createPortal(
 					<div
 						ref={popoverRef}
-						className={`${isHovering ? "block" : "hidden"} fixed top-0 left-0 z-[100] border-2 border-border bg-white shadow-shadow rounded-base overflow-hidden w-[280px] h-[396px] pointer-events-none transition-transform duration-75 ease-out`}
+						className="fixed top-0 left-0 z-[100] border-2 border-border bg-white shadow-shadow rounded-base overflow-hidden w-[280px] h-[396px] pointer-events-none transition-transform duration-75 ease-out"
 					>
 						<ResumeThumbnail
 							templateId={resumeIndex.templateId}

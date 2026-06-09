@@ -169,5 +169,7 @@ describe("resumeIndexStore", () => {
 		expect(state.resumes[0].id).toBe("default");
 		expect(state.defaultResumeId).toBeNull();
 		expect(mockStorage["resume-default"]).toBe(JSON.stringify(legacyState));
+		expect(mockStorage["resume-builder-state"]).toBeUndefined();
+		expect(mockStorage["resume-index"]).toBe(JSON.stringify(state));
 	});
 });

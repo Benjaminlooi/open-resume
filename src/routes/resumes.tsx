@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { FileUp } from "lucide-react";
-import { type ChangeEvent, useRef, useState } from "react";
+import { type ChangeEvent, useEffect, useRef, useState } from "react";
 import ResumeCard from "#/components/dashboard/ResumeCard";
 import NewResumeModal from "#/components/editor/NewResumeModal";
 import { useResumeIndexStore } from "#/lib/resume-index-store";
@@ -17,6 +17,11 @@ function ResumesDashboard() {
 	const { resumes, createResumeIndexEntry, deleteResumeIndexEntry } =
 		useResumeIndexStore();
 	const [isModalOpen, setIsModalOpen] = useState(false);
+	const [isMounted, setIsMounted] = useState(false);
+
+	useEffect(() => {
+		setIsMounted(true);
+	}, []);
 
 	const handleImportMarkdown = async (event: ChangeEvent<HTMLInputElement>) => {
 		const file = event.target.files?.[0];
@@ -72,13 +77,14 @@ function ResumesDashboard() {
 					<div className="font-heading text-xl">New Resume</div>
 				</button>
 
-				{resumes.map((resume) => (
-					<ResumeCard
-						key={resume.id}
-						resumeIndex={resume}
-						onDelete={deleteResumeIndexEntry}
-					/>
-				))}
+				{isMounted &&
+					resumes.map((resume) => (
+						<ResumeCard
+							key={resume.id}
+							resumeIndex={resume}
+							onDelete={deleteResumeIndexEntry}
+						/>
+					))}
 			</div>
 			{isModalOpen && <NewResumeModal onClose={() => setIsModalOpen(false)} />}
 		</main>
