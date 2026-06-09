@@ -25,7 +25,7 @@ export type ResumeEditProposalStatus = z.infer<
 	typeof resumeEditProposalStatusSchema
 >;
 
-export const resumeEditTargetSchema = z.discriminatedUnion("section", [
+export const resumeEditTargetSchema = z.union([
 	z.object({ section: z.literal("summary") }),
 	z.object({
 		section: z.literal("experience"),
