@@ -8,6 +8,7 @@ import {
 	generateJobFitBrief,
 	generateResumeTailoring,
 	getModel,
+	parseBulletsFromDescription,
 	parseCoverLetterDraft,
 	parseJobFitBrief,
 	parseResumeEditProposals,
@@ -42,8 +43,9 @@ const mockResume: Resume = {
 			startDate: "2020",
 			endDate: "2023",
 			location: "SF",
-			bullets: ["Built awesome features", "Improved performance"],
-			description: "Worked on frontend features.",
+			bullets: undefined,
+			description:
+				"Worked on frontend features. <ul><li>Built awesome features</li><li>Improved performance</li></ul>",
 		},
 	],
 	education: [],
@@ -120,6 +122,8 @@ describe("Prompt builders", () => {
 		expect(prompt).toContain("skills-1");
 		expect(prompt).toContain("proj-1");
 		expect(prompt).toContain("proposals");
+		expect(prompt).toContain("Built awesome features");
+		expect(prompt).toContain("Improved performance");
 	});
 
 	it("builds cover letter prompt correctly", () => {
@@ -127,6 +131,29 @@ describe("Prompt builders", () => {
 		expect(prompt).toContain("NextGen Inc");
 		expect(prompt).toContain("Senior React Developer");
 		expect(prompt).toContain("cover letter");
+	});
+});
+
+describe("parseBulletsFromDescription", () => {
+	it("extracts bullets from standard ul/li tags", () => {
+		const html = "<ul><li>Bullet 1</li><li>Bullet 2</li></ul>";
+		const result = parseBulletsFromDescription(html);
+		expect(result).toEqual(["Bullet 1", "Bullet 2"]);
+	});
+
+	it("handles multi-line and attribute nested li tags", () => {
+		const html = `<li class="item">
+			First item
+		</li><li id="two">Second item</li>`;
+		const result = parseBulletsFromDescription(html);
+		expect(result).toEqual(["First item", "Second item"]);
+	});
+
+	it("returns empty array for empty or missing description", () => {
+		expect(parseBulletsFromDescription(undefined)).toEqual([]);
+		expect(parseBulletsFromDescription("Just plain text without li")).toEqual(
+			[],
+		);
 	});
 });
 

@@ -37,6 +37,21 @@ export function cleanJsonString(jsonString: string): string {
 }
 
 /**
+ * Helper to extract bullet items from description HTML (<li> tags).
+ */
+export function parseBulletsFromDescription(description?: string): string[] {
+	if (!description) return [];
+	const bullets: string[] = [];
+	const regex = /<li[^>]*>([\s\S]*?)<\/li>/gi;
+	let match = regex.exec(description);
+	while (match) {
+		bullets.push(match[1].trim());
+		match = regex.exec(description);
+	}
+	return bullets;
+}
+
+/**
  * Prompt-building helper for Job Fit Brief analysis.
  */
 export function buildJobAnalysisPrompt(
@@ -115,13 +130,19 @@ export function buildResumeTailoringPrompt(
 
 	const resumeDetails = {
 		summary: tailoredResume.summary,
-		experience: tailoredResume.experience.map((exp) => ({
-			id: exp.id,
-			company: exp.company,
-			role: exp.role,
-			description: exp.description,
-			bullets: exp.bullets,
-		})),
+		experience: tailoredResume.experience.map((exp) => {
+			const bullets =
+				exp.bullets && exp.bullets.length > 0
+					? exp.bullets
+					: parseBulletsFromDescription(exp.description);
+			return {
+				id: exp.id,
+				company: exp.company,
+				role: exp.role,
+				description: exp.description,
+				bullets,
+			};
+		}),
 		skills: tailoredResume.skills.map((s) => ({
 			id: s.id,
 			category: s.category,
@@ -336,7 +357,10 @@ export function parseResumeEditProposals(
 				);
 			}
 			if (target.field === "bullet") {
-				const bullets = item.bullets ?? [];
+				const bullets =
+					item.bullets && item.bullets.length > 0
+						? item.bullets
+						: parseBulletsFromDescription(item.description);
 				if (target.bulletIndex < 0 || target.bulletIndex >= bullets.length) {
 					throw new Error(
 						`Bullet index ${target.bulletIndex} out of bounds for experience item '${target.itemId}' (total bullets: ${bullets.length}).`,
