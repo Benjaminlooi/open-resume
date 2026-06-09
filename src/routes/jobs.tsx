@@ -3,6 +3,7 @@ import { Briefcase, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import JobApplicationCard from "#/components/jobs/JobApplicationCard";
 import NewJobApplicationModal from "#/components/jobs/NewJobApplicationModal";
+import PipelineIntegrityPanel from "#/components/jobs/PipelineIntegrityPanel";
 import { useJobApplicationStore } from "#/lib/job-application-store";
 
 export const Route = createFileRoute("/jobs")({
@@ -56,6 +57,8 @@ function JobsDashboard() {
 					New Job Application
 				</button>
 			</div>
+
+			{isMounted && <PipelineIntegrityPanel />}
 
 			{/* Filters */}
 			<div className="mb-8 flex flex-wrap gap-2">

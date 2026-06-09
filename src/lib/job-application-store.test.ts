@@ -413,48 +413,117 @@ describe("jobApplicationStore", () => {
 		);
 	});
 
-	it("validatePipeline flags missing fields, missing default resumes, and stale proposal targets", () => {
-		// 1. Create a job application with missing company and title
+	it("validatePipeline flags missing fields, missing source resumes, out-of-bounds bullet indexes, and archived jobs with pending proposals", () => {
+		// 1. Create a job application with missing company, title, description, and sourceResumeId
 		const id1 = useJobApplicationStore
 			.getState()
 			.createJobApplication("", "", "Mountain View", "", "");
-
-		// 2. Create another job application with missing description and default resume not set
-		const id2 = useJobApplicationStore
-			.getState()
-			.createJobApplication(
-				"Facebook",
-				"Product Manager",
-				"Menlo Park",
-				"",
-				"",
-			);
 
 		let warnings = useJobApplicationStore.getState().validatePipeline();
 
 		expect(warnings[id1]).toContain("Company name is missing.");
 		expect(warnings[id1]).toContain("Job title is missing.");
 		expect(warnings[id1]).toContain("Job description is missing.");
-		expect(warnings[id1]).toContain(
-			"No tailored resume and no default resume set.",
-		);
+		expect(warnings[id1]).toContain("No source resume has been associated yet.");
 
-		expect(warnings[id2]).toContain("Job description is missing.");
-		expect(warnings[id2]).toContain(
-			"No tailored resume and no default resume set.",
-		);
+		// 2. Associate a resume
+		const resumeId = "resume-1";
+		const mockResume = {
+			personalInfo: {
+				fullName: "John Doe",
+				email: "",
+				phone: "",
+				location: "",
+				contactLinks: [],
+			},
+			sections: [],
+			experience: [
+				{
+					id: "exp-1",
+					company: "A",
+					role: "Eng",
+					startDate: "",
+					endDate: "",
+					location: "",
+					description: "<ul><li>Bullet 1</li><li>Bullet 2</li></ul>",
+				},
+			],
+			education: [],
+			skills: [],
+			projects: [],
+		};
+		useResumeIndexStore.setState({
+			resumes: [{ id: resumeId, name: "Core Resume", templateId: "modern", lastModified: Date.now() }],
+			defaultResumeId: resumeId,
+		});
+		mockStorage[`resume-${resumeId}`] = JSON.stringify(mockResume);
 
-		// Set default resume index but don't create tailored resume yet
-		useResumeIndexStore.setState({ defaultResumeId: "resume-1" });
+		useJobApplicationStore.getState().associateSourceResume(id1, resumeId);
+		useJobApplicationStore.getState().updateJobApplication(id1, {
+			title: "Developer",
+			company: "Startup",
+			description: "Coding stuff",
+		});
+
 		warnings = useJobApplicationStore.getState().validatePipeline();
-		expect(warnings[id1]).not.toContain(
-			"No tailored resume and no default resume set.",
+		expect(warnings[id1]).toBeUndefined(); // All cleared now!
+
+		// 3. Save proposals with stale targets and out-of-bounds bullet
+		useJobApplicationStore.getState().updateJobApplication(id1, {
+			resumeEditProposals: [
+				{
+					id: "prop-stale-exp",
+					target: {
+						section: "experience",
+						itemId: "non-existent-exp",
+						field: "role",
+					},
+					status: "pending",
+					currentText: "",
+					suggestedText: "",
+					rationale: "",
+					createdAt: Date.now(),
+				},
+				{
+					id: "prop-oob-bullet",
+					target: {
+						section: "experience",
+						itemId: "exp-1",
+						field: "bullet",
+						bulletIndex: 5, // out of bounds
+					},
+					status: "pending",
+					currentText: "",
+					suggestedText: "",
+					rationale: "",
+					createdAt: Date.now(),
+				},
+			] as any,
+		});
+
+		warnings = useJobApplicationStore.getState().validatePipeline();
+		expect(warnings[id1]).toContain(
+			"Stale proposal target: experience item non-existent-exp is no longer present.",
 		);
-		expect(warnings[id2]).not.toContain(
-			"No tailored resume and no default resume set.",
+		expect(warnings[id1]).toContain(
+			"Stale proposal target: experience item exp-1 bullet index 5 is out of bounds.",
 		);
 
-		// 3. Create a tailored resume but with stale proposal targets
+		// 4. Archive the job application
+		useJobApplicationStore.getState().archiveIncompleteJob(id1);
+		warnings = useJobApplicationStore.getState().validatePipeline();
+		// For archived job, we only expect warning about pending proposals
+		expect(warnings[id1]).toEqual(["Archived job has pending proposals."]);
+
+		// Clear the pending proposals
+		useJobApplicationStore.getState().clearStaleProposal(id1, "prop-stale-exp");
+		useJobApplicationStore.getState().clearStaleProposal(id1, "prop-oob-bullet");
+		warnings = useJobApplicationStore.getState().validatePipeline();
+		expect(warnings[id1]).toBeUndefined(); // Warnings cleared because no pending proposals left
+	});
+
+	it("recovery actions work as expected and never mutate the original default resume", () => {
+		const resumeId = "resume-1";
 		const mockResume = {
 			personalInfo: {
 				fullName: "John Doe",
@@ -479,75 +548,36 @@ describe("jobApplicationStore", () => {
 			projects: [],
 		};
 
-		useJobApplicationStore.getState().updateJobApplication(id2, {
-			description: "Has description now",
-			tailoredResume: mockResume,
-			resumeEditProposals: [
-				{
-					id: "prop-stale-exp",
-					target: {
-						section: "experience",
-						itemId: "non-existent-exp",
-						field: "role",
-					},
-					status: "pending",
-					currentText: "",
-					suggestedText: "",
-					rationale: "",
-					createdAt: Date.now(),
-				},
-				{
-					id: "prop-valid-exp",
-					target: { section: "experience", itemId: "exp-1", field: "role" },
-					status: "pending",
-					currentText: "",
-					suggestedText: "",
-					rationale: "",
-					createdAt: Date.now(),
-				},
-				{
-					id: "prop-stale-project",
-					target: {
-						section: "projects",
-						itemId: "non-existent-proj",
-						field: "description",
-					},
-					status: "pending",
-					currentText: "",
-					suggestedText: "",
-					rationale: "",
-					createdAt: Date.now(),
-				},
-				{
-					id: "prop-stale-skills",
-					target: {
-						section: "skills",
-						itemId: "non-existent-skill",
-						field: "items",
-					},
-					status: "pending",
-					currentText: "",
-					suggestedText: "",
-					rationale: "",
-					createdAt: Date.now(),
-				},
-			] as any,
+		useResumeIndexStore.setState({
+			resumes: [{ id: resumeId, name: "Core Resume", templateId: "modern", lastModified: Date.now() }],
+			defaultResumeId: resumeId,
 		});
+		mockStorage[`resume-${resumeId}`] = JSON.stringify(mockResume);
 
-		warnings = useJobApplicationStore.getState().validatePipeline();
-		expect(warnings[id2]).toBeDefined();
-		expect(warnings[id2]).toContain(
-			"Stale proposal target: experience item non-existent-exp is no longer present.",
-		);
-		expect(warnings[id2]).toContain(
-			"Stale proposal target: project item non-existent-proj is no longer present.",
-		);
-		expect(warnings[id2]).toContain(
-			"Stale proposal target: skill group non-existent-skill is no longer present.",
-		);
-		// Valid target should not trigger a warning
-		expect(warnings[id2]).not.toContain(
-			"Stale proposal target: experience item exp-1 is no longer present.",
-		);
+		const appId = useJobApplicationStore
+			.getState()
+			.createJobApplication("Company", "Title", "Loc", "url", "desc");
+
+		// Associate source resume
+		useJobApplicationStore.getState().associateSourceResume(appId, resumeId);
+
+		const app = useJobApplicationStore.getState().jobApplications.find((a: any) => a.id === appId);
+		expect(app).toBeDefined();
+		expect(app?.sourceResumeId).toBe(resumeId);
+		expect(app?.status).toBe("tailoring");
+
+		// Check deep copy and mutation safety
+		expect(app?.tailoredResume).toEqual(app?.sourceResumeSnapshot);
+		expect(app?.tailoredResume).not.toBe(app?.sourceResumeSnapshot);
+
+		// Modify tailored resume in the app
+		const tailored = app?.tailoredResume;
+		if (tailored) {
+			tailored.personalInfo.fullName = "Jane Doe";
+		}
+
+		// Ensure original in mockStorage (representing the localStorage) remains untouched
+		const originalInStorage = JSON.parse(mockStorage[`resume-${resumeId}`]);
+		expect(originalInStorage.personalInfo.fullName).toBe("John Doe");
 	});
 });

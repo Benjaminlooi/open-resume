@@ -36,6 +36,9 @@ export interface JobApplicationState {
 		coverLetterDraft: CoverLetterDraft,
 	) => void;
 	validatePipeline: () => Record<string, string[]>;
+	clearStaleProposal: (appId: string, proposalId: string) => void;
+	associateSourceResume: (appId: string, resumeId: string) => void;
+	archiveIncompleteJob: (appId: string) => void;
 }
 
 const getInitialState = (): { jobApplications: JobApplication[] } => {
@@ -297,11 +300,18 @@ export const useJobApplicationStore = create<JobApplicationState>()(
 
 			validatePipeline: () => {
 				const { jobApplications } = get();
-				const defaultResumeId = useResumeIndexStore.getState().defaultResumeId;
 				const warnings: Record<string, string[]> = {};
 
 				for (const app of jobApplications) {
-					if (app.status === "archived") continue;
+					if (app.status === "archived") {
+						const hasPendingProposals = app.resumeEditProposals?.some(
+							(p) => p.status === "pending",
+						);
+						if (hasPendingProposals) {
+							warnings[app.id] = ["Archived job has pending proposals."];
+						}
+						continue;
+					}
 
 					const appWarnings: string[] = [];
 
@@ -314,21 +324,36 @@ export const useJobApplicationStore = create<JobApplicationState>()(
 					if (!app.company || app.company.trim() === "") {
 						appWarnings.push("Company name is missing.");
 					}
-					if (!app.tailoredResume && !defaultResumeId) {
-						appWarnings.push("No tailored resume and no default resume set.");
+					if (app.sourceResumeId === null) {
+						appWarnings.push("No source resume has been associated yet.");
 					}
 
 					if (app.tailoredResume) {
 						for (const prop of app.resumeEditProposals) {
 							const { target } = prop;
 							if (target.section === "experience") {
-								const exists = app.tailoredResume.experience?.some(
+								const exists = app.tailoredResume.experience?.find(
 									(item) => item.id === target.itemId,
 								);
 								if (!exists) {
 									appWarnings.push(
 										`Stale proposal target: experience item ${target.itemId} is no longer present.`,
 									);
+								} else if (target.field === "bullet") {
+									let bulletsList: string[] = [];
+									const desc = exists.description || "";
+									const matches = [...desc.matchAll(/<li>(.*?)<\/li>/g)];
+									if (matches.length > 0) {
+										bulletsList = matches.map((m) => m[1]);
+									} else if (desc.trim() !== "") {
+										bulletsList = [desc];
+									}
+									const idx = target.bulletIndex;
+									if (idx === undefined || idx < 0 || idx >= bulletsList.length) {
+										appWarnings.push(
+											`Stale proposal target: experience item ${target.itemId} bullet index ${idx} is out of bounds.`,
+										);
+									}
 								}
 							} else if (target.section === "skills") {
 								const exists = app.tailoredResume.skills?.some(
@@ -359,6 +384,72 @@ export const useJobApplicationStore = create<JobApplicationState>()(
 
 				return warnings;
 			},
+
+			clearStaleProposal: (appId, proposalId) =>
+				set((state) => ({
+					jobApplications: state.jobApplications.map((app) =>
+						app.id === appId
+							? {
+									...app,
+									resumeEditProposals: app.resumeEditProposals.filter(
+										(p) => p.id !== proposalId,
+									),
+									updatedAt: Date.now(),
+								}
+							: app,
+					),
+				})),
+
+			associateSourceResume: (appId, resumeId) => {
+				const app = get().jobApplications.find((a) => a.id === appId);
+				if (!app) return;
+
+				const resume = getResumeData(resumeId);
+				if (!resume) return;
+
+				const indexState = useResumeIndexStore.getState();
+				const resumeIndexEntry = indexState.resumes.find(
+					(r) => r.id === resumeId,
+				);
+				const sourceResumeName = resumeIndexEntry
+					? resumeIndexEntry.name
+					: resume.name || "Selected Resume";
+
+				const {
+					id: _id,
+					name: _name,
+					activeSection: _activeSection,
+					templateId: _templateId,
+					...sourceResumeSnapshot
+				} = resume;
+
+				const tailoredResume = JSON.parse(JSON.stringify(sourceResumeSnapshot));
+
+				set((state) => ({
+					jobApplications: state.jobApplications.map((a) =>
+						a.id === appId
+							? {
+									...a,
+									sourceResumeId: resumeId,
+									sourceResumeName,
+									sourceResumeSnapshot,
+									tailoredResume,
+									status: "tailoring",
+									updatedAt: Date.now(),
+								}
+							: a,
+					),
+				}));
+			},
+
+			archiveIncompleteJob: (appId) =>
+				set((state) => ({
+					jobApplications: state.jobApplications.map((app) =>
+						app.id === appId
+							? { ...app, status: "archived", updatedAt: Date.now() }
+							: app,
+					),
+				})),
 		}),
 		{ name: "job-application-store" },
 	),
