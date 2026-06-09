@@ -1,0 +1,550 @@
+import {
+	afterAll,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from "vitest";
+
+describe("jobApplicationStore", () => {
+	let originalWindow: any;
+	let originalLocalStorage: any;
+	const mockStorage: Record<string, string> = {};
+	let useJobApplicationStore: any;
+	let useResumeIndexStore: any;
+
+	beforeAll(async () => {
+		originalWindow = globalThis.window;
+		originalLocalStorage = (globalThis as any).localStorage;
+
+		const storageMock = {
+			getItem: vi.fn((key: string) => mockStorage[key] || null),
+			setItem: vi.fn((key: string, value: string) => {
+				mockStorage[key] = value;
+			}),
+			removeItem: vi.fn((key: string) => {
+				delete mockStorage[key];
+			}),
+			clear: vi.fn(() => {
+				for (const key of Object.keys(mockStorage)) {
+					delete mockStorage[key];
+				}
+			}),
+			length: 0,
+			key: vi.fn(),
+		};
+
+		globalThis.window = {
+			localStorage: storageMock,
+		} as any;
+		(globalThis as any).localStorage = storageMock;
+
+		// Dynamically import AFTER global mocks are set up, so ESM hoisting doesn't bypass them
+		const indexStoreModule = await import("./resume-index-store");
+		useResumeIndexStore = indexStoreModule.useResumeIndexStore;
+
+		await import("./resume-store");
+
+		const jobStoreModule = await import("./job-application-store");
+		useJobApplicationStore = jobStoreModule.useJobApplicationStore;
+	});
+
+	beforeEach(() => {
+		// Reset mockStorage keys between tests
+		for (const key of Object.keys(mockStorage)) {
+			delete mockStorage[key];
+		}
+
+		// Reset singleton stores state manually
+		useResumeIndexStore.setState({
+			resumes: [],
+			defaultResumeId: null,
+		});
+
+		useJobApplicationStore.setState({
+			jobApplications: [],
+		});
+
+		vi.clearAllMocks();
+	});
+
+	afterAll(() => {
+		globalThis.window = originalWindow;
+		(globalThis as any).localStorage = originalLocalStorage;
+		vi.restoreAllMocks();
+	});
+
+	it("adds, updates, and deletes a job application", () => {
+		// Add application
+		const id = useJobApplicationStore
+			.getState()
+			.createJobApplication(
+				"Google",
+				"Software Engineer",
+				"Mountain View",
+				"https://google.com/jobs",
+				"Job description text",
+			);
+
+		expect(id).toBeDefined();
+		expect(typeof id).toBe("string");
+
+		let state = useJobApplicationStore.getState();
+		expect(state.jobApplications).toHaveLength(1);
+		expect(state.jobApplications[0]).toMatchObject({
+			id,
+			company: "Google",
+			title: "Software Engineer",
+			location: "Mountain View",
+			sourceUrl: "https://google.com/jobs",
+			description: "Job description text",
+			status: "saved",
+		});
+
+		// Update application
+		useJobApplicationStore.getState().updateJobApplication(id, {
+			notes: "First round interview scheduled",
+		});
+
+		state = useJobApplicationStore.getState();
+		expect(state.jobApplications[0].notes).toBe(
+			"First round interview scheduled",
+		);
+
+		// Set status
+		useJobApplicationStore.getState().setStatus(id, "interviewing");
+		state = useJobApplicationStore.getState();
+		expect(state.jobApplications[0].status).toBe("interviewing");
+
+		// Delete application
+		useJobApplicationStore.getState().deleteJobApplication(id);
+		state = useJobApplicationStore.getState();
+		expect(state.jobApplications).toHaveLength(0);
+	});
+
+	it("ensureTailoredResume copies the default resume snapshot", () => {
+		const resumeId = "resume-1";
+		const mockResume = {
+			personalInfo: {
+				fullName: "John Doe",
+				email: "john@example.com",
+				phone: "123456",
+				location: "New York",
+				contactLinks: [],
+			},
+			summary: "Experienced engineer.",
+			sections: [
+				{ id: "summary", name: "Summary", visible: true },
+				{ id: "experience", name: "Experience", visible: true },
+			],
+			experience: [
+				{
+					id: "exp-1",
+					company: "Company A",
+					role: "Software Engineer",
+					startDate: "2020",
+					endDate: "2022",
+					location: "NY",
+					bullets: ["Bullet 1"],
+					description: "My role.",
+				},
+			],
+			education: [],
+			skills: [{ id: "skill-1", category: "Languages", items: "TS, JS" }],
+			projects: [
+				{
+					id: "proj-1",
+					name: "Project A",
+					url: "http://a.com",
+					date: "2021",
+					description: "Proj A desc",
+				},
+			],
+			certifications: [],
+			languages: [],
+		};
+
+		// 1. Setup default resume in index store and localStorage
+		useResumeIndexStore.setState({
+			resumes: [
+				{
+					id: resumeId,
+					name: "My Core Resume",
+					templateId: "modern",
+					lastModified: Date.now(),
+				},
+			],
+			defaultResumeId: resumeId,
+		});
+		mockStorage[`resume-${resumeId}`] = JSON.stringify(mockResume);
+
+		// 2. Create job application
+		const id = useJobApplicationStore
+			.getState()
+			.createJobApplication(
+				"Google",
+				"Software Engineer",
+				"Mountain View",
+				"https://google.com/jobs",
+				"Job description text",
+			);
+
+		// 3. Call ensureTailoredResume
+		useJobApplicationStore.getState().ensureTailoredResume(id);
+
+		// 4. Verify copies are stored and status updated
+		const app = useJobApplicationStore
+			.getState()
+			.jobApplications.find((a: any) => a.id === id);
+		expect(app).toBeDefined();
+		expect(app.sourceResumeId).toBe(resumeId);
+		expect(app.sourceResumeName).toBe("My Core Resume");
+		expect(app.status).toBe("tailoring");
+
+		// Extracting the resume snapshot should match the migrated mockResume
+		const expectedMigratedResume = {
+			...mockResume,
+			experience: [
+				{
+					...mockResume.experience[0],
+					description: "<ul><li>Bullet 1</li></ul>",
+				},
+			],
+		};
+		delete (expectedMigratedResume.experience[0] as any).bullets;
+
+		expect(app.sourceResumeSnapshot).toEqual(expectedMigratedResume);
+		expect(app.tailoredResume).toEqual(expectedMigratedResume);
+
+		// Ensure it is a deep copy, not reference identical
+		expect(app.tailoredResume).not.toBe(app.sourceResumeSnapshot);
+	});
+
+	it("applyResumeEditProposal correctly applies edits to tailoredResume and leaves source resume intact", () => {
+		const resumeId = "resume-1";
+		const mockResume = {
+			personalInfo: {
+				fullName: "John Doe",
+				email: "john@example.com",
+				phone: "123456",
+				location: "New York",
+				contactLinks: [],
+			},
+			summary: "Experienced engineer.",
+			sections: [
+				{ id: "summary", name: "Summary", visible: true },
+				{ id: "experience", name: "Experience", visible: true },
+			],
+			experience: [
+				{
+					id: "exp-1",
+					company: "Company A",
+					role: "Software Engineer",
+					startDate: "2020",
+					endDate: "2022",
+					location: "NY",
+					bullets: ["Bullet 1"],
+					description: "My role.",
+				},
+			],
+			education: [],
+			skills: [{ id: "skill-1", category: "Languages", items: "TS, JS" }],
+			projects: [
+				{
+					id: "proj-1",
+					name: "Project A",
+					url: "http://a.com",
+					date: "2021",
+					description: "Proj A desc",
+				},
+			],
+			certifications: [],
+			languages: [],
+		};
+
+		useResumeIndexStore.setState({
+			resumes: [
+				{
+					id: resumeId,
+					name: "My Core Resume",
+					templateId: "modern",
+					lastModified: Date.now(),
+				},
+			],
+			defaultResumeId: resumeId,
+		});
+		mockStorage[`resume-${resumeId}`] = JSON.stringify(mockResume);
+
+		const id = useJobApplicationStore
+			.getState()
+			.createJobApplication(
+				"Google",
+				"Software Engineer",
+				"Mountain View",
+				"https://google.com/jobs",
+				"Job description",
+			);
+
+		useJobApplicationStore.getState().ensureTailoredResume(id);
+
+		// Save edit proposals
+		const proposals = [
+			{
+				id: "prop-1",
+				target: { section: "summary" },
+				currentText: "Experienced engineer.",
+				suggestedText: "Highly experienced software developer.",
+				rationale: "Tailored to job description.",
+				status: "pending",
+				createdAt: Date.now(),
+			},
+			{
+				id: "prop-2",
+				target: {
+					section: "experience",
+					itemId: "exp-1",
+					field: "role",
+				},
+				currentText: "Software Engineer",
+				suggestedText: "Lead Software Engineer",
+				rationale: "Highlight leadership.",
+				status: "pending",
+				createdAt: Date.now(),
+			},
+			{
+				id: "prop-3",
+				target: {
+					section: "experience",
+					itemId: "exp-1",
+					field: "bullet",
+					bulletIndex: 0,
+				},
+				currentText: "Bullet 1",
+				suggestedText: "Super awesome bullet 1",
+				rationale: "Better impact wording.",
+				status: "pending",
+				createdAt: Date.now(),
+			},
+			{
+				id: "prop-4",
+				target: {
+					section: "skills",
+					itemId: "skill-1",
+					field: "items",
+				},
+				currentText: "TS, JS",
+				suggestedText: "TS, JS, Python",
+				rationale: "Match job requirements.",
+				status: "pending",
+				createdAt: Date.now(),
+			},
+			{
+				id: "prop-5",
+				target: {
+					section: "projects",
+					itemId: "proj-1",
+					field: "description",
+				},
+				currentText: "Proj A desc",
+				suggestedText: "Tailored project A description",
+				rationale: "More relevance.",
+				status: "pending",
+				createdAt: Date.now(),
+			},
+		];
+
+		useJobApplicationStore
+			.getState()
+			.saveResumeEditProposals(id, proposals as any);
+
+		// Apply proposal 1 (summary)
+		useJobApplicationStore.getState().applyResumeEditProposal(id, "prop-1");
+
+		// Apply proposal 2 (experience role)
+		useJobApplicationStore.getState().applyResumeEditProposal(id, "prop-2");
+
+		// Apply proposal 3 (experience bullet)
+		useJobApplicationStore.getState().applyResumeEditProposal(id, "prop-3");
+
+		// Apply proposal 4 (skills items)
+		useJobApplicationStore.getState().applyResumeEditProposal(id, "prop-4");
+
+		// Apply proposal 5 (project description)
+		useJobApplicationStore.getState().applyResumeEditProposal(id, "prop-5");
+
+		const app = useJobApplicationStore
+			.getState()
+			.jobApplications.find((a: any) => a.id === id);
+		expect(app).toBeDefined();
+
+		// Verify updates in tailoredResume
+		expect(app.tailoredResume.summary).toBe(
+			"Highly experienced software developer.",
+		);
+		expect(app.tailoredResume.experience[0].role).toBe(
+			"Lead Software Engineer",
+		);
+		expect(app.tailoredResume.experience[0].bullets[0]).toBe(
+			"Super awesome bullet 1",
+		);
+		expect(app.tailoredResume.skills[0].items).toBe("TS, JS, Python");
+		expect(app.tailoredResume.projects[0].description).toBe(
+			"Tailored project A description",
+		);
+
+		// Verify status of applied proposals
+		expect(app.resumeEditProposals[0].status).toBe("applied");
+		expect(app.resumeEditProposals[0].appliedAt).toBeDefined();
+
+		// Verify original sourceResumeSnapshot remains unchanged!
+		expect(app.sourceResumeSnapshot.summary).toBe("Experienced engineer.");
+		expect(app.sourceResumeSnapshot.experience[0].role).toBe(
+			"Software Engineer",
+		);
+		expect(app.sourceResumeSnapshot.experience[0].bullets).toBeUndefined();
+		expect(app.sourceResumeSnapshot.skills[0].items).toBe("TS, JS");
+		expect(app.sourceResumeSnapshot.projects[0].description).toBe(
+			"Proj A desc",
+		);
+	});
+
+	it("validatePipeline flags missing fields, missing default resumes, and stale proposal targets", () => {
+		// 1. Create a job application with missing company and title
+		const id1 = useJobApplicationStore
+			.getState()
+			.createJobApplication("", "", "Mountain View", "", "");
+
+		// 2. Create another job application with missing description and default resume not set
+		const id2 = useJobApplicationStore
+			.getState()
+			.createJobApplication(
+				"Facebook",
+				"Product Manager",
+				"Menlo Park",
+				"",
+				"",
+			);
+
+		let warnings = useJobApplicationStore.getState().validatePipeline();
+
+		expect(warnings[id1]).toContain("Company name is missing.");
+		expect(warnings[id1]).toContain("Job title is missing.");
+		expect(warnings[id1]).toContain("Job description is missing.");
+		expect(warnings[id1]).toContain(
+			"No tailored resume and no default resume set.",
+		);
+
+		expect(warnings[id2]).toContain("Job description is missing.");
+		expect(warnings[id2]).toContain(
+			"No tailored resume and no default resume set.",
+		);
+
+		// Set default resume index but don't create tailored resume yet
+		useResumeIndexStore.setState({ defaultResumeId: "resume-1" });
+		warnings = useJobApplicationStore.getState().validatePipeline();
+		expect(warnings[id1]).not.toContain(
+			"No tailored resume and no default resume set.",
+		);
+		expect(warnings[id2]).not.toContain(
+			"No tailored resume and no default resume set.",
+		);
+
+		// 3. Create a tailored resume but with stale proposal targets
+		const mockResume = {
+			personalInfo: {
+				fullName: "John Doe",
+				email: "",
+				phone: "",
+				location: "",
+				contactLinks: [],
+			},
+			sections: [],
+			experience: [
+				{
+					id: "exp-1",
+					company: "A",
+					role: "Eng",
+					startDate: "",
+					endDate: "",
+					location: "",
+				},
+			],
+			education: [],
+			skills: [],
+			projects: [],
+		};
+
+		useJobApplicationStore.getState().updateJobApplication(id2, {
+			description: "Has description now",
+			tailoredResume: mockResume,
+			resumeEditProposals: [
+				{
+					id: "prop-stale-exp",
+					target: {
+						section: "experience",
+						itemId: "non-existent-exp",
+						field: "role",
+					},
+					status: "pending",
+					currentText: "",
+					suggestedText: "",
+					rationale: "",
+					createdAt: Date.now(),
+				},
+				{
+					id: "prop-valid-exp",
+					target: { section: "experience", itemId: "exp-1", field: "role" },
+					status: "pending",
+					currentText: "",
+					suggestedText: "",
+					rationale: "",
+					createdAt: Date.now(),
+				},
+				{
+					id: "prop-stale-project",
+					target: {
+						section: "projects",
+						itemId: "non-existent-proj",
+						field: "description",
+					},
+					status: "pending",
+					currentText: "",
+					suggestedText: "",
+					rationale: "",
+					createdAt: Date.now(),
+				},
+				{
+					id: "prop-stale-skills",
+					target: {
+						section: "skills",
+						itemId: "non-existent-skill",
+						field: "items",
+					},
+					status: "pending",
+					currentText: "",
+					suggestedText: "",
+					rationale: "",
+					createdAt: Date.now(),
+				},
+			] as any,
+		});
+
+		warnings = useJobApplicationStore.getState().validatePipeline();
+		expect(warnings[id2]).toBeDefined();
+		expect(warnings[id2]).toContain(
+			"Stale proposal target: experience item non-existent-exp is no longer present.",
+		);
+		expect(warnings[id2]).toContain(
+			"Stale proposal target: project item non-existent-proj is no longer present.",
+		);
+		expect(warnings[id2]).toContain(
+			"Stale proposal target: skill group non-existent-skill is no longer present.",
+		);
+		// Valid target should not trigger a warning
+		expect(warnings[id2]).not.toContain(
+			"Stale proposal target: experience item exp-1 is no longer present.",
+		);
+	});
+});

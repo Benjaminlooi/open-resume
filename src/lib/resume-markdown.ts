@@ -469,10 +469,8 @@ function markdownToHtml(markdown: string): string {
 
 function markdownInlineToHtml(value: string): string {
 	return escapeHtml(value)
-		.replace(
-			/\[([^\]]+)\]\(((?:[^()]|\([^)]*\))+)\)/g,
-			(_match, label, url) =>
-				isSafeLinkUrl(url) ? `<a href="${url}">${label}</a>` : label,
+		.replace(/\[([^\]]+)\]\(((?:[^()]|\([^)]*\))+)\)/g, (_match, label, url) =>
+			isSafeLinkUrl(url) ? `<a href="${url}">${label}</a>` : label,
 		)
 		.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
 		.replace(/\*([^*]+)\*/g, "<em>$1</em>");

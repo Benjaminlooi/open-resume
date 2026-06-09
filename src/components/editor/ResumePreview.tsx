@@ -28,13 +28,15 @@ export default function ResumePreview() {
 		const containerRect = container.getBoundingClientRect();
 
 		// Convert NodeList to array and sort by vertical position to ensure correct processing
-		const sortedElements = Array.from(elements).map((el) => {
-			const rect = el.getBoundingClientRect();
-			return {
-				top: rect.top - containerRect.top,
-				bottom: rect.bottom - containerRect.top,
-			};
-		}).sort((a, b) => a.top - b.top);
+		const sortedElements = Array.from(elements)
+			.map((el) => {
+				const rect = el.getBoundingClientRect();
+				return {
+					top: rect.top - containerRect.top,
+					bottom: rect.bottom - containerRect.top,
+				};
+			})
+			.sort((a, b) => a.top - b.top);
 
 		for (const el of sortedElements) {
 			if (el.bottom > currentBreakTarget) {

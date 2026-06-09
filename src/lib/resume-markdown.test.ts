@@ -275,7 +275,7 @@ See [profile](javascript:alert(1)), [website](https://example.com), [email](mail
 `);
 
 		expect(parsed.resume.summary).not.toContain("javascript:");
-		expect(parsed.resume.summary).not.toContain("<a href=\"javascript:");
+		expect(parsed.resume.summary).not.toContain('<a href="javascript:');
 		expect(parsed.resume.summary).toContain("See profile,");
 		expect(parsed.resume.summary).toContain(
 			'<a href="https://example.com">website</a>',
