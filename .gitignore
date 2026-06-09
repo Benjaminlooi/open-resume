@@ -22,3 +22,5 @@ routeTree.gen.ts
 # Python cache
 __pycache__/
 *.pyc
+
+.worktrees/
