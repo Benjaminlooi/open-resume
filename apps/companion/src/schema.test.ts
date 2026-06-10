@@ -1,11 +1,33 @@
 import { describe, expect, it } from "vitest";
-import { ZodError } from "zod";
+import { z, ZodError } from "zod";
 import {
 	extractJobRequestSchema,
+	healthResponseSchema,
 	jobExtractionResultSchema,
 } from "./schema.js";
 
 describe("companion schema", () => {
+	it("accepts a valid health response", () => {
+		const parsed = healthResponseSchema.parse({
+			ok: true,
+			service: "companion",
+		});
+
+		expect(parsed).toEqual({
+			ok: true,
+			service: "companion",
+		});
+	});
+
+	it("rejects invalid health responses", () => {
+		expect(() =>
+			healthResponseSchema.parse({
+				ok: "true",
+				service: "companion",
+			}),
+		).toThrow(ZodError);
+	});
+
 	it("accepts a valid extraction request", () => {
 		const parsed = extractJobRequestSchema.parse({
 			url: "https://example.com/jobs/123",
@@ -39,5 +61,17 @@ describe("companion schema", () => {
 		});
 
 		expect(parsed.extractionMethod).toBe("json-ld");
+	});
+
+	it("registers named API schemas", () => {
+		expect(z.globalRegistry.get(healthResponseSchema)?.id).toBe(
+			"HealthResponse",
+		);
+		expect(z.globalRegistry.get(extractJobRequestSchema)?.id).toBe(
+			"ExtractJobRequest",
+		);
+		expect(z.globalRegistry.get(jobExtractionResultSchema)?.id).toBe(
+			"JobExtractionResult",
+		);
 	});
 });
