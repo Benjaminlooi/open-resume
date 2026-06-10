@@ -24,16 +24,17 @@ A modern, fast, and highly customizable resume builder application. Built with c
 ## 📁 Project Structure
 
 ```text
-src/
-├── routes/        # File-based routing via TanStack Router
-├── lib/
-│   ├── resume-store.ts     # Core Zustand store for resume data
-│   ├── settings-store.ts   # Zustand store for app settings
-│   └── resume-schema.ts    # Zod schema for resume validation
-├── components/
-│   ├── editor/             # Complex form components for resume editing
-│   ├── dashboard/          # Components for managing saved resumes
-│   └── ui/                 # Shared Shadcn UI components
+apps/
+├── web/                    # TanStack Start browser app
+│   └── src/
+│       ├── routes/         # File-based routing via TanStack Router
+│       ├── lib/            # Stores, schemas, AI helpers, companion client
+│       └── components/     # Editor, dashboard, jobs, and shared UI
+└── companion/              # Optional local Node companion backend
+    └── src/
+        ├── extract/        # Job page extraction helpers
+        ├── server.ts       # Fastify app factory
+        └── index.ts        # Local daemon entrypoint
 ```
 
 ## 💻 Getting Started
@@ -57,10 +58,38 @@ Make sure you have [Node.js](https://nodejs.org/) installed along with [`pnpm`](
 
 ### Development Workflow
 
-Start the Vite development server on `http://localhost:3000`:
+Start the web app and local companion together:
 ```bash
 pnpm dev
 ```
+
+The web app runs on `http://localhost:3000`. The local companion runs on `http://127.0.0.1:47321`.
+
+Run only the web app:
+```bash
+pnpm web:dev
+```
+
+Run only the local companion:
+```bash
+pnpm companion:dev
+```
+
+### Local Companion
+
+Open Resume can use the optional local companion service to extract job details from pasted job URLs.
+
+Check that the companion is running:
+```bash
+curl http://127.0.0.1:47321/health
+```
+
+Expected response:
+```json
+{"ok":true,"service":"open-resume-companion"}
+```
+
+Open `http://localhost:3000/jobs`, create a job application, paste a job URL, and click **Fetch details**. If the companion is not running, the app keeps working with manual job description paste.
 
 ### Build & Preview
 
@@ -78,14 +107,19 @@ pnpm preview
 
 | Command | Description |
 |---|---|
-| `pnpm dev` | Starts the Vite development server. |
-| `pnpm build` | Builds the application for production. |
-| `pnpm preview` | Starts a local server to preview the production build. |
-| `pnpm test` | Runs tests using Vitest. |
+| `pnpm dev` | Starts the web app and local companion together. |
+| `pnpm web:dev` | Starts only the web app. |
+| `pnpm companion:dev` | Starts only the local companion. |
+| `pnpm build` | Builds workspace apps for production. |
+| `pnpm web:build` | Builds only the web app. |
+| `pnpm companion:build` | Builds only the local companion. |
+| `pnpm preview` | Starts a local server to preview the web production build. |
+| `pnpm test` | Runs workspace tests using Vitest. |
+| `pnpm typecheck` | Runs TypeScript checks across workspace apps. |
 | `pnpm format` | Formats code using Biome. |
 | `pnpm lint` | Lints code using Biome. |
 | `pnpm check` | Runs both lint and format checks via Biome. |
-| `pnpm cf-typegen`| Generates TypeScript types for Cloudflare Workers using Wrangler. |
+| `pnpm cf-typegen` | Generates TypeScript types for Cloudflare Workers using Wrangler. |
 | `pnpm deploy` | Builds the app and deploys it to Cloudflare Workers via Wrangler. |
 
 ## 🌐 Deployment
@@ -98,4 +132,4 @@ To deploy to your Cloudflare account, run:
 pnpm deploy
 ```
 
-Ensure your `wrangler.jsonc` is properly configured and you are authenticated via the Wrangler CLI (`pnpm wrangler login`).
+Ensure `apps/web/wrangler.jsonc` is properly configured and you are authenticated via the Wrangler CLI (`pnpm --filter @open-resume/web wrangler login`).
