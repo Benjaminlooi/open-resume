@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { ZodError } from "zod";
 import {
 	extractJobRequestSchema,
 	jobExtractionResultSchema,
@@ -16,7 +17,13 @@ describe("companion schema", () => {
 	it("rejects non-http URLs", () => {
 		expect(() =>
 			extractJobRequestSchema.parse({ url: "file:///etc/passwd" }),
-		).toThrow();
+		).toThrow(ZodError);
+	});
+
+	it("rejects completely invalid URLs like 'string'", () => {
+		expect(() =>
+			extractJobRequestSchema.parse({ url: "string" }),
+		).toThrow(ZodError);
 	});
 
 	it("accepts a normalized extraction result", () => {

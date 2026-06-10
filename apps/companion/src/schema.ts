@@ -4,8 +4,12 @@ const httpUrlSchema = z
 	.string()
 	.url()
 	.refine((value) => {
-		const url = new URL(value);
-		return url.protocol === "http:" || url.protocol === "https:";
+		try {
+			const url = new URL(value);
+			return url.protocol === "http:" || url.protocol === "https:";
+		} catch {
+			return false;
+		}
 	}, "URL must use http or https");
 
 export const extractJobRequestSchema = z.object({

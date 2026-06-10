@@ -44,6 +44,20 @@ describe("companion server", () => {
 		});
 	});
 
+	it("rejects completely invalid URLs with 400 bad request", async () => {
+		const server = createServer();
+		const response = await server.inject({
+			method: "POST",
+			url: "/extract-job",
+			payload: { url: "string" },
+		});
+
+		expect(response.statusCode).toBe(400);
+		expect(response.json()).toMatchObject({
+			error: "Invalid extraction request",
+		});
+	});
+
 	it("logs request details when logging is enabled", async () => {
 		let logOutput = "";
 		const server = createServer({

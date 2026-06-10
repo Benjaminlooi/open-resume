@@ -3,7 +3,7 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"dev": "node --env-file-if-exists=.env --import tsx src/index.ts",
+		"dev": "node --watch --env-file-if-exists=.env --import tsx src/index.ts",
 		"start": "node --env-file-if-exists=.env dist/index.js",
 		"openapi": "node --import tsx src/export-openapi.ts",
 		"openapi:lint": "redocly lint openapi.json",
