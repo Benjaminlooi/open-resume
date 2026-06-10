@@ -4,6 +4,7 @@ import { extractReadableText } from "./extract/html.js";
 import { extractJobPostingJsonLd } from "./extract/json-ld.js";
 import { normalizeExtraction } from "./extract/normalize.js";
 import { extractWithPlaywright } from "./extract/playwright.js";
+import { registerOpenApi } from "./openapi.js";
 import { extractJobRequestSchema } from "./schema.js";
 
 interface LogStream {
@@ -21,7 +22,8 @@ function isScrapedDataLoggingEnabled(value: string | undefined): boolean {
 }
 
 function createLoggerOptions(options: CreateServerOptions) {
-	const logLevel = options.logLevel ?? process.env.OPEN_RESUME_COMPANION_LOG_LEVEL;
+	const logLevel =
+		options.logLevel ?? process.env.OPEN_RESUME_COMPANION_LOG_LEVEL;
 
 	if (!logLevel || logLevel === "silent") {
 		return false;
@@ -52,111 +54,161 @@ export function createServer(options: CreateServerOptions = {}) {
 		logger: createLoggerOptions(options),
 	});
 
+	registerOpenApi(server);
+
 	server.register(cors, {
 		origin: [/^http:\/\/localhost:\d+$/, /^http:\/\/127\.0\.0\.1:\d+$/],
 	});
 
-	server.get("/health", async () => ({
-		ok: true,
-		service: "open-resume-companion",
-	}));
-
-	server.post("/extract-job", async (request, reply) => {
-		const parsed = extractJobRequestSchema.safeParse(request.body);
-
-		if (!parsed.success) {
-			request.log.warn({ details: parsed.error.message }, "invalid extraction request");
-			return reply.status(400).send({
-				error: "Invalid extraction request",
-				details: parsed.error.message,
-			});
-		}
-
-		request.log.info({ url: parsed.data.url }, "extract job started");
-		const response = await fetch(parsed.data.url, {
-			headers: {
-				"user-agent":
-					"OpenResumeCompanion/0.1 (+https://github.com/Benjaminlooi/resume-builder)",
-				accept: "text/html,application/xhtml+xml",
-			},
-		});
-		request.log.debug(
+	server.after(() => {
+		server.get(
+			"/health",
 			{
-				status: response.status,
-				contentType: response.headers.get("content-type"),
+				schema: {
+					operationId: "getHealth",
+					tags: ["System"],
+					summary: "Check companion health",
+					response: {
+						200: { $ref: "HealthResponse#" },
+					},
+				},
 			},
-			"fetched job URL",
+			async () => ({
+				ok: true,
+				service: "open-resume-companion",
+			}),
 		);
 
-		if (!response.ok) {
-			request.log.info(
-				{ status: response.status },
-				"falling back to playwright after fetch failure",
-			);
-			const result = await extractWithPlaywright(parsed.data.url, {
-				logger: request.log,
-				logScrapedData,
-			});
-			request.log.info(
-				{
-					method: result.extractionMethod,
-					descriptionLength: result.description.length,
-				},
-				"extracted job details",
-			);
-			return reply.send(result);
-		}
-
-		const html = await response.text();
-		const rawText = extractReadableText(html);
-		const structured = extractJobPostingJsonLd(html);
-		if (logScrapedData) {
-			request.log.debug(
-				{ url: parsed.data.url, rawText, structured },
-				"scraped data before normalization",
-			);
-		}
-		const result = normalizeExtraction({
-			sourceUrl: parsed.data.url,
-			rawText,
-			method: structured ? "json-ld" : "readability",
-			structured,
-		});
-		if (logScrapedData) {
-			request.log.debug(
-				{ url: parsed.data.url, result },
-				"scraped data after normalization",
-			);
-		}
-
-		if (!result.description || result.description.length < 160) {
-			request.log.info(
-				{ descriptionLength: result.description.length },
-				"falling back to playwright after short extraction",
-			);
-			const playwrightResult = await extractWithPlaywright(parsed.data.url, {
-				logger: request.log,
-				logScrapedData,
-			});
-			request.log.info(
-				{
-					method: playwrightResult.extractionMethod,
-					descriptionLength: playwrightResult.description.length,
-				},
-				"extracted job details",
-			);
-			return reply.send(playwrightResult);
-		}
-
-		request.log.info(
+		server.get(
+			"/openapi.json",
 			{
-				method: result.extractionMethod,
-				descriptionLength: result.description.length,
-				hasStructuredData: Boolean(structured),
+				schema: {
+					hide: true,
+				},
 			},
-			"extracted job details",
+			async () => server.swagger(),
 		);
-		return reply.send(result);
+
+		server.post(
+			"/extract-job",
+			{
+				schema: {
+					operationId: "extractJob",
+					tags: ["Extraction"],
+					summary: "Extract job details from a URL",
+					body: { $ref: "ExtractJobRequest#" },
+					response: {
+						200: { $ref: "JobExtractionResult#" },
+						400: { $ref: "CompanionErrorResponse#" },
+						500: { $ref: "CompanionErrorResponse#" },
+						502: { $ref: "CompanionErrorResponse#" },
+					},
+				},
+			},
+			async (request, reply) => {
+				const parsed = extractJobRequestSchema.safeParse(request.body);
+
+				if (!parsed.success) {
+					request.log.warn(
+						{ details: parsed.error.message },
+						"invalid extraction request",
+					);
+					return reply.status(400).send({
+						error: "Invalid extraction request",
+						details: parsed.error.message,
+					});
+				}
+
+				request.log.info({ url: parsed.data.url }, "extract job started");
+				const response = await fetch(parsed.data.url, {
+					headers: {
+						"user-agent":
+							"OpenResumeCompanion/0.1 (+https://github.com/Benjaminlooi/resume-builder)",
+						accept: "text/html,application/xhtml+xml",
+					},
+				});
+				request.log.debug(
+					{
+						status: response.status,
+						contentType: response.headers.get("content-type"),
+					},
+					"fetched job URL",
+				);
+
+				if (!response.ok) {
+					request.log.info(
+						{ status: response.status },
+						"falling back to playwright after fetch failure",
+					);
+					const result = await extractWithPlaywright(parsed.data.url, {
+						logger: request.log,
+						logScrapedData,
+					});
+					request.log.info(
+						{
+							method: result.extractionMethod,
+							descriptionLength: result.description.length,
+						},
+						"extracted job details",
+					);
+					return reply.send(result);
+				}
+
+				const html = await response.text();
+				const rawText = extractReadableText(html);
+				const structured = extractJobPostingJsonLd(html);
+				if (logScrapedData) {
+					request.log.debug(
+						{ url: parsed.data.url, rawText, structured },
+						"scraped data before normalization",
+					);
+				}
+				const result = normalizeExtraction({
+					sourceUrl: parsed.data.url,
+					rawText,
+					method: structured ? "json-ld" : "readability",
+					structured,
+				});
+				if (logScrapedData) {
+					request.log.debug(
+						{ url: parsed.data.url, result },
+						"scraped data after normalization",
+					);
+				}
+
+				if (!result.description || result.description.length < 160) {
+					request.log.info(
+						{ descriptionLength: result.description.length },
+						"falling back to playwright after short extraction",
+					);
+					const playwrightResult = await extractWithPlaywright(
+						parsed.data.url,
+						{
+							logger: request.log,
+							logScrapedData,
+						},
+					);
+					request.log.info(
+						{
+							method: playwrightResult.extractionMethod,
+							descriptionLength: playwrightResult.description.length,
+						},
+						"extracted job details",
+					);
+					return reply.send(playwrightResult);
+				}
+
+				request.log.info(
+					{
+						method: result.extractionMethod,
+						descriptionLength: result.description.length,
+						hasStructuredData: Boolean(structured),
+					},
+					"extracted job details",
+				);
+				return reply.send(result);
+			},
+		);
 	});
 
 	return server;

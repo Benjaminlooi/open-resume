@@ -133,4 +133,45 @@ describe("companion server", () => {
 			]),
 		);
 	});
+
+	it("serves an OpenAPI document with companion route contracts", async () => {
+		const server = createServer();
+		const response = await server.inject({
+			method: "GET",
+			url: "/openapi.json",
+		});
+
+		expect(response.statusCode).toBe(200);
+		const document = response.json();
+		expect(document.openapi).toBe("3.0.3");
+		expect(document.info).toMatchObject({
+			title: "Open Resume Companion API",
+			version: "0.1.0",
+		});
+		expect(document.paths["/health"].get).toMatchObject({
+			operationId: "getHealth",
+			tags: ["System"],
+		});
+		expect(document.paths["/extract-job"].post).toMatchObject({
+			operationId: "extractJob",
+			tags: ["Extraction"],
+		});
+		expect(document.components.schemas).toMatchObject({
+			ExtractJobRequest: expect.any(Object),
+			JobExtractionResult: expect.any(Object),
+			CompanionErrorResponse: expect.any(Object),
+			HealthResponse: expect.any(Object),
+		});
+		expect(document.paths["/openapi.json"]).toBeUndefined();
+	});
+
+	it("serves Swagger UI for manual API exploration", async () => {
+		const server = createServer();
+		const response = await server.inject({
+			method: "GET",
+			url: "/docs",
+		});
+
+		expect([200, 301, 302]).toContain(response.statusCode);
+	});
 });
