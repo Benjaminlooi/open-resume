@@ -212,6 +212,19 @@ describe("companion server", () => {
 			CompanionErrorResponse: expect.any(Object),
 			HealthResponse: expect.any(Object),
 		});
+		expect(
+			document.components.schemas.ExtractJobRequest.properties.url,
+		).toMatchObject({
+			type: "string",
+			format: "uri",
+			description: "HTTP or HTTPS job posting URL to extract.",
+		});
+		expect(
+			document.components.schemas.JobExtractionResult.properties.extractedAt,
+		).toMatchObject({
+			type: "number",
+			description: "Unix timestamp in milliseconds.",
+		});
 		expect(document.paths["/openapi.json"]).toBeUndefined();
 	});
 

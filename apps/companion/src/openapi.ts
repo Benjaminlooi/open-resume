@@ -1,79 +1,17 @@
 import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
 import type { FastifyInstance } from "fastify";
-
-const httpUrlSchema = {
-	type: "string",
-	format: "uri",
-} as const;
+import {
+	jsonSchemaTransform,
+	jsonSchemaTransformObject,
+	serializerCompiler,
+	validatorCompiler,
+} from "fastify-type-provider-zod";
+import "./schema.js";
 
 export function registerOpenApi(server: FastifyInstance) {
-	server.addSchema({
-		$id: "HealthResponse",
-		type: "object",
-		properties: {
-			ok: { type: "boolean" },
-			service: { type: "string" },
-		},
-		required: ["ok", "service"],
-		additionalProperties: false,
-	});
-
-	server.addSchema({
-		$id: "ExtractJobRequest",
-		type: "object",
-		properties: {
-			url: {
-				type: "string",
-				description: "HTTP or HTTPS job posting URL to extract.",
-			},
-		},
-		required: ["url"],
-		additionalProperties: false,
-	});
-
-	server.addSchema({
-		$id: "JobExtractionResult",
-		type: "object",
-		properties: {
-			sourceUrl: httpUrlSchema,
-			title: { type: "string" },
-			company: { type: "string" },
-			location: { type: "string" },
-			description: { type: "string" },
-			rawText: { type: "string" },
-			extractionMethod: {
-				type: "string",
-				enum: ["json-ld", "readability", "playwright"],
-			},
-			extractedAt: {
-				type: "number",
-				description: "Unix timestamp in milliseconds.",
-			},
-		},
-		required: [
-			"sourceUrl",
-			"title",
-			"company",
-			"location",
-			"description",
-			"rawText",
-			"extractionMethod",
-			"extractedAt",
-		],
-		additionalProperties: false,
-	});
-
-	server.addSchema({
-		$id: "CompanionErrorResponse",
-		type: "object",
-		properties: {
-			error: { type: "string" },
-			details: { type: "string" },
-		},
-		required: ["error"],
-		additionalProperties: false,
-	});
+	server.setValidatorCompiler(validatorCompiler);
+	server.setSerializerCompiler(serializerCompiler);
 
 	server.register(swagger, {
 		openapi: {
@@ -92,11 +30,8 @@ export function registerOpenApi(server: FastifyInstance) {
 				},
 			],
 		},
-		refResolver: {
-			buildLocalReference(json, _baseUri, _fragment, index) {
-				return json.$id?.toString() ?? `def-${index}`;
-			},
-		},
+		transform: jsonSchemaTransform,
+		transformObject: jsonSchemaTransformObject,
 	});
 
 	server.register(swaggerUi, {
