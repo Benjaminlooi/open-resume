@@ -36,8 +36,28 @@ describe("job repository", () => {
 			sourceUrl: "https://example.com/one",
 			crawlStatus: "pending",
 			cleanedText: "",
+			createdAt: 1000,
+			updatedAt: 1000,
 		});
 		expect(repository.listJobs()).toEqual([second, first]);
+	});
+
+	it("lists jobs by update time", () => {
+		const repository = createTestRepository();
+		repository.createJob({
+			id: "job-1",
+			sourceUrl: "https://example.com/one",
+			now: 1000,
+		});
+		repository.createJob({
+			id: "job-2",
+			sourceUrl: "https://example.com/two",
+			now: 2000,
+		});
+
+		repository.markFailed("job-1", { error: "Blocked", now: 3000 });
+
+		expect(repository.listJobs()[0]?.id).toBe("job-1");
 	});
 
 	it("updates crawl success and failure state", () => {
