@@ -1,7 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { extractWithPlaywright } from "./extract/playwright.js";
 import { createServer } from "./server.js";
 
-const originalFetch = globalThis.fetch;
+vi.mock("./extract/playwright.js", () => ({
+	extractWithPlaywright: vi.fn(),
+}));
 
 function parseJsonLogs(output: string) {
 	return output
@@ -12,8 +15,8 @@ function parseJsonLogs(output: string) {
 
 describe("companion server", () => {
 	afterEach(() => {
-		globalThis.fetch = originalFetch;
 		vi.restoreAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it("responds to health checks", async () => {
@@ -90,23 +93,33 @@ describe("companion server", () => {
 		);
 	});
 
-	it("logs scraped data before and after normalization when enabled", async () => {
+	it("extracts job details via playwright and logs scraped data when enabled", async () => {
 		let logOutput = "";
-		globalThis.fetch = vi.fn().mockResolvedValue(
-			new Response(
-				[
-					"<html><body>",
-					"<h1>Senior Engineer</h1>",
-					"<p>Acme Inc</p>",
-					"<p>Build reliable hiring systems with observability and care. Lead backend improvements, improve job ingestion quality, and help teams understand whether scraped content is complete enough for tailoring workflows.</p>",
-					"</body></html>",
-				].join(""),
-				{
-					status: 200,
-					headers: { "content-type": "text/html" },
-				},
-			),
+		const mockResult = {
+			sourceUrl: "https://example.com/jobs/1",
+			title: "Senior Engineer",
+			company: "Acme Inc",
+			location: "",
+			description: "Build reliable hiring systems...",
+			rawText: "Build reliable hiring systems...",
+			extractionMethod: "playwright" as const,
+			extractedAt: Date.now(),
+		};
+
+		vi.mocked(extractWithPlaywright).mockImplementationOnce(
+			async (url, options) => {
+				options?.logger?.debug(
+					{ url, rawText: mockResult.rawText, structured: null },
+					"scraped data before normalization",
+				);
+				options?.logger?.debug(
+					{ url, result: mockResult },
+					"scraped data after normalization",
+				);
+				return mockResult;
+			},
 		);
+
 		const server = createServer({
 			logLevel: "debug",
 			logScrapedData: true,
@@ -124,14 +137,19 @@ describe("companion server", () => {
 		});
 
 		expect(response.statusCode).toBe(200);
+		expect(response.json()).toEqual(mockResult);
+		expect(extractWithPlaywright).toHaveBeenCalledWith(
+			"https://example.com/jobs/1",
+			expect.any(Object),
+		);
+
 		const logs = parseJsonLogs(logOutput);
 		expect(logs).toEqual(
 			expect.arrayContaining([
 				expect.objectContaining({
 					level: 20,
 					msg: "scraped data before normalization",
-					rawText:
-						"Senior Engineer Acme Inc Build reliable hiring systems with observability and care. Lead backend improvements, improve job ingestion quality, and help teams understand whether scraped content is complete enough for tailoring workflows.",
+					rawText: "Build reliable hiring systems...",
 					structured: null,
 				}),
 				expect.objectContaining({
@@ -139,13 +157,31 @@ describe("companion server", () => {
 					msg: "scraped data after normalization",
 					result: expect.objectContaining({
 						sourceUrl: "https://example.com/jobs/1",
-						description:
-							"Senior Engineer Acme Inc Build reliable hiring systems with observability and care. Lead backend improvements, improve job ingestion quality, and help teams understand whether scraped content is complete enough for tailoring workflows.",
-						extractionMethod: "readability",
+						description: "Build reliable hiring systems...",
+						extractionMethod: "playwright",
 					}),
 				}),
 			]),
 		);
+	});
+
+	it("returns 502 Bad Gateway when playwright extraction throws an error", async () => {
+		vi.mocked(extractWithPlaywright).mockRejectedValueOnce(
+			new Error("Playwright crashed"),
+		);
+
+		const server = createServer();
+		const response = await server.inject({
+			method: "POST",
+			url: "/extract-job",
+			payload: { url: "https://example.com/jobs/fail" },
+		});
+
+		expect(response.statusCode).toBe(502);
+		expect(response.json()).toEqual({
+			error: "Failed to extract job details",
+			details: "Playwright crashed",
+		});
 	});
 
 	it("serves an OpenAPI document with companion route contracts", async () => {

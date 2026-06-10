@@ -21,9 +21,9 @@ describe("companion schema", () => {
 	});
 
 	it("rejects completely invalid URLs like 'string'", () => {
-		expect(() =>
-			extractJobRequestSchema.parse({ url: "string" }),
-		).toThrow(ZodError);
+		expect(() => extractJobRequestSchema.parse({ url: "string" })).toThrow(
+			ZodError,
+		);
 	});
 
 	it("accepts a normalized extraction result", () => {

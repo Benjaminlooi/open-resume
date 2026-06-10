@@ -58,8 +58,23 @@ export async function extractWithPlaywright(
 			waitUntil: "domcontentloaded",
 			timeout: 30000,
 		});
-		await page.waitForLoadState("networkidle", { timeout: 10000 }).catch(() => {});
-		const html = await page.content();
+		await page
+			.waitForLoadState("networkidle", { timeout: 10000 })
+			.catch(() => {});
+		let html = await page.content();
+
+		// Append content of child frames (e.g., Ashby, Greenhouse, Lever iframes)
+		for (const frame of page.frames()) {
+			if (frame !== page.mainFrame()) {
+				try {
+					const frameContent = await frame.content();
+					html += `\n<!-- FRAME: ${frame.url()} -->\n${frameContent}`;
+				} catch {
+					// Ignore frames that we cannot access or read
+				}
+			}
+		}
+
 		return normalizePlaywrightExtraction({
 			sourceUrl,
 			html,

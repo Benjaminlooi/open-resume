@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 
 const specUrl = new URL("../openapi.json", import.meta.url);
 const spec = JSON.parse(readFileSync(specUrl, "utf8"));

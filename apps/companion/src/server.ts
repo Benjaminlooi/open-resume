@@ -1,8 +1,5 @@
 import cors from "@fastify/cors";
 import Fastify from "fastify";
-import { extractReadableText } from "./extract/html.js";
-import { extractJobPostingJsonLd } from "./extract/json-ld.js";
-import { normalizeExtraction } from "./extract/normalize.js";
 import { extractWithPlaywright } from "./extract/playwright.js";
 import { registerOpenApi } from "./openapi.js";
 import { extractJobRequestSchema } from "./schema.js";
@@ -120,26 +117,7 @@ export function createServer(options: CreateServerOptions = {}) {
 				}
 
 				request.log.info({ url: parsed.data.url }, "extract job started");
-				const response = await fetch(parsed.data.url, {
-					headers: {
-						"user-agent":
-							"OpenResumeCompanion/0.1 (+https://github.com/Benjaminlooi/resume-builder)",
-						accept: "text/html,application/xhtml+xml",
-					},
-				});
-				request.log.debug(
-					{
-						status: response.status,
-						contentType: response.headers.get("content-type"),
-					},
-					"fetched job URL",
-				);
-
-				if (!response.ok) {
-					request.log.info(
-						{ status: response.status },
-						"falling back to playwright after fetch failure",
-					);
+				try {
 					const result = await extractWithPlaywright(parsed.data.url, {
 						logger: request.log,
 						logScrapedData,
@@ -152,61 +130,17 @@ export function createServer(options: CreateServerOptions = {}) {
 						"extracted job details",
 					);
 					return reply.send(result);
+				} catch (err) {
+					const errorMessage = err instanceof Error ? err.message : String(err);
+					request.log.error(
+						{ url: parsed.data.url, error: errorMessage },
+						"failed to extract job with playwright",
+					);
+					return reply.status(502).send({
+						error: "Failed to extract job details",
+						details: errorMessage,
+					});
 				}
-
-				const html = await response.text();
-				const rawText = extractReadableText(html);
-				const structured = extractJobPostingJsonLd(html);
-				if (logScrapedData) {
-					request.log.debug(
-						{ url: parsed.data.url, rawText, structured },
-						"scraped data before normalization",
-					);
-				}
-				const result = normalizeExtraction({
-					sourceUrl: parsed.data.url,
-					rawText,
-					method: structured ? "json-ld" : "readability",
-					structured,
-				});
-				if (logScrapedData) {
-					request.log.debug(
-						{ url: parsed.data.url, result },
-						"scraped data after normalization",
-					);
-				}
-
-				if (!result.description || result.description.length < 160) {
-					request.log.info(
-						{ descriptionLength: result.description.length },
-						"falling back to playwright after short extraction",
-					);
-					const playwrightResult = await extractWithPlaywright(
-						parsed.data.url,
-						{
-							logger: request.log,
-							logScrapedData,
-						},
-					);
-					request.log.info(
-						{
-							method: playwrightResult.extractionMethod,
-							descriptionLength: playwrightResult.description.length,
-						},
-						"extracted job details",
-					);
-					return reply.send(playwrightResult);
-				}
-
-				request.log.info(
-					{
-						method: result.extractionMethod,
-						descriptionLength: result.description.length,
-						hasStructuredData: Boolean(structured),
-					},
-					"extracted job details",
-				);
-				return reply.send(result);
 			},
 		);
 	});

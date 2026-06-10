@@ -86,7 +86,10 @@ function stringValue(value: unknown): string {
 }
 
 function stripHtml(value: string): string {
-	return value.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+	return value
+		.replace(/<[^>]+>/g, " ")
+		.replace(/\s+/g, " ")
+		.trim();
 }
 
 function decodeHtmlEntities(value: string): string {
