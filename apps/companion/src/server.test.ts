@@ -45,6 +45,7 @@ describe("companion server", () => {
 		expect(response.json()).toMatchObject({
 			error: "Invalid extraction request",
 		});
+		expect(extractWithPlaywright).not.toHaveBeenCalled();
 	});
 
 	it("rejects completely invalid URLs with 400 bad request", async () => {
@@ -59,6 +60,26 @@ describe("companion server", () => {
 		expect(response.json()).toMatchObject({
 			error: "Invalid extraction request",
 		});
+		expect(extractWithPlaywright).not.toHaveBeenCalled();
+	});
+
+	it("rejects malformed JSON extraction requests without serialization errors", async () => {
+		const server = createServer();
+		const response = await server.inject({
+			method: "POST",
+			url: "/extract-job",
+			headers: {
+				"content-type": "application/json",
+			},
+			payload: '{ "url":',
+		});
+
+		expect(response.statusCode).toBe(400);
+		expect(response.json()).toMatchObject({
+			error: expect.any(String),
+		});
+		expect(response.body).not.toContain("FST_ERR_FAILED_ERROR_SERIALIZATION");
+		expect(extractWithPlaywright).not.toHaveBeenCalled();
 	});
 
 	it("logs request details when logging is enabled", async () => {

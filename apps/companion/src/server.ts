@@ -1,8 +1,16 @@
 import cors from "@fastify/cors";
 import Fastify from "fastify";
+import type { FastifyError } from "fastify";
+import type { ZodTypeProvider } from "fastify-type-provider-zod";
+import { hasZodFastifySchemaValidationErrors } from "fastify-type-provider-zod";
 import { extractWithPlaywright } from "./extract/playwright.js";
 import { registerOpenApi } from "./openapi.js";
-import { extractJobRequestSchema } from "./schema.js";
+import {
+	companionErrorResponseSchema,
+	extractJobRequestSchema,
+	healthResponseSchema,
+	jobExtractionResultSchema,
+} from "./schema.js";
 
 interface LogStream {
 	write(message: string): void;
@@ -50,15 +58,38 @@ export function createServer(options: CreateServerOptions = {}) {
 	const server = Fastify({
 		logger: createLoggerOptions(options),
 	});
+	const typedServer = server.withTypeProvider<ZodTypeProvider>();
 
 	registerOpenApi(server);
+
+	server.setErrorHandler((err: FastifyError, request, reply) => {
+		if (hasZodFastifySchemaValidationErrors(err)) {
+			request.log.warn(
+				{ details: JSON.stringify(err.validation) },
+				"invalid extraction request",
+			);
+			return reply.status(400).send({
+				error: "Invalid extraction request",
+				details: JSON.stringify(err.validation),
+			});
+		}
+
+		const statusCode =
+			typeof err.statusCode === "number" && err.statusCode >= 400
+				? err.statusCode
+				: 500;
+
+		return reply.status(statusCode).send({
+			error: err.message || "Internal server error",
+		});
+	});
 
 	server.register(cors, {
 		origin: [/^http:\/\/localhost:\d+$/, /^http:\/\/127\.0\.0\.1:\d+$/],
 	});
 
 	server.after(() => {
-		server.get(
+		typedServer.get(
 			"/health",
 			{
 				schema: {
@@ -66,7 +97,7 @@ export function createServer(options: CreateServerOptions = {}) {
 					tags: ["System"],
 					summary: "Check companion health",
 					response: {
-						200: { $ref: "HealthResponse#" },
+						200: healthResponseSchema,
 					},
 				},
 			},
@@ -76,7 +107,7 @@ export function createServer(options: CreateServerOptions = {}) {
 			}),
 		);
 
-		server.get(
+		typedServer.get(
 			"/openapi.json",
 			{
 				schema: {
@@ -86,39 +117,26 @@ export function createServer(options: CreateServerOptions = {}) {
 			async () => server.swagger(),
 		);
 
-		server.post(
+		typedServer.post(
 			"/extract-job",
 			{
 				schema: {
 					operationId: "extractJob",
 					tags: ["Extraction"],
 					summary: "Extract job details from a URL",
-					body: { $ref: "ExtractJobRequest#" },
+					body: extractJobRequestSchema,
 					response: {
-						200: { $ref: "JobExtractionResult#" },
-						400: { $ref: "CompanionErrorResponse#" },
-						500: { $ref: "CompanionErrorResponse#" },
-						502: { $ref: "CompanionErrorResponse#" },
+						200: jobExtractionResultSchema,
+						400: companionErrorResponseSchema,
+						500: companionErrorResponseSchema,
+						502: companionErrorResponseSchema,
 					},
 				},
 			},
 			async (request, reply) => {
-				const parsed = extractJobRequestSchema.safeParse(request.body);
-
-				if (!parsed.success) {
-					request.log.warn(
-						{ details: parsed.error.message },
-						"invalid extraction request",
-					);
-					return reply.status(400).send({
-						error: "Invalid extraction request",
-						details: parsed.error.message,
-					});
-				}
-
-				request.log.info({ url: parsed.data.url }, "extract job started");
+				request.log.info({ url: request.body.url }, "extract job started");
 				try {
-					const result = await extractWithPlaywright(parsed.data.url, {
+					const result = await extractWithPlaywright(request.body.url, {
 						logger: request.log,
 						logScrapedData,
 					});
@@ -133,7 +151,7 @@ export function createServer(options: CreateServerOptions = {}) {
 				} catch (err) {
 					const errorMessage = err instanceof Error ? err.message : String(err);
 					request.log.error(
-						{ url: parsed.data.url, error: errorMessage },
+						{ url: request.body.url, error: errorMessage },
 						"failed to extract job with playwright",
 					);
 					return reply.status(502).send({
