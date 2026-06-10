@@ -6,6 +6,7 @@
 		"dev": "pnpm -r --parallel --filter @open-resume/web --filter @open-resume/companion dev",
 		"web:dev": "pnpm --filter @open-resume/web dev",
 		"companion:dev": "pnpm --filter @open-resume/companion dev",
+		"companion:openapi": "pnpm --filter @open-resume/companion openapi",
 		"build": "pnpm -r --filter @open-resume/web --filter @open-resume/companion build",
 		"web:build": "pnpm --filter @open-resume/web build",
 		"companion:build": "pnpm --filter @open-resume/companion build",
