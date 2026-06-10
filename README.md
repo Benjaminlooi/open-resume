@@ -79,6 +79,16 @@ pnpm companion:dev
 
 Open Resume can use the optional local companion service to extract job details from pasted job URLs.
 
+Configure companion environment variables in `apps/companion/.env`. Start from the checked-in example:
+```bash
+cp apps/companion/.env.example apps/companion/.env
+```
+
+For verbose request and extraction logs, set:
+```env
+OPEN_RESUME_COMPANION_LOG_LEVEL=debug
+```
+
 Check that the companion is running:
 ```bash
 curl http://127.0.0.1:47321/health
@@ -90,6 +100,12 @@ Expected response:
 ```
 
 Open `http://localhost:3000/jobs`, create a job application, paste a job URL, and click **Fetch details**. If the companion is not running, the app keeps working with manual job description paste.
+
+To debug scraping quality, enable scraped-data logs in `apps/companion/.env`. This prints the extracted text and structured data before normalization, then the normalized extraction result:
+```env
+OPEN_RESUME_COMPANION_LOG_LEVEL=debug
+OPEN_RESUME_COMPANION_LOG_SCRAPED_DATA=1
+```
 
 ### Build & Preview
 

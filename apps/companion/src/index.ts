@@ -6,12 +6,14 @@ const port = Number.parseInt(
 );
 const host = process.env.OPEN_RESUME_COMPANION_HOST ?? "127.0.0.1";
 
-const server = createServer();
+const server = createServer({
+	logLevel: process.env.OPEN_RESUME_COMPANION_LOG_LEVEL ?? "info",
+});
 
 try {
 	await server.listen({ host, port });
-	console.log(`Open Resume companion listening on http://${host}:${port}`);
+	server.log.info({ host, port }, "Open Resume companion listening");
 } catch (error) {
-	console.error(error);
+	server.log.error({ error }, "Open Resume companion failed to start");
 	process.exit(1);
 }
