@@ -107,6 +107,23 @@ OPEN_RESUME_COMPANION_LOG_LEVEL=debug
 OPEN_RESUME_COMPANION_LOG_SCRAPED_DATA=1
 ```
 
+The companion exposes OpenAPI docs for manual testing and client tooling:
+
+- `http://127.0.0.1:47321/openapi.json`: machine-readable OpenAPI 3.0 document.
+- `http://127.0.0.1:47321/docs`: Swagger UI for browser-based endpoint testing.
+
+Generate the committed OpenAPI artifact for Bruno import:
+```bash
+pnpm companion:openapi
+```
+
+Validate the generated OpenAPI contract:
+```bash
+pnpm --filter @open-resume/companion openapi:lint
+```
+
+In Bruno, import `apps/companion/openapi.json` as an OpenAPI collection to generate requests for the companion endpoints.
+
 ### Build & Preview
 
 Build the application for production:
