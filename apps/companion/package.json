@@ -6,6 +6,7 @@
 		"dev": "node --env-file-if-exists=.env --import tsx src/index.ts",
 		"start": "node --env-file-if-exists=.env dist/index.js",
 		"openapi": "node --import tsx src/export-openapi.ts",
+		"openapi:lint": "node --import tsx src/validate-openapi.ts",
 		"build": "tsup src/index.ts --format esm --target node22 --dts",
 		"test": "vitest run",
 		"typecheck": "tsc --noEmit"
