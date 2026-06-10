@@ -17,9 +17,9 @@
 		"companion:test": "pnpm --filter @open-resume/companion test",
 		"typecheck": "pnpm -r --filter @open-resume/web --filter @open-resume/companion typecheck",
 		"verify": "pnpm typecheck && pnpm test && pnpm build",
-		"lint": "pnpm --filter @open-resume/web lint",
-		"format": "pnpm --filter @open-resume/web format",
-		"check": "pnpm --filter @open-resume/web check",
+		"lint": "pnpm -r --filter @open-resume/web --filter @open-resume/companion lint",
+		"format": "pnpm -r --filter @open-resume/web --filter @open-resume/companion format",
+		"check": "pnpm -r --filter @open-resume/web --filter @open-resume/companion check",
 		"cf-typegen": "pnpm --filter @open-resume/web cf-typegen",
 		"deploy": "pnpm --filter @open-resume/web deploy"
 	},

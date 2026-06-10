@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { z, ZodError } from "zod";
+import { ZodError, z } from "zod";
 import {
 	extractJobRequestSchema,
 	healthResponseSchema,

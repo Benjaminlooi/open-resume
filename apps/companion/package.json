@@ -9,7 +9,10 @@
 		"openapi:lint": "redocly lint openapi.json",
 		"build": "tsup src/index.ts --format esm --target node22 --dts",
 		"test": "vitest run",
-		"typecheck": "tsc --noEmit"
+		"typecheck": "tsc --noEmit",
+		"format": "biome format",
+		"lint": "biome lint",
+		"check": "biome check"
 	},
 	"dependencies": {
 		"@fastify/cors": "^11.1.0",
@@ -21,6 +24,7 @@
 		"zod": "^4.4.3"
 	},
 	"devDependencies": {
+		"@biomejs/biome": "2.4.5",
 		"@redocly/cli": "^2.31.6",
 		"@types/node": "^22.19.19",
 		"tsup": "^8.5.0",

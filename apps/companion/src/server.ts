@@ -1,6 +1,6 @@
 import cors from "@fastify/cors";
-import Fastify from "fastify";
 import type { FastifyError } from "fastify";
+import Fastify from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
 import { hasZodFastifySchemaValidationErrors } from "fastify-type-provider-zod";
 import { extractWithPlaywright } from "./extract/playwright.js";

@@ -5,6 +5,8 @@ interface StructuredJobPosting {
 	description: string;
 }
 
+type JsonLdRecord = Record<string, unknown>;
+
 const scriptRegex =
 	/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
 
@@ -23,7 +25,7 @@ export function extractJobPostingJsonLd(
 
 			return {
 				title: stringValue(candidate.title),
-				company: stringValue(candidate.hiringOrganization?.name),
+				company: stringValue(getRecord(candidate.hiringOrganization)?.name),
 				location: extractLocation(candidate.jobLocation),
 				description: stripHtml(stringValue(candidate.description)),
 			};
@@ -41,17 +43,17 @@ function parseJsonSafely(value: string): unknown {
 	}
 }
 
-function flattenJsonLd(value: unknown): Record<string, any>[] {
+function flattenJsonLd(value: unknown): JsonLdRecord[] {
 	if (!value) return [];
 	if (Array.isArray(value)) return value.flatMap(flattenJsonLd);
 	if (typeof value !== "object") return [];
 
-	const record = value as Record<string, any>;
+	const record = value as JsonLdRecord;
 	const graph = Array.isArray(record["@graph"]) ? record["@graph"] : [];
 	return [record, ...graph.flatMap(flattenJsonLd)];
 }
 
-function isJobPosting(value: Record<string, any>): boolean {
+function isJobPosting(value: JsonLdRecord): boolean {
 	const type = value["@type"];
 	if (Array.isArray(type)) return type.includes("JobPosting");
 	return type === "JobPosting";
@@ -64,21 +66,30 @@ function extractLocation(value: unknown): string {
 
 	if (!value || typeof value !== "object") return "";
 
-	const record = value as Record<string, any>;
+	const record = value as JsonLdRecord;
 	const address = record.address;
 
 	if (typeof address === "string") return address;
-	if (address && typeof address === "object") {
+	const addressRecord = getRecord(address);
+	if (addressRecord) {
 		return [
-			stringValue(address.addressLocality),
-			stringValue(address.addressRegion),
-			stringValue(address.addressCountry),
+			stringValue(addressRecord.addressLocality),
+			stringValue(addressRecord.addressRegion),
+			stringValue(addressRecord.addressCountry),
 		]
 			.filter(Boolean)
 			.join(", ");
 	}
 
 	return stringValue(record.name);
+}
+
+function getRecord(value: unknown): JsonLdRecord | null {
+	if (!value || typeof value !== "object" || Array.isArray(value)) {
+		return null;
+	}
+
+	return value as JsonLdRecord;
 }
 
 function stringValue(value: unknown): string {
