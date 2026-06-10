@@ -1,8 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { ZodError, z } from "zod";
 import {
+	companionJobSchema,
+	createJobRequestSchema,
+	deleteJobResponseSchema,
 	extractJobRequestSchema,
 	healthResponseSchema,
+	jobIdParamsSchema,
 	jobExtractionResultSchema,
 } from "./schema.js";
 
@@ -63,6 +67,33 @@ describe("companion schema", () => {
 		expect(parsed.extractionMethod).toBe("json-ld");
 	});
 
+	it("accepts a companion job with pending crawl state", () => {
+		const parsed = companionJobSchema.parse({
+			id: "job-1",
+			sourceUrl: "https://example.com/jobs/1",
+			crawlStatus: "pending",
+			crawlError: null,
+			cleanedText: "",
+			createdAt: 1791571200000,
+			updatedAt: 1791571200000,
+			crawledAt: null,
+		});
+
+		expect(parsed.crawlStatus).toBe("pending");
+	});
+
+	it("rejects create job requests with non-http URLs", () => {
+		expect(() => createJobRequestSchema.parse({ sourceUrl: "file:///tmp/a" }))
+			.toThrow(ZodError);
+	});
+
+	it("accepts job route params and delete responses", () => {
+		expect(jobIdParamsSchema.parse({ id: "job-1" })).toEqual({ id: "job-1" });
+		expect(deleteJobResponseSchema.parse({ deleted: true })).toEqual({
+			deleted: true,
+		});
+	});
+
 	it("registers named API schemas", () => {
 		expect(z.globalRegistry.get(healthResponseSchema)?.id).toBe(
 			"HealthResponse",
@@ -72,6 +103,16 @@ describe("companion schema", () => {
 		);
 		expect(z.globalRegistry.get(jobExtractionResultSchema)?.id).toBe(
 			"JobExtractionResult",
+		);
+	});
+
+	it("registers job schemas for OpenAPI component generation", () => {
+		expect(z.globalRegistry.get(createJobRequestSchema)?.id).toBe(
+			"CreateJobRequest",
+		);
+		expect(z.globalRegistry.get(companionJobSchema)?.id).toBe("CompanionJob");
+		expect(z.globalRegistry.get(deleteJobResponseSchema)?.id).toBe(
+			"DeleteJobResponse",
 		);
 	});
 });
