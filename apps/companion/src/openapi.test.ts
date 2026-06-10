@@ -42,6 +42,25 @@ describe("OpenAPI Contract Validation", () => {
 		expect(spec.components?.schemas?.[schemaName]).toBeDefined();
 	});
 
+	it("should include zod-derived request validation details", () => {
+		const requestSchema = spec.components?.schemas?.ExtractJobRequest;
+
+		expect(requestSchema?.properties?.url).toMatchObject({
+			type: "string",
+			format: "uri",
+			description: "HTTP or HTTPS job posting URL to extract.",
+		});
+	});
+
+	it("should include zod-derived response descriptions", () => {
+		const resultSchema = spec.components?.schemas?.JobExtractionResult;
+
+		expect(resultSchema?.properties?.extractedAt).toMatchObject({
+			type: "number",
+			description: "Unix timestamp in milliseconds.",
+		});
+	});
+
 	describe("Operations Validation", () => {
 		for (const op of requiredOperations) {
 			it(`should define ${op.method.toUpperCase()} ${op.path} correctly`, () => {

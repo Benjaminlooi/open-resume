@@ -7,6 +7,98 @@
   },
   "components": {
     "schemas": {
+      "HealthResponseInput": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "service": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "ok",
+          "service"
+        ],
+        "additionalProperties": false
+      },
+      "ExtractJobRequestInput": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "HTTP or HTTPS job posting URL to extract."
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "additionalProperties": false
+      },
+      "JobExtractionResultInput": {
+        "type": "object",
+        "properties": {
+          "sourceUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "title": {
+            "type": "string"
+          },
+          "company": {
+            "type": "string"
+          },
+          "location": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "rawText": {
+            "type": "string"
+          },
+          "extractionMethod": {
+            "type": "string",
+            "enum": [
+              "json-ld",
+              "readability",
+              "playwright"
+            ]
+          },
+          "extractedAt": {
+            "type": "number",
+            "description": "Unix timestamp in milliseconds."
+          }
+        },
+        "required": [
+          "sourceUrl",
+          "title",
+          "company",
+          "location",
+          "description",
+          "rawText",
+          "extractionMethod",
+          "extractedAt"
+        ],
+        "additionalProperties": false
+      },
+      "CompanionErrorResponseInput": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "details": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "additionalProperties": false
+      },
       "HealthResponse": {
         "type": "object",
         "properties": {
@@ -28,6 +120,7 @@
         "properties": {
           "url": {
             "type": "string",
+            "format": "uri",
             "description": "HTTP or HTTPS job posting URL to extract."
           }
         },
@@ -134,7 +227,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ExtractJobRequest"
+                "$ref": "#/components/schemas/ExtractJobRequestInput"
               }
             }
           }
