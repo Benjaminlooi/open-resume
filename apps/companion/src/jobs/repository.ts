@@ -31,7 +31,9 @@ export function createJobRepository(path: string) {
 		create table if not exists jobs (
 			id text primary key,
 			source_url text not null,
-			crawl_status text not null,
+			crawl_status text not null check (
+				crawl_status in ('pending', 'crawling', 'ready', 'failed')
+			),
 			crawl_error text,
 			cleaned_text text not null default '',
 			created_at integer not null,
@@ -39,7 +41,16 @@ export function createJobRepository(path: string) {
 			crawled_at integer
 		);
 		create index if not exists jobs_updated_at_idx on jobs(updated_at desc);
+		create index if not exists jobs_runnable_idx
+			on jobs(crawl_status, created_at asc);
 	`);
+
+	function getJob(id: string) {
+		const row = database
+			.prepare("select * from jobs where id = ?")
+			.get(id) as unknown as JobRow | undefined;
+		return row ? mapJob(row) : null;
+	}
 
 	return {
 		createJob(input: { id: string; sourceUrl: string; now: number }) {
@@ -51,7 +62,7 @@ export function createJobRepository(path: string) {
 					) values (?, ?, 'pending', null, '', ?, ?, null)
 				`)
 				.run(input.id, input.sourceUrl, input.now, input.now);
-			return this.getJob(input.id) as CompanionJob;
+			return getJob(input.id) as CompanionJob;
 		},
 
 		listJobs() {
@@ -61,12 +72,7 @@ export function createJobRepository(path: string) {
 				.map((row) => mapJob(row as unknown as JobRow));
 		},
 
-		getJob(id: string) {
-			const row = database
-				.prepare("select * from jobs where id = ?")
-				.get(id) as unknown as JobRow | undefined;
-			return row ? mapJob(row) : null;
-		},
+		getJob,
 
 		listRunnableJobs() {
 			return database
@@ -87,7 +93,7 @@ export function createJobRepository(path: string) {
 					where id = ?
 				`)
 				.run(now, id);
-			return this.getJob(id);
+			return getJob(id);
 		},
 
 		markReady(id: string, input: { cleanedText: string; now: number }) {
@@ -102,7 +108,7 @@ export function createJobRepository(path: string) {
 					where id = ?
 				`)
 				.run(input.cleanedText, input.now, input.now, id);
-			return this.getJob(id);
+			return getJob(id);
 		},
 
 		markFailed(id: string, input: { error: string; now: number }) {
@@ -113,7 +119,7 @@ export function createJobRepository(path: string) {
 					where id = ?
 				`)
 				.run(input.error, input.now, id);
-			return this.getJob(id);
+			return getJob(id);
 		},
 
 		resetForRetry(id: string, now: number) {
@@ -124,7 +130,7 @@ export function createJobRepository(path: string) {
 					where id = ?
 				`)
 				.run(now, id);
-			return this.getJob(id);
+			return getJob(id);
 		},
 
 		deleteJob(id: string) {
