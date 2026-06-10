@@ -1,6 +1,7 @@
 import { useNavigate } from "@tanstack/react-router";
 import { type FormEvent, useState } from "react";
 import { useJobApplicationStore } from "#/lib/job-application-store";
+import { extractJobWithLocalCompanion } from "#/lib/local-companion-client";
 
 interface NewJobApplicationModalProps {
 	onClose: () => void;
@@ -19,6 +20,29 @@ export default function NewJobApplicationModal({
 	const [sourceUrl, setSourceUrl] = useState("");
 	const [description, setDescription] = useState("");
 	const [error, setError] = useState("");
+	const [isExtracting, setIsExtracting] = useState(false);
+
+	const handleFetchDetails = async () => {
+		if (!sourceUrl.trim()) {
+			setError("Job URL is required before fetching details");
+			return;
+		}
+
+		setError("");
+		setIsExtracting(true);
+
+		try {
+			const extracted = await extractJobWithLocalCompanion(sourceUrl.trim());
+			setCompany(extracted.company);
+			setTitle(extracted.title);
+			setLocation(extracted.location);
+			setDescription(extracted.description);
+		} catch (err) {
+			setError(err instanceof Error ? err.message : "Failed to fetch job details");
+		} finally {
+			setIsExtracting(false);
+		}
+	};
 
 	const handleSubmit = (e: FormEvent) => {
 		e.preventDefault();
@@ -56,10 +80,11 @@ export default function NewJobApplicationModal({
 
 				<form onSubmit={handleSubmit} className="flex flex-col gap-4">
 					<div>
-						<label className="block text-sm font-bold mb-1">
+						<label className="block text-sm font-bold mb-1" htmlFor="job-company">
 							Company <span className="text-red-500">*</span>
 						</label>
 						<input
+							id="job-company"
 							type="text"
 							required
 							value={company}
@@ -70,10 +95,11 @@ export default function NewJobApplicationModal({
 					</div>
 
 					<div>
-						<label className="block text-sm font-bold mb-1">
+						<label className="block text-sm font-bold mb-1" htmlFor="job-title">
 							Job Title <span className="text-red-500">*</span>
 						</label>
 						<input
+							id="job-title"
 							type="text"
 							required
 							value={title}
@@ -85,8 +111,14 @@ export default function NewJobApplicationModal({
 
 					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 						<div>
-							<label className="block text-sm font-bold mb-1">Location</label>
+							<label
+								className="block text-sm font-bold mb-1"
+								htmlFor="job-location"
+							>
+								Location
+							</label>
 							<input
+								id="job-location"
 								type="text"
 								value={location}
 								onChange={(e) => setLocation(e.target.value)}
@@ -95,22 +127,39 @@ export default function NewJobApplicationModal({
 							/>
 						</div>
 						<div>
-							<label className="block text-sm font-bold mb-1">Job URL</label>
-							<input
-								type="url"
-								value={sourceUrl}
-								onChange={(e) => setSourceUrl(e.target.value)}
-								placeholder="e.g. https://company.com/careers/123"
-								className="w-full border-2 border-border rounded-base p-2 focus:outline-none focus:ring-2 focus:ring-main bg-white"
-							/>
+							<label className="block text-sm font-bold mb-1" htmlFor="job-url">
+								Job URL
+							</label>
+							<div className="flex gap-2">
+								<input
+									id="job-url"
+									type="url"
+									value={sourceUrl}
+									onChange={(e) => setSourceUrl(e.target.value)}
+									placeholder="e.g. https://company.com/careers/123"
+									className="w-full border-2 border-border rounded-base p-2 focus:outline-none focus:ring-2 focus:ring-main bg-white"
+								/>
+								<button
+									type="button"
+									onClick={handleFetchDetails}
+									disabled={isExtracting}
+									className="shrink-0 px-3 py-2 border-2 border-border rounded-base font-bold hover:bg-main/5 disabled:opacity-60 cursor-pointer bg-white"
+								>
+									{isExtracting ? "Fetching" : "Fetch details"}
+								</button>
+							</div>
 						</div>
 					</div>
 
 					<div>
-						<label className="block text-sm font-bold mb-1">
+						<label
+							className="block text-sm font-bold mb-1"
+							htmlFor="job-description"
+						>
 							Job Description
 						</label>
 						<textarea
+							id="job-description"
 							value={description}
 							onChange={(e) => setDescription(e.target.value)}
 							placeholder="Paste job description here..."
