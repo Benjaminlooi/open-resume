@@ -6,7 +6,7 @@
 		"dev": "node --env-file-if-exists=.env --import tsx src/index.ts",
 		"start": "node --env-file-if-exists=.env dist/index.js",
 		"openapi": "node --import tsx src/export-openapi.ts",
-		"openapi:lint": "node --import tsx src/validate-openapi.ts",
+		"openapi:lint": "redocly lint openapi.json",
 		"build": "tsup src/index.ts --format esm --target node22 --dts",
 		"test": "vitest run",
 		"typecheck": "tsc --noEmit"
@@ -20,6 +20,7 @@
 		"zod": "^4.4.3"
 	},
 	"devDependencies": {
+		"@redocly/cli": "^2.31.6",
 		"@types/node": "^22.19.19",
 		"tsup": "^8.5.0",
 		"tsx": "^4.20.6",
