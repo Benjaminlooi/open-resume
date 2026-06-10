@@ -88,7 +88,7 @@ export type JobIdParams = z.infer<typeof jobIdParamsSchema>;
 
 export const companionJobSchema = z
 	.object({
-		id: z.string(),
+		id: z.string().min(1),
 		sourceUrl: httpUrlSchema,
 		crawlStatus: crawlStatusSchema,
 		crawlError: z.string().nullable(),
@@ -128,6 +128,7 @@ z.globalRegistry.add(jobExtractionResultSchema, { id: "JobExtractionResult" });
 z.globalRegistry.add(companionErrorResponseSchema, {
 	id: "CompanionErrorResponse",
 });
+z.globalRegistry.add(crawlStatusSchema, { id: "CrawlStatus" });
 z.globalRegistry.add(createJobRequestSchema, { id: "CreateJobRequest" });
 z.globalRegistry.add(jobIdParamsSchema, { id: "JobIdParams" });
 z.globalRegistry.add(companionJobSchema, { id: "CompanionJob" });

@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import { ZodError, z } from "zod";
 import {
 	companionJobSchema,
+	companionJobsResponseSchema,
 	createJobRequestSchema,
+	crawlStatusSchema,
 	deleteJobResponseSchema,
 	extractJobRequestSchema,
 	healthResponseSchema,
@@ -82,6 +84,21 @@ describe("companion schema", () => {
 		expect(parsed.crawlStatus).toBe("pending");
 	});
 
+	it("rejects companion jobs with empty IDs", () => {
+		expect(() =>
+			companionJobSchema.parse({
+				id: "",
+				sourceUrl: "https://example.com/jobs/1",
+				crawlStatus: "pending",
+				crawlError: null,
+				cleanedText: "",
+				createdAt: 1791571200000,
+				updatedAt: 1791571200000,
+				crawledAt: null,
+			}),
+		).toThrow(ZodError);
+	});
+
 	it("rejects create job requests with non-http URLs", () => {
 		expect(() => createJobRequestSchema.parse({ sourceUrl: "file:///tmp/a" }))
 			.toThrow(ZodError);
@@ -107,10 +124,15 @@ describe("companion schema", () => {
 	});
 
 	it("registers job schemas for OpenAPI component generation", () => {
+		expect(z.globalRegistry.get(crawlStatusSchema)?.id).toBe("CrawlStatus");
 		expect(z.globalRegistry.get(createJobRequestSchema)?.id).toBe(
 			"CreateJobRequest",
 		);
+		expect(z.globalRegistry.get(jobIdParamsSchema)?.id).toBe("JobIdParams");
 		expect(z.globalRegistry.get(companionJobSchema)?.id).toBe("CompanionJob");
+		expect(z.globalRegistry.get(companionJobsResponseSchema)?.id).toBe(
+			"CompanionJobsResponse",
+		);
 		expect(z.globalRegistry.get(deleteJobResponseSchema)?.id).toBe(
 			"DeleteJobResponse",
 		);
