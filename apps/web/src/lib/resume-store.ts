@@ -6,6 +6,7 @@ import {
 	updateResume,
 	type ResumeContent,
 } from "./local-companion-client";
+import { resumeSchema } from "./resume-schema";
 import type {
 	Certification,
 	ContactLink,
@@ -220,17 +221,7 @@ const normalizeEditorState = (
 };
 
 const toResumeContent = (state: EditorState): ResumeContent =>
-	({
-		personalInfo: state.personalInfo,
-		summary: state.summary,
-		sections: state.sections,
-		experience: state.experience,
-		education: state.education,
-		skills: state.skills,
-		projects: state.projects,
-		certifications: state.certifications,
-		languages: state.languages,
-	}) as unknown as ResumeContent;
+	resumeSchema.parse(state) as unknown as ResumeContent;
 
 let isLoadingResume = false;
 let saveTimer: ReturnType<typeof setTimeout> | null = null;
