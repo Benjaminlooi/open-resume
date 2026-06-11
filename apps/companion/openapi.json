@@ -99,6 +99,128 @@
         ],
         "additionalProperties": false
       },
+      "CrawlStatusInput": {
+        "type": "string",
+        "enum": [
+          "pending",
+          "crawling",
+          "ready",
+          "failed"
+        ]
+      },
+      "CreateJobRequestInput": {
+        "type": "object",
+        "properties": {
+          "sourceUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "HTTP or HTTPS job posting URL to crawl."
+          }
+        },
+        "required": [
+          "sourceUrl"
+        ],
+        "additionalProperties": false
+      },
+      "JobIdParamsInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "CompanionJobInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sourceUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "crawlStatus": {
+            "$ref": "#/components/schemas/CrawlStatusInput"
+          },
+          "crawlError": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "cleanedText": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "number",
+            "description": "Unix timestamp in milliseconds."
+          },
+          "updatedAt": {
+            "type": "number",
+            "description": "Unix timestamp in milliseconds."
+          },
+          "crawledAt": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Unix timestamp in milliseconds, or null before crawl success."
+          }
+        },
+        "required": [
+          "id",
+          "sourceUrl",
+          "crawlStatus",
+          "crawlError",
+          "cleanedText",
+          "createdAt",
+          "updatedAt",
+          "crawledAt"
+        ],
+        "additionalProperties": false
+      },
+      "CompanionJobsResponseInput": {
+        "type": "object",
+        "properties": {
+          "jobs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CompanionJobInput"
+            }
+          }
+        },
+        "required": [
+          "jobs"
+        ],
+        "additionalProperties": false
+      },
+      "DeleteJobResponseInput": {
+        "type": "object",
+        "properties": {
+          "deleted": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "deleted"
+        ],
+        "additionalProperties": false
+      },
       "HealthResponse": {
         "type": "object",
         "properties": {
@@ -190,6 +312,128 @@
           "error"
         ],
         "additionalProperties": false
+      },
+      "CrawlStatus": {
+        "type": "string",
+        "enum": [
+          "pending",
+          "crawling",
+          "ready",
+          "failed"
+        ]
+      },
+      "CreateJobRequest": {
+        "type": "object",
+        "properties": {
+          "sourceUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "HTTP or HTTPS job posting URL to crawl."
+          }
+        },
+        "required": [
+          "sourceUrl"
+        ],
+        "additionalProperties": false
+      },
+      "JobIdParams": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "CompanionJob": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sourceUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "crawlStatus": {
+            "$ref": "#/components/schemas/CrawlStatus"
+          },
+          "crawlError": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "cleanedText": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "number",
+            "description": "Unix timestamp in milliseconds."
+          },
+          "updatedAt": {
+            "type": "number",
+            "description": "Unix timestamp in milliseconds."
+          },
+          "crawledAt": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Unix timestamp in milliseconds, or null before crawl success."
+          }
+        },
+        "required": [
+          "id",
+          "sourceUrl",
+          "crawlStatus",
+          "crawlError",
+          "cleanedText",
+          "createdAt",
+          "updatedAt",
+          "crawledAt"
+        ],
+        "additionalProperties": false
+      },
+      "CompanionJobsResponse": {
+        "type": "object",
+        "properties": {
+          "jobs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CompanionJob"
+            }
+          }
+        },
+        "required": [
+          "jobs"
+        ],
+        "additionalProperties": false
+      },
+      "DeleteJobResponse": {
+        "type": "object",
+        "properties": {
+          "deleted": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "deleted"
+        ],
+        "additionalProperties": false
       }
     }
   },
@@ -215,30 +459,30 @@
         }
       }
     },
-    "/extract-job": {
+    "/jobs": {
       "post": {
-        "operationId": "extractJob",
-        "summary": "Extract job details from a URL",
+        "operationId": "createJob",
+        "summary": "Create a companion job and enqueue crawling",
         "tags": [
-          "Extraction"
+          "Jobs"
         ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ExtractJobRequestInput"
+                "$ref": "#/components/schemas/CreateJobRequestInput"
               }
             }
           }
         },
         "responses": {
-          "200": {
+          "201": {
             "description": "Default Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/JobExtractionResult"
+                  "$ref": "#/components/schemas/CompanionJob"
                 }
               }
             }
@@ -262,8 +506,131 @@
                 }
               }
             }
+          }
+        }
+      },
+      "get": {
+        "operationId": "listJobs",
+        "summary": "List companion jobs",
+        "tags": [
+          "Jobs"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionJobsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/jobs/{id}": {
+      "get": {
+        "operationId": "getJob",
+        "summary": "Get a companion job",
+        "tags": [
+          "Jobs"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionJob"
+                }
+              }
+            }
           },
-          "502": {
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteJob",
+        "summary": "Delete a companion job",
+        "tags": [
+          "Jobs"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteJobResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/jobs/{id}/retry-crawl": {
+      "post": {
+        "operationId": "retryJobCrawl",
+        "summary": "Retry crawling a companion job",
+        "tags": [
+          "Jobs"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionJob"
+                }
+              }
+            }
+          },
+          "404": {
             "description": "Default Response",
             "content": {
               "application/json": {
@@ -283,8 +650,8 @@
       "description": "Operational companion endpoints."
     },
     {
-      "name": "Extraction",
-      "description": "Job posting extraction endpoints."
+      "name": "Jobs",
+      "description": "Companion job intake and crawl lifecycle endpoints."
     }
   ]
 }

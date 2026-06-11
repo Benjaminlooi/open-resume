@@ -6,9 +6,12 @@ const spec = JSON.parse(readFileSync(specUrl, "utf8"));
 
 const requiredSchemas = [
 	"HealthResponse",
-	"ExtractJobRequest",
-	"JobExtractionResult",
 	"CompanionErrorResponse",
+	"CreateJobRequest",
+	"JobIdParams",
+	"CompanionJob",
+	"CompanionJobsResponse",
+	"DeleteJobResponse",
 ] as const;
 
 const requiredOperations = [
@@ -20,11 +23,39 @@ const requiredOperations = [
 		responses: ["200"],
 	},
 	{
-		path: "/extract-job",
+		path: "/jobs",
 		method: "post",
-		operationId: "extractJob",
-		tags: ["Extraction"],
-		responses: ["200", "400", "500", "502"],
+		operationId: "createJob",
+		tags: ["Jobs"],
+		responses: ["201", "400", "500"],
+	},
+	{
+		path: "/jobs",
+		method: "get",
+		operationId: "listJobs",
+		tags: ["Jobs"],
+		responses: ["200"],
+	},
+	{
+		path: "/jobs/{id}",
+		method: "get",
+		operationId: "getJob",
+		tags: ["Jobs"],
+		responses: ["200", "404"],
+	},
+	{
+		path: "/jobs/{id}/retry-crawl",
+		method: "post",
+		operationId: "retryJobCrawl",
+		tags: ["Jobs"],
+		responses: ["200", "404"],
+	},
+	{
+		path: "/jobs/{id}",
+		method: "delete",
+		operationId: "deleteJob",
+		tags: ["Jobs"],
+		responses: ["200"],
 	},
 ] as const;
 
@@ -43,19 +74,19 @@ describe("OpenAPI Contract Validation", () => {
 	});
 
 	it("should include zod-derived request validation details", () => {
-		const requestSchema = spec.components?.schemas?.ExtractJobRequest;
+		const requestSchema = spec.components?.schemas?.CreateJobRequest;
 
-		expect(requestSchema?.properties?.url).toMatchObject({
+		expect(requestSchema?.properties?.sourceUrl).toMatchObject({
 			type: "string",
 			format: "uri",
-			description: "HTTP or HTTPS job posting URL to extract.",
+			description: "HTTP or HTTPS job posting URL to crawl.",
 		});
 	});
 
 	it("should include zod-derived response descriptions", () => {
-		const resultSchema = spec.components?.schemas?.JobExtractionResult;
+		const resultSchema = spec.components?.schemas?.CompanionJob;
 
-		expect(resultSchema?.properties?.extractedAt).toMatchObject({
+		expect(resultSchema?.properties?.createdAt).toMatchObject({
 			type: "number",
 			description: "Unix timestamp in milliseconds.",
 		});
