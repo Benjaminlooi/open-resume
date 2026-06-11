@@ -16,7 +16,8 @@ export default function DashboardHeader() {
 						<Link
 							to="/resumes"
 							activeProps={{
-								className: "bg-main text-main-foreground border-2 border-border shadow-light translate-x-none translate-y-none",
+								className:
+									"bg-main text-main-foreground border-2 border-border shadow-light translate-x-none translate-y-none",
 							}}
 							inactiveProps={{
 								className: "border-2 border-transparent",
@@ -28,7 +29,8 @@ export default function DashboardHeader() {
 						<Link
 							to="/jobs"
 							activeProps={{
-								className: "bg-main text-main-foreground border-2 border-border shadow-light translate-x-none translate-y-none",
+								className:
+									"bg-main text-main-foreground border-2 border-border shadow-light translate-x-none translate-y-none",
 							}}
 							inactiveProps={{
 								className: "border-2 border-transparent",
@@ -40,7 +42,8 @@ export default function DashboardHeader() {
 						<Link
 							to="/profile"
 							activeProps={{
-								className: "bg-main text-main-foreground border-2 border-border shadow-light translate-x-none translate-y-none",
+								className:
+									"bg-main text-main-foreground border-2 border-border shadow-light translate-x-none translate-y-none",
 							}}
 							inactiveProps={{
 								className: "border-2 border-transparent",

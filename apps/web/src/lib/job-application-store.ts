@@ -24,7 +24,7 @@ export interface JobApplicationState {
 	deleteJobApplication: (id: string) => void;
 	setStatus: (id: string, status: JobApplicationStatus) => void;
 	saveFitBrief: (id: string, fitBrief: JobFitBrief) => void;
-	ensureTailoredResume: (id: string) => void;
+	ensureTailoredResume: (id: string) => Promise<void>;
 	saveResumeEditProposals: (
 		id: string,
 		proposals: ResumeEditProposal[],
@@ -37,7 +37,7 @@ export interface JobApplicationState {
 	) => void;
 	validatePipeline: () => Record<string, string[]>;
 	clearStaleProposal: (appId: string, proposalId: string) => void;
-	associateSourceResume: (appId: string, resumeId: string) => void;
+	associateSourceResume: (appId: string, resumeId: string) => Promise<void>;
 	archiveIncompleteJob: (appId: string) => void;
 }
 
@@ -128,14 +128,14 @@ export const useJobApplicationStore = create<JobApplicationState>()(
 					),
 				})),
 
-			ensureTailoredResume: (id) => {
+			ensureTailoredResume: async (id) => {
 				const app = get().jobApplications.find((a) => a.id === id);
 				if (!app || app.tailoredResume) return;
 
 				const defaultResumeId = useResumeIndexStore.getState().defaultResumeId;
 				if (!defaultResumeId) return;
 
-				const defaultResume = getResumeData(defaultResumeId);
+				const defaultResume = await getResumeData(defaultResumeId);
 				if (!defaultResume) return;
 
 				const indexState = useResumeIndexStore.getState();
@@ -349,7 +349,11 @@ export const useJobApplicationStore = create<JobApplicationState>()(
 										bulletsList = [desc];
 									}
 									const idx = target.bulletIndex;
-									if (idx === undefined || idx < 0 || idx >= bulletsList.length) {
+									if (
+										idx === undefined ||
+										idx < 0 ||
+										idx >= bulletsList.length
+									) {
 										appWarnings.push(
 											`Stale proposal target: experience item ${target.itemId} bullet index ${idx} is out of bounds.`,
 										);
@@ -400,11 +404,11 @@ export const useJobApplicationStore = create<JobApplicationState>()(
 					),
 				})),
 
-			associateSourceResume: (appId, resumeId) => {
+			associateSourceResume: async (appId, resumeId) => {
 				const app = get().jobApplications.find((a) => a.id === appId);
 				if (!app) return;
 
-				const resume = getResumeData(resumeId);
+				const resume = await getResumeData(resumeId);
 				if (!resume) return;
 
 				const indexState = useResumeIndexStore.getState();

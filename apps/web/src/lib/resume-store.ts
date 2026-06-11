@@ -176,9 +176,25 @@ const migrateResume = (resume: LegacyEditorState): EditorState => {
 	} as EditorState;
 };
 
-export const getResumeData = (id: string): EditorState | null => {
+export const getResumeData = async (
+	id: string,
+): Promise<EditorState | null> => {
 	const state = useResumeStore.getState();
-	return state.id === id ? state : null;
+	if (state.id === id) {
+		return state;
+	}
+	try {
+		const resume = await getResume(id);
+		return normalizeEditorState(
+			resume.id,
+			resume.name,
+			resume.templateId,
+			resume.content,
+		);
+	} catch (e) {
+		console.error("Failed to fetch resume data", e);
+		return null;
+	}
 };
 
 const normalizeEditorState = (
@@ -203,17 +219,18 @@ const normalizeEditorState = (
 	return migrateResume(parsed);
 };
 
-const toResumeContent = (state: EditorState): ResumeContent => ({
-	personalInfo: state.personalInfo,
-	summary: state.summary,
-	sections: state.sections,
-	experience: state.experience,
-	education: state.education,
-	skills: state.skills,
-	projects: state.projects,
-	certifications: state.certifications,
-	languages: state.languages,
-}) as unknown as ResumeContent;
+const toResumeContent = (state: EditorState): ResumeContent =>
+	({
+		personalInfo: state.personalInfo,
+		summary: state.summary,
+		sections: state.sections,
+		experience: state.experience,
+		education: state.education,
+		skills: state.skills,
+		projects: state.projects,
+		certifications: state.certifications,
+		languages: state.languages,
+	}) as unknown as ResumeContent;
 
 let isLoadingResume = false;
 let saveTimer: ReturnType<typeof setTimeout> | null = null;

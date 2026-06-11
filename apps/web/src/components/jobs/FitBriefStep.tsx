@@ -1,5 +1,11 @@
 import { useState } from "react";
-import { Loader2, Sparkles, CheckCircle2, AlertTriangle, ArrowRight } from "lucide-react";
+import {
+	Loader2,
+	Sparkles,
+	CheckCircle2,
+	AlertTriangle,
+	ArrowRight,
+} from "lucide-react";
 import { useJobApplicationStore } from "#/lib/job-application-store";
 import { useResumeIndexStore } from "#/lib/resume-index-store";
 import { useSettingsStore } from "#/lib/settings-store";
@@ -32,16 +38,21 @@ export default function FitBriefStep({ applicationId }: FitBriefStepProps) {
 		try {
 			const defaultResumeId = useResumeIndexStore.getState().defaultResumeId;
 			if (!defaultResumeId) {
-				throw new Error("No default resume selected. Please select a default resume first on the Resumes page.");
+				throw new Error(
+					"No default resume selected. Please select a default resume first on the Resumes page.",
+				);
 			}
 
-			const defaultResume = getResumeData(defaultResumeId);
+			const defaultResume = await getResumeData(defaultResumeId);
 			if (!defaultResume) {
-				throw new Error(`Failed to load default resume data for ID: ${defaultResumeId}`);
+				throw new Error(
+					`Failed to load default resume data for ID: ${defaultResumeId}`,
+				);
 			}
 
 			// Get active provider config from settings store
-			const { defaultProvider, apiKeys, baseUrls, selectedModels } = useSettingsStore.getState();
+			const { defaultProvider, apiKeys, baseUrls, selectedModels } =
+				useSettingsStore.getState();
 			const providerConfig = {
 				provider: defaultProvider,
 				apiKey: apiKeys[defaultProvider],
@@ -49,7 +60,11 @@ export default function FitBriefStep({ applicationId }: FitBriefStepProps) {
 				modelName: selectedModels[defaultProvider],
 			};
 
-			const fitBrief = await generateJobFitBrief(providerConfig, application, defaultResume);
+			const fitBrief = await generateJobFitBrief(
+				providerConfig,
+				application,
+				defaultResume,
+			);
 			saveFitBrief(applicationId, fitBrief);
 			setStatus(applicationId, "analyzing");
 		} catch (err: any) {
@@ -68,7 +83,8 @@ export default function FitBriefStep({ applicationId }: FitBriefStepProps) {
 				<div>
 					<h2 className="text-2xl font-heading">Fit Analysis</h2>
 					<p className="text-sm text-muted-foreground mt-1">
-						Analyze how well your default resume aligns with the job description.
+						Analyze how well your default resume aligns with the job
+						description.
 					</p>
 				</div>
 				<p className="text-sm text-muted-foreground">Step 2 of 5</p>
@@ -86,9 +102,12 @@ export default function FitBriefStep({ applicationId }: FitBriefStepProps) {
 					<div className="size-16 rounded-full border-2 border-border bg-[#F5F3FF] flex items-center justify-center mb-4 text-[#8B5CF6]">
 						<Sparkles className="size-8" />
 					</div>
-					<h3 className="text-xl font-heading mb-2">No Fit Analysis Generated Yet</h3>
+					<h3 className="text-xl font-heading mb-2">
+						No Fit Analysis Generated Yet
+					</h3>
 					<p className="text-muted-foreground max-w-md mb-6">
-						AI will compare your default resume with the job description to identify strengths, key keywords, requirements, and profile gaps.
+						AI will compare your default resume with the job description to
+						identify strengths, key keywords, requirements, and profile gaps.
 					</p>
 					<button
 						type="button"
@@ -180,11 +199,18 @@ export default function FitBriefStep({ applicationId }: FitBriefStepProps) {
 							<div className="flex flex-col gap-4">
 								{fitBrief.gaps.length > 0 && (
 									<div>
-										<h4 className="text-xs font-bold uppercase text-[#9F1239] mb-1">Gaps</h4>
+										<h4 className="text-xs font-bold uppercase text-[#9F1239] mb-1">
+											Gaps
+										</h4>
 										<ul className="flex flex-col gap-1.5 list-none pl-0 text-[#881337]">
 											{fitBrief.gaps.map((gap, i) => (
-												<li key={i} className="flex gap-2 text-sm leading-relaxed">
-													<span className="text-[#E11D48] font-bold shrink-0">•</span>
+												<li
+													key={i}
+													className="flex gap-2 text-sm leading-relaxed"
+												>
+													<span className="text-[#E11D48] font-bold shrink-0">
+														•
+													</span>
 													<span>{gap}</span>
 												</li>
 											))}
@@ -193,11 +219,18 @@ export default function FitBriefStep({ applicationId }: FitBriefStepProps) {
 								)}
 								{fitBrief.risks.length > 0 && (
 									<div>
-										<h4 className="text-xs font-bold uppercase text-[#9F1239] mb-1">Risks & Concerns</h4>
+										<h4 className="text-xs font-bold uppercase text-[#9F1239] mb-1">
+											Risks & Concerns
+										</h4>
 										<ul className="flex flex-col gap-1.5 list-none pl-0 text-[#881337]">
 											{fitBrief.risks.map((risk, i) => (
-												<li key={i} className="flex gap-2 text-sm leading-relaxed">
-													<span className="text-[#E11D48] font-bold shrink-0">•</span>
+												<li
+													key={i}
+													className="flex gap-2 text-sm leading-relaxed"
+												>
+													<span className="text-[#E11D48] font-bold shrink-0">
+														•
+													</span>
 													<span>{risk}</span>
 												</li>
 											))}
@@ -216,7 +249,9 @@ export default function FitBriefStep({ applicationId }: FitBriefStepProps) {
 						<ul className="flex flex-col gap-2 list-none pl-0 text-[#78350F]">
 							{fitBrief.nextActions.map((action, i) => (
 								<li key={i} className="flex gap-2 text-sm leading-relaxed">
-									<span className="text-[#D97706] font-bold shrink-0">{i + 1}.</span>
+									<span className="text-[#D97706] font-bold shrink-0">
+										{i + 1}.
+									</span>
 									<span>{action}</span>
 								</li>
 							))}

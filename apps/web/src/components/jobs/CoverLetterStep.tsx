@@ -1,5 +1,12 @@
 import { useState, useEffect } from "react";
-import { Loader2, Sparkles, FileText, AlertTriangle, Clipboard, Check } from "lucide-react";
+import {
+	Loader2,
+	Sparkles,
+	FileText,
+	AlertTriangle,
+	Clipboard,
+	Check,
+} from "lucide-react";
 import { useJobApplicationStore } from "#/lib/job-application-store";
 import { useResumeIndexStore } from "#/lib/resume-index-store";
 import { useSettingsStore } from "#/lib/settings-store";
@@ -10,7 +17,9 @@ interface CoverLetterStepProps {
 	applicationId: string;
 }
 
-export default function CoverLetterStep({ applicationId }: CoverLetterStepProps) {
+export default function CoverLetterStep({
+	applicationId,
+}: CoverLetterStepProps) {
 	const { jobApplications, saveCoverLetterDraft } = useJobApplicationStore();
 	const application = jobApplications.find((app) => app.id === applicationId);
 
@@ -18,7 +27,9 @@ export default function CoverLetterStep({ applicationId }: CoverLetterStepProps)
 
 	const [isGenerating, setIsGenerating] = useState(false);
 	const [error, setError] = useState<string | null>(null);
-	const [localContent, setLocalContent] = useState(coverLetterDraft?.content || "");
+	const [localContent, setLocalContent] = useState(
+		coverLetterDraft?.content || "",
+	);
 	const [isSaved, setIsSaved] = useState(false);
 	const [isCopied, setIsCopied] = useState(false);
 
@@ -40,7 +51,9 @@ export default function CoverLetterStep({ applicationId }: CoverLetterStepProps)
 
 	const handleGenerate = async () => {
 		if (!fitBrief) {
-			setError("Cannot generate cover letter: Fit Analysis must be generated first.");
+			setError(
+				"Cannot generate cover letter: Fit Analysis must be generated first.",
+			);
 			return;
 		}
 
@@ -54,15 +67,18 @@ export default function CoverLetterStep({ applicationId }: CoverLetterStepProps)
 			if (!finalResume) {
 				const defaultResumeId = useResumeIndexStore.getState().defaultResumeId;
 				if (defaultResumeId) {
-					finalResume = getResumeData(defaultResumeId);
+					finalResume = await getResumeData(defaultResumeId);
 				}
 			}
 
 			if (!finalResume) {
-				throw new Error("No resume found. Please select a default resume or begin tailoring first.");
+				throw new Error(
+					"No resume found. Please select a default resume or begin tailoring first.",
+				);
 			}
 
-			const { defaultProvider, apiKeys, baseUrls, selectedModels } = useSettingsStore.getState();
+			const { defaultProvider, apiKeys, baseUrls, selectedModels } =
+				useSettingsStore.getState();
 			const providerConfig = {
 				provider: defaultProvider,
 				apiKey: apiKeys[defaultProvider],
@@ -111,7 +127,8 @@ export default function CoverLetterStep({ applicationId }: CoverLetterStepProps)
 				<div>
 					<h2 className="text-2xl font-heading">Cover Letter</h2>
 					<p className="text-sm text-muted-foreground mt-1">
-						Generate a tailored cover letter based on your experience and the role fit analysis.
+						Generate a tailored cover letter based on your experience and the
+						role fit analysis.
 					</p>
 				</div>
 				<p className="text-sm text-muted-foreground">Step 4 of 5</p>
@@ -135,13 +152,17 @@ export default function CoverLetterStep({ applicationId }: CoverLetterStepProps)
 					<div className="size-16 rounded-full border-2 border-border bg-[#F5F3FF] flex items-center justify-center mb-4 text-[#8B5CF6]">
 						<FileText className="size-8" />
 					</div>
-					<h3 className="text-xl font-heading mb-2">No Cover Letter Drafted Yet</h3>
+					<h3 className="text-xl font-heading mb-2">
+						No Cover Letter Drafted Yet
+					</h3>
 					<p className="text-muted-foreground max-w-md mb-6">
-						AI will generate a polished cover letter referencing your specific strengths and tailoring it to this job application.
+						AI will generate a polished cover letter referencing your specific
+						strengths and tailoring it to this job application.
 					</p>
 					{!fitBrief && (
 						<div className="bg-amber-100 text-amber-950 border-2 border-[#FCD34D] p-3 rounded-base text-sm font-bold max-w-md mb-6">
-							⚠️ Fit Analysis must be generated in Step 2 before generating the cover letter.
+							⚠️ Fit Analysis must be generated in Step 2 before generating the
+							cover letter.
 						</div>
 					)}
 					<button
@@ -167,7 +188,8 @@ export default function CoverLetterStep({ applicationId }: CoverLetterStepProps)
 				<div className="flex flex-col gap-4">
 					<div className="flex items-center justify-between">
 						<span className="text-sm font-bold text-muted-foreground">
-							Last Generated: {new Date(coverLetterDraft.generatedAt).toLocaleDateString()}
+							Last Generated:{" "}
+							{new Date(coverLetterDraft.generatedAt).toLocaleDateString()}
 						</span>
 						<div className="flex gap-2">
 							<button
@@ -175,7 +197,11 @@ export default function CoverLetterStep({ applicationId }: CoverLetterStepProps)
 								onClick={handleCopy}
 								className="inline-flex h-9 items-center gap-1.5 px-3 border-2 border-border bg-white font-bold text-xs rounded-base transition-all shadow-light hover:translate-x-boxShadowX hover:translate-y-boxShadowY hover:shadow-none cursor-pointer"
 							>
-								{isCopied ? <Check className="size-4 text-green-600" /> : <Clipboard className="size-4" />}
+								{isCopied ? (
+									<Check className="size-4 text-green-600" />
+								) : (
+									<Clipboard className="size-4" />
+								)}
 								{isCopied ? "Copied!" : "Copy Content"}
 							</button>
 							<button

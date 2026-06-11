@@ -165,7 +165,12 @@ describe("resumeIndexStore", () => {
 
 		await useResumeIndexStore
 			.getState()
-			.createResumeIndexEntry("resume-import", "Imported Person", "demo", content);
+			.createResumeIndexEntry(
+				"resume-import",
+				"Imported Person",
+				"demo",
+				content,
+			);
 
 		expect(createResumeMock).toHaveBeenCalledWith(
 			"resume-import",

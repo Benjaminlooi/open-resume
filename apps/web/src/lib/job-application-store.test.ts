@@ -8,10 +8,43 @@ import {
 	vi,
 } from "vitest";
 
+const mockStorage: Record<string, string> = {};
+
+vi.mock("./local-companion-client", () => {
+	return {
+		getResume: vi.fn(async (id: string) => {
+			const contentStr = mockStorage[`resume-${id}`];
+			if (!contentStr) {
+				throw new Error(`Resume not found in mock storage: ${id}`);
+			}
+			const { useResumeIndexStore } = await import("./resume-index-store");
+			const state = useResumeIndexStore.getState();
+			const entry = state.resumes.find((r: any) => r.id === id);
+			return {
+				id,
+				name: entry?.name || "Core Resume",
+				templateId: entry?.templateId || "modern",
+				lastModified: entry?.lastModified || Date.now(),
+				isDefault: state.defaultResumeId === id,
+				content: JSON.parse(contentStr),
+			};
+		}),
+		updateResume: vi.fn(async (id: string, data: any) => {
+			return {
+				id,
+				name: data.name,
+				templateId: data.templateId,
+				content: data.content,
+				lastModified: Date.now(),
+				isDefault: false,
+			};
+		}),
+	};
+});
+
 describe("jobApplicationStore", () => {
 	let originalWindow: any;
 	let originalLocalStorage: any;
-	const mockStorage: Record<string, string> = {};
 	let useJobApplicationStore: any;
 	let useResumeIndexStore: any;
 
@@ -124,7 +157,7 @@ describe("jobApplicationStore", () => {
 		expect(state.jobApplications).toHaveLength(0);
 	});
 
-	it("ensureTailoredResume copies the default resume snapshot", () => {
+	it("ensureTailoredResume copies the default resume snapshot", async () => {
 		const resumeId = "resume-1";
 		const mockResume = {
 			personalInfo: {
@@ -192,7 +225,7 @@ describe("jobApplicationStore", () => {
 			);
 
 		// 3. Call ensureTailoredResume
-		useJobApplicationStore.getState().ensureTailoredResume(id);
+		await useJobApplicationStore.getState().ensureTailoredResume(id);
 
 		// 4. Verify copies are stored and status updated
 		const app = useJobApplicationStore
@@ -222,7 +255,7 @@ describe("jobApplicationStore", () => {
 		expect(app.tailoredResume).not.toBe(app.sourceResumeSnapshot);
 	});
 
-	it("applyResumeEditProposal correctly applies edits to tailoredResume and leaves source resume intact", () => {
+	it("applyResumeEditProposal correctly applies edits to tailoredResume and leaves source resume intact", async () => {
 		const resumeId = "resume-1";
 		const mockResume = {
 			personalInfo: {
@@ -287,7 +320,7 @@ describe("jobApplicationStore", () => {
 				"Job description",
 			);
 
-		useJobApplicationStore.getState().ensureTailoredResume(id);
+		await useJobApplicationStore.getState().ensureTailoredResume(id);
 
 		// Save edit proposals
 		const proposals = [
@@ -413,7 +446,7 @@ describe("jobApplicationStore", () => {
 		);
 	});
 
-	it("validatePipeline flags missing fields, missing source resumes, out-of-bounds bullet indexes, and archived jobs with pending proposals", () => {
+	it("validatePipeline flags missing fields, missing source resumes, out-of-bounds bullet indexes, and archived jobs with pending proposals", async () => {
 		// 1. Create a job application with missing company, title, description, and sourceResumeId
 		const id1 = useJobApplicationStore
 			.getState()
@@ -424,7 +457,9 @@ describe("jobApplicationStore", () => {
 		expect(warnings[id1]).toContain("Company name is missing.");
 		expect(warnings[id1]).toContain("Job title is missing.");
 		expect(warnings[id1]).toContain("Job description is missing.");
-		expect(warnings[id1]).toContain("No source resume has been associated yet.");
+		expect(warnings[id1]).toContain(
+			"No source resume has been associated yet.",
+		);
 
 		// 2. Associate a resume
 		const resumeId = "resume-1";
@@ -453,12 +488,21 @@ describe("jobApplicationStore", () => {
 			projects: [],
 		};
 		useResumeIndexStore.setState({
-			resumes: [{ id: resumeId, name: "Core Resume", templateId: "modern", lastModified: Date.now() }],
+			resumes: [
+				{
+					id: resumeId,
+					name: "Core Resume",
+					templateId: "modern",
+					lastModified: Date.now(),
+				},
+			],
 			defaultResumeId: resumeId,
 		});
 		mockStorage[`resume-${resumeId}`] = JSON.stringify(mockResume);
 
-		useJobApplicationStore.getState().associateSourceResume(id1, resumeId);
+		await useJobApplicationStore
+			.getState()
+			.associateSourceResume(id1, resumeId);
 		useJobApplicationStore.getState().updateJobApplication(id1, {
 			title: "Developer",
 			company: "Startup",
@@ -517,12 +561,14 @@ describe("jobApplicationStore", () => {
 
 		// Clear the pending proposals
 		useJobApplicationStore.getState().clearStaleProposal(id1, "prop-stale-exp");
-		useJobApplicationStore.getState().clearStaleProposal(id1, "prop-oob-bullet");
+		useJobApplicationStore
+			.getState()
+			.clearStaleProposal(id1, "prop-oob-bullet");
 		warnings = useJobApplicationStore.getState().validatePipeline();
 		expect(warnings[id1]).toBeUndefined(); // Warnings cleared because no pending proposals left
 	});
 
-	it("recovery actions work as expected and never mutate the original default resume", () => {
+	it("recovery actions work as expected and never mutate the original default resume", async () => {
 		const resumeId = "resume-1";
 		const mockResume = {
 			personalInfo: {
@@ -549,7 +595,14 @@ describe("jobApplicationStore", () => {
 		};
 
 		useResumeIndexStore.setState({
-			resumes: [{ id: resumeId, name: "Core Resume", templateId: "modern", lastModified: Date.now() }],
+			resumes: [
+				{
+					id: resumeId,
+					name: "Core Resume",
+					templateId: "modern",
+					lastModified: Date.now(),
+				},
+			],
 			defaultResumeId: resumeId,
 		});
 		mockStorage[`resume-${resumeId}`] = JSON.stringify(mockResume);
@@ -559,9 +612,13 @@ describe("jobApplicationStore", () => {
 			.createJobApplication("Company", "Title", "Loc", "url", "desc");
 
 		// Associate source resume
-		useJobApplicationStore.getState().associateSourceResume(appId, resumeId);
+		await useJobApplicationStore
+			.getState()
+			.associateSourceResume(appId, resumeId);
 
-		const app = useJobApplicationStore.getState().jobApplications.find((a: any) => a.id === appId);
+		const app = useJobApplicationStore
+			.getState()
+			.jobApplications.find((a: any) => a.id === appId);
 		expect(app).toBeDefined();
 		expect(app?.sourceResumeId).toBe(resumeId);
 		expect(app?.status).toBe("tailoring");

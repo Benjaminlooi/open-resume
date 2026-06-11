@@ -1,6 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { ArrowLeft, ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
+import {
+	ArrowLeft,
+	ChevronLeft,
+	ChevronRight,
+	AlertCircle,
+} from "lucide-react";
 import { useJobApplicationStore } from "#/lib/job-application-store";
 import JobDetailsStep from "#/components/jobs/JobDetailsStep";
 import FitBriefStep from "#/components/jobs/FitBriefStep";
@@ -72,7 +77,10 @@ function JobWorkspace() {
 						<AlertCircle className="size-6 shrink-0" />
 						<span>Job application not found</span>
 					</div>
-					<p>The job application with ID "{id}" could not be found. It may have been deleted.</p>
+					<p>
+						The job application with ID "{id}" could not be found. It may have
+						been deleted.
+					</p>
 					<Link
 						to="/jobs"
 						className="inline-flex w-fit items-center gap-1.5 border-2 border-border bg-white p-2 rounded-base font-bold text-sm shadow-light hover:translate-x-boxShadowX hover:translate-y-boxShadowY hover:shadow-none transition-all cursor-pointer"

@@ -93,15 +93,16 @@ vi.mock("#/lib/settings-store", () => ({
 }));
 
 vi.mock("#/lib/resume-store", () => ({
-	getResumeData: () => ({
-		id: "res-1",
-		name: "My Default Resume",
-		summary: "Default summary",
-		experience: [],
-		education: [],
-		skills: [],
-		projects: [],
-	}),
+	getResumeData: () =>
+		Promise.resolve({
+			id: "res-1",
+			name: "My Default Resume",
+			summary: "Default summary",
+			experience: [],
+			education: [],
+			skills: [],
+			projects: [],
+		}),
 }));
 
 vi.mock("#/lib/job-ai", () => ({

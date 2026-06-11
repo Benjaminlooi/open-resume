@@ -562,5 +562,4 @@ describe("resumeStore", () => {
 			expect(state.languages?.[1].id).toBe(initialOrder[0]);
 		});
 	});
-
 });

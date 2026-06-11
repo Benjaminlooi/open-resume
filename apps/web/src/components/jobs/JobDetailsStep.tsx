@@ -13,7 +13,9 @@ export default function JobDetailsStep({ applicationId }: JobDetailsStepProps) {
 	const [title, setTitle] = useState(application?.title || "");
 	const [location, setLocation] = useState(application?.location || "");
 	const [sourceUrl, setSourceUrl] = useState(application?.sourceUrl || "");
-	const [description, setDescription] = useState(application?.description || "");
+	const [description, setDescription] = useState(
+		application?.description || "",
+	);
 	const [error, setError] = useState("");
 	const [isSaved, setIsSaved] = useState(false);
 

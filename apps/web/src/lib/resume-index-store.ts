@@ -50,7 +50,9 @@ export const useResumeIndexStore = create<ResumeIndexState>()(
 			loadIndex: async () => {
 				const resumes = await listResumes();
 				set(() => ({
-					resumes: resumes.map(({ isDefault: _isDefault, ...resume }) => resume),
+					resumes: resumes.map(
+						({ isDefault: _isDefault, ...resume }) => resume,
+					),
 					defaultResumeId:
 						resumes.find((resume) => resume.isDefault)?.id ?? null,
 				}));

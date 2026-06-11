@@ -84,7 +84,9 @@ function ResumesDashboard() {
 							/>
 						))}
 				</div>
-				{isModalOpen && <NewResumeModal onClose={() => setIsModalOpen(false)} />}
+				{isModalOpen && (
+					<NewResumeModal onClose={() => setIsModalOpen(false)} />
+				)}
 			</main>
 		</>
 	);

@@ -17,8 +17,11 @@ const STATUS_OPTIONS: { value: JobApplicationStatus; label: string }[] = [
 	{ value: "archived", label: "Archived" },
 ];
 
-export default function ApplicationTrackerStep({ applicationId }: ApplicationTrackerStepProps) {
-	const { jobApplications, setStatus, updateJobApplication } = useJobApplicationStore();
+export default function ApplicationTrackerStep({
+	applicationId,
+}: ApplicationTrackerStepProps) {
+	const { jobApplications, setStatus, updateJobApplication } =
+		useJobApplicationStore();
 	const application = jobApplications.find((app) => app.id === applicationId);
 
 	const getInitialFollowUpDate = () => {
@@ -90,7 +93,8 @@ export default function ApplicationTrackerStep({ applicationId }: ApplicationTra
 				<div>
 					<h2 className="text-2xl font-heading">Application Tracker</h2>
 					<p className="text-sm text-muted-foreground mt-1">
-						Update the tracking status, follow-up reminders, and general interview notes.
+						Update the tracking status, follow-up reminders, and general
+						interview notes.
 					</p>
 				</div>
 				<p className="text-sm text-muted-foreground">Step 5 of 5</p>
@@ -133,15 +137,14 @@ export default function ApplicationTrackerStep({ applicationId }: ApplicationTra
 						className="w-full border-2 border-border rounded-base p-2 focus:outline-none focus:ring-2 focus:ring-main bg-white"
 					/>
 					<p className="text-xs text-muted-foreground mt-1">
-						Set a target date to follow up on this application (e.g. after submitting, or after an interview).
+						Set a target date to follow up on this application (e.g. after
+						submitting, or after an interview).
 					</p>
 				</div>
 
 				{/* Notes */}
 				<div>
-					<label className="block text-sm font-bold mb-1.5">
-						Notes & Log
-					</label>
+					<label className="block text-sm font-bold mb-1.5">Notes & Log</label>
 					<textarea
 						value={notes}
 						onChange={(e) => setNotes(e.target.value)}
