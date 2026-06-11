@@ -4,7 +4,48 @@ import {
 	deleteCompanionJob,
 	listCompanionJobs,
 	retryCompanionJobCrawl,
+	getProfile,
+	updateProfile,
+	syncResume,
 } from "./local-companion-client";
+
+const mockProfile = {
+	candidate: {
+		fullName: "John Doe",
+		email: "john@example.com",
+		phone: "12345678",
+		location: "NY",
+		linkedin: "linkedin.com/in/john",
+		portfolioUrl: "john.dev",
+		github: "github.com/john",
+		twitter: "twitter.com/john",
+	},
+	targetRoles: {
+		primary: ["Software Engineer"],
+		archetypes: [{ name: "Product Dev", level: "Senior", fit: "primary" as const }],
+	},
+	narrative: {
+		headline: "Great dev",
+		exitStory: "Moved on",
+		superpowers: ["Coding"],
+		proofPoints: [{ name: "Shipped app", url: "https://app.com", heroMetric: "10x" }],
+	},
+	compensation: {
+		targetRange: "100k-120k",
+		currency: "USD",
+		minimum: "90k",
+		preferred: "110k",
+		locationFlexibility: "Hybrid",
+	},
+	location: {
+		country: "USA",
+		city: "New York",
+		timezone: "EST",
+		visaStatus: "Citizen",
+		onsiteAvailability: "2 days",
+		remotePolicy: "Flexible",
+	},
+};
 
 describe("local companion client", () => {
 	afterEach(() => {
@@ -88,6 +129,64 @@ describe("local companion client", () => {
 		await expect(deleteCompanionJob("job-1")).resolves.toEqual({
 			deleted: true,
 		});
+	});
+
+	it("gets candidate profile", async () => {
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(async () => ({
+				ok: true,
+				json: async () => mockProfile,
+			})),
+		);
+
+		const result = await getProfile();
+		expect(result).toEqual(mockProfile);
+		expect(fetch).toHaveBeenCalledWith(
+			"http://127.0.0.1:47321/profile",
+			undefined,
+		);
+	});
+
+	it("updates candidate profile", async () => {
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(async () => ({
+				ok: true,
+				json: async () => mockProfile,
+			})),
+		);
+
+		const result = await updateProfile(mockProfile);
+		expect(result).toEqual(mockProfile);
+		expect(fetch).toHaveBeenCalledWith(
+			"http://127.0.0.1:47321/profile",
+			expect.objectContaining({
+				method: "PUT",
+				body: JSON.stringify(mockProfile),
+			}),
+		);
+	});
+
+	it("syncs default resume", async () => {
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(async () => ({
+				ok: true,
+				json: async () => ({ ok: true }),
+			})),
+		);
+
+		const resumeData = { personalInfo: { fullName: "John Doe" } };
+		const result = await syncResume(resumeData);
+		expect(result).toEqual({ ok: true });
+		expect(fetch).toHaveBeenCalledWith(
+			"http://127.0.0.1:47321/profile/resume",
+			expect.objectContaining({
+				method: "PUT",
+				body: JSON.stringify({ resume: resumeData }),
+			}),
+		);
 	});
 
 	it("returns a user-facing error when the companion is unavailable", async () => {

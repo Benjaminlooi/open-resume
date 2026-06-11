@@ -3,6 +3,7 @@ import { Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import CompanionJobCard from "#/components/jobs/CompanionJobCard";
 import NewJobApplicationModal from "#/components/jobs/NewJobApplicationModal";
+import DashboardHeader from "#/components/dashboard/DashboardHeader";
 import {
 	type LocalCompanionJob,
 	deleteCompanionJob,
@@ -79,7 +80,9 @@ function JobsDashboard() {
 	const failedJobs = companionJobs.filter((job) => job.crawlStatus === "failed");
 
 	return (
-		<main className="container mx-auto p-8 pt-[100px] text-[#082F49]">
+		<>
+			<DashboardHeader />
+			<main className="container mx-auto p-8 pt-[100px] text-[#082F49]">
 			<div className="mb-8 flex flex-wrap items-center justify-between gap-4">
 				<div>
 					<h1 className="text-4xl font-heading">Jobs Tracker</h1>
@@ -199,5 +202,6 @@ function JobsDashboard() {
 				/>
 			)}
 		</main>
+		</>
 	);
 }
