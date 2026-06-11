@@ -5,6 +5,7 @@ interface CompanionJobCardProps {
 	job: LocalCompanionJob;
 	onRetry: (id: string) => void;
 	onDelete: (id: string) => void;
+	onConvert?: (job: LocalCompanionJob) => void;
 }
 
 function getHostname(sourceUrl: string) {
@@ -23,21 +24,45 @@ export default function CompanionJobCard({
 	job,
 	onRetry,
 	onDelete,
+	onConvert,
 }: CompanionJobCardProps) {
+	const hostname = getHostname(job.sourceUrl);
+	const isReady = job.crawlStatus === "ready";
+	const title = isReady ? job.parsedTitle || hostname : hostname;
+	const company = isReady ? job.parsedCompany || hostname : null;
+
 	return (
 		<article className="flex min-h-52 flex-col gap-3 rounded-base border-2 border-border bg-white p-4 shadow-shadow">
 			<div className="flex items-start justify-between gap-3">
 				<div>
-					<h3 className="break-all font-heading text-lg">
-						{getHostname(job.sourceUrl)}
-					</h3>
+					<h3 className="break-all font-heading text-lg">{title}</h3>
+					{isReady && company && (
+						<p className="break-all font-bold text-sm text-gray-700">
+							{company}
+						</p>
+					)}
 					<p className="break-all text-muted-foreground text-xs">
 						{job.sourceUrl}
 					</p>
 				</div>
-				<span className="rounded-base border-2 border-border bg-[#F0F9FF] px-2 py-1 font-bold text-xs uppercase">
-					{job.crawlStatus}
-				</span>
+				<div className="flex flex-col items-end gap-1.5 shrink-0">
+					<span className="rounded-base border-2 border-border bg-[#F0F9FF] px-2 py-1 font-bold text-xs uppercase">
+						{job.crawlStatus}
+					</span>
+					{isReady && job.fitScore !== null && job.fitScore !== undefined && (
+						<span
+							className={`rounded-base border-2 border-border px-2 py-0.5 font-bold text-xs uppercase ${
+								job.fitScore >= 80
+									? "bg-[#BBF7D0]"
+									: job.fitScore >= 60
+										? "bg-[#FEF08A]"
+										: "bg-[#FECACA]"
+							}`}
+						>
+							{job.fitScore}% Match
+						</span>
+					)}
+				</div>
 			</div>
 
 			{job.crawlStatus === "ready" && (
@@ -50,7 +75,9 @@ export default function CompanionJobCard({
 				</p>
 			)}
 
-			{(job.crawlStatus === "pending" || job.crawlStatus === "crawling") && (
+			{(job.crawlStatus === "pending" ||
+				job.crawlStatus === "crawling" ||
+				job.crawlStatus === "analyzing") && (
 				<p className="text-muted-foreground text-sm">
 					Crawl is queued locally. This card will update when the companion
 					finishes.
@@ -58,6 +85,15 @@ export default function CompanionJobCard({
 			)}
 
 			<div className="mt-auto flex justify-end gap-2">
+				{isReady && onConvert && (
+					<button
+						type="button"
+						onClick={() => onConvert(job)}
+						className="inline-flex items-center gap-1 rounded-base border-2 border-border bg-main px-3 py-1.5 font-bold text-sm text-main-foreground shadow-shadow hover:translate-x-boxShadowX hover:translate-y-boxShadowY hover:shadow-none transition-all cursor-pointer bg-main"
+					>
+						Convert to Application
+					</button>
+				)}
 				{job.crawlStatus === "failed" && (
 					<button
 						type="button"

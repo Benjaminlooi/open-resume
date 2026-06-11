@@ -5,12 +5,18 @@ const companionBaseUrl = "http://127.0.0.1:47321";
 const companionJobSchema = z.object({
 	id: z.string(),
 	sourceUrl: z.string().url(),
-	crawlStatus: z.enum(["pending", "crawling", "ready", "failed"]),
+	crawlStatus: z.enum(["pending", "crawling", "analyzing", "ready", "failed"]),
 	crawlError: z.string().nullable(),
 	cleanedText: z.string(),
 	createdAt: z.number(),
 	updatedAt: z.number(),
 	crawledAt: z.number().nullable(),
+	parsedTitle: z.string().nullable().optional(),
+	parsedCompany: z.string().nullable().optional(),
+	parsedLocation: z.string().nullable().optional(),
+	parsedDescription: z.string().nullable().optional(),
+	fitScore: z.number().nullable().optional(),
+	fitBriefJson: z.string().nullable().optional(),
 });
 
 const companionJobsResponseSchema = z.object({
@@ -105,7 +111,10 @@ export type CandidateProfile = z.infer<typeof candidateProfileSchema>;
 export type ResumeSyncRequest = z.infer<typeof resumeSyncRequestSchema>;
 export type OkResponse = z.infer<typeof okResponseSchema>;
 
-async function companionFetch(path: string, init?: RequestInit): Promise<Response> {
+async function companionFetch(
+	path: string,
+	init?: RequestInit,
+): Promise<Response> {
 	try {
 		return await fetch(`${companionBaseUrl}${path}`, init);
 	} catch {
