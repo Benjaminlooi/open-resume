@@ -41,7 +41,17 @@ export const getInitialIndexState = (): {
 };
 
 const toResumeContent = (content: Resume): ResumeContent =>
-	content as unknown as ResumeContent;
+	({
+		personalInfo: content.personalInfo,
+		summary: content.summary,
+		sections: content.sections,
+		experience: content.experience,
+		education: content.education,
+		skills: content.skills,
+		projects: content.projects,
+		certifications: content.certifications,
+		languages: content.languages,
+	}) as unknown as ResumeContent;
 
 export const useResumeIndexStore = create<ResumeIndexState>()(
 	devtools(

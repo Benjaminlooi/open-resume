@@ -180,6 +180,72 @@ describe("resumeIndexStore", () => {
 		);
 	});
 
+	it("strips metadata properties from content (such as id, name, templateId) when creating a resume", async () => {
+		const contentWithMetadata = {
+			id: "dummy",
+			name: "Template Preview",
+			activeSection: "personalInfo",
+			templateId: "demo",
+			personalInfo: {
+				fullName: "Test Person",
+				email: "",
+				phone: "",
+				location: "",
+				contactLinks: [],
+			},
+			summary: "",
+			sections: [],
+			experience: [],
+			education: [],
+			skills: [],
+			projects: [],
+			certifications: [],
+			languages: [],
+		};
+
+		createResumeMock.mockResolvedValue({
+			id: "resume-1",
+			name: "Test Person",
+			templateId: "demo",
+			lastModified: 456,
+			isDefault: false,
+			content: {
+				personalInfo: {
+					fullName: "Test Person",
+					email: "",
+					phone: "",
+					location: "",
+					contactLinks: [],
+				},
+				summary: "",
+				sections: [],
+				experience: [],
+				education: [],
+				skills: [],
+				projects: [],
+				certifications: [],
+				languages: [],
+			},
+		});
+
+		await useResumeIndexStore
+			.getState()
+			.createResumeIndexEntry(
+				"resume-1",
+				"Test Person",
+				"demo",
+				contentWithMetadata as any,
+			);
+
+		expect(createResumeMock).toHaveBeenCalledOnce();
+		const callArgs = createResumeMock.mock.calls[0];
+		const sentContent = callArgs[3];
+		expect(sentContent).not.toHaveProperty("id");
+		expect(sentContent).not.toHaveProperty("name");
+		expect(sentContent).not.toHaveProperty("activeSection");
+		expect(sentContent).not.toHaveProperty("templateId");
+	});
+
 	it("sets and clears the default resume through the companion", async () => {
 		setDefaultResumeMock.mockResolvedValue({
 			id: "resume-1",
