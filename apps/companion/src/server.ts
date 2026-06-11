@@ -1,11 +1,11 @@
+import { randomUUID } from "node:crypto";
+import { mkdirSync } from "node:fs";
+import { dirname, resolve } from "node:path";
 import cors from "@fastify/cors";
 import type { FastifyError } from "fastify";
 import Fastify from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
 import { hasZodFastifySchemaValidationErrors } from "fastify-type-provider-zod";
-import { randomUUID } from "node:crypto";
-import { mkdirSync } from "node:fs";
-import { dirname, resolve } from "node:path";
 import { crawlCleanedTextWithPlaywright } from "./extract/playwright.js";
 import type { CrawlQueue } from "./jobs/crawl-queue.js";
 import { createCrawlQueue } from "./jobs/crawl-queue.js";
@@ -13,8 +13,8 @@ import type { JobRepository } from "./jobs/repository.js";
 import { createJobRepository } from "./jobs/repository.js";
 import { registerOpenApi } from "./openapi.js";
 import {
-	companionJobSchema,
 	companionErrorResponseSchema,
+	companionJobSchema,
 	companionJobsResponseSchema,
 	createJobRequestSchema,
 	deleteJobResponseSchema,

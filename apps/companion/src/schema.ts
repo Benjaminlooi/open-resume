@@ -72,7 +72,9 @@ export type CrawlStatus = z.infer<typeof crawlStatusSchema>;
 
 export const createJobRequestSchema = z
 	.object({
-		sourceUrl: httpUrlSchema.describe("HTTP or HTTPS job posting URL to crawl."),
+		sourceUrl: httpUrlSchema.describe(
+			"HTTP or HTTPS job posting URL to crawl.",
+		),
 	})
 	.strict();
 
@@ -98,7 +100,9 @@ export const companionJobSchema = z
 		crawledAt: z
 			.number()
 			.nullable()
-			.describe("Unix timestamp in milliseconds, or null before crawl success."),
+			.describe(
+				"Unix timestamp in milliseconds, or null before crawl success.",
+			),
 	})
 	.strict();
 
@@ -110,9 +114,7 @@ export const companionJobsResponseSchema = z
 	})
 	.strict();
 
-export type CompanionJobsResponse = z.infer<
-	typeof companionJobsResponseSchema
->;
+export type CompanionJobsResponse = z.infer<typeof companionJobsResponseSchema>;
 
 export const deleteJobResponseSchema = z
 	.object({

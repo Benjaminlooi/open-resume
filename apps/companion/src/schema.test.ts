@@ -3,13 +3,13 @@ import { ZodError, z } from "zod";
 import {
 	companionJobSchema,
 	companionJobsResponseSchema,
-	createJobRequestSchema,
 	crawlStatusSchema,
+	createJobRequestSchema,
 	deleteJobResponseSchema,
 	extractJobRequestSchema,
 	healthResponseSchema,
-	jobIdParamsSchema,
 	jobExtractionResultSchema,
+	jobIdParamsSchema,
 } from "./schema.js";
 
 describe("companion schema", () => {
@@ -100,8 +100,9 @@ describe("companion schema", () => {
 	});
 
 	it("rejects create job requests with non-http URLs", () => {
-		expect(() => createJobRequestSchema.parse({ sourceUrl: "file:///tmp/a" }))
-			.toThrow(ZodError);
+		expect(() =>
+			createJobRequestSchema.parse({ sourceUrl: "file:///tmp/a" }),
+		).toThrow(ZodError);
 	});
 
 	it("accepts job route params and delete responses", () => {

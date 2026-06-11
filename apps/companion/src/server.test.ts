@@ -1,8 +1,8 @@
 import type { FastifyInstance } from "fastify";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createCrawlQueue } from "./jobs/crawl-queue.js";
-import { createJobRepository } from "./jobs/repository.js";
 import type { JobRepository } from "./jobs/repository.js";
+import { createJobRepository } from "./jobs/repository.js";
 import { createServer } from "./server.js";
 
 function parseJsonLogs(output: string) {
@@ -181,17 +181,20 @@ describe("companion server", () => {
 		});
 		repository.markFailed(created.id, { error: "Timeout", now: 1100 });
 
-		expect((await server.inject({ method: "GET", url: "/jobs" })).json())
-			.toMatchObject({ jobs: [expect.objectContaining({ id: "job-1" })] });
+		expect(
+			(await server.inject({ method: "GET", url: "/jobs" })).json(),
+		).toMatchObject({ jobs: [expect.objectContaining({ id: "job-1" })] });
 
 		expect(
-			(await server.inject({ method: "POST", url: "/jobs/job-1/retry-crawl" }))
-				.json(),
+			(
+				await server.inject({ method: "POST", url: "/jobs/job-1/retry-crawl" })
+			).json(),
 		).toMatchObject({ id: "job-1", crawlStatus: "pending" });
 		expect(crawlQueue.enqueue).toHaveBeenCalledWith("job-1");
 
-		expect((await server.inject({ method: "GET", url: "/jobs/job-1" })).json())
-			.toMatchObject({ id: "job-1" });
+		expect(
+			(await server.inject({ method: "GET", url: "/jobs/job-1" })).json(),
+		).toMatchObject({ id: "job-1" });
 
 		const deleteResponse = await server.inject({
 			method: "DELETE",

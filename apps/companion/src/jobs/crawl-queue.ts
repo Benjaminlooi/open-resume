@@ -39,7 +39,8 @@ export function createCrawlQueue(options: CrawlQueueOptions) {
 				});
 			}
 		} catch (error) {
-			const errorMessage = error instanceof Error ? error.message : String(error);
+			const errorMessage =
+				error instanceof Error ? error.message : String(error);
 			options.logger?.error(
 				{ error: errorMessage, jobId: id, sourceUrl: job.sourceUrl },
 				"crawl queue job failed",
