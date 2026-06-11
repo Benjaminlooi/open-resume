@@ -254,6 +254,138 @@ describe("companion server", () => {
 		expect(deleteResponse.json()).toEqual({ deleted: false });
 	});
 
+	it("serves resume CRUD routes from SQLite", async () => {
+		const { server } = createTestServer();
+
+		const createResponse = await server.inject({
+			method: "POST",
+			url: "/resumes",
+			payload: {
+				id: "resume-1",
+				name: "Backend Resume",
+				templateId: "modern",
+				content: { personalInfo: { fullName: "Jane Doe" } },
+			},
+		});
+		expect(createResponse.statusCode).toBe(201);
+		expect(createResponse.json()).toMatchObject({
+			id: "resume-1",
+			name: "Backend Resume",
+			templateId: "modern",
+			isDefault: false,
+			content: { personalInfo: { fullName: "Jane Doe" } },
+		});
+
+		expect(
+			(await server.inject({ method: "GET", url: "/resumes" })).json(),
+		).toEqual({
+			resumes: [
+				expect.objectContaining({
+					id: "resume-1",
+					name: "Backend Resume",
+					templateId: "modern",
+					isDefault: false,
+				}),
+			],
+		});
+
+		expect(
+			(await server.inject({ method: "GET", url: "/resumes/resume-1" })).json(),
+		).toMatchObject({
+			id: "resume-1",
+			content: { personalInfo: { fullName: "Jane Doe" } },
+		});
+
+		const updateResponse = await server.inject({
+			method: "PUT",
+			url: "/resumes/resume-1",
+			payload: { name: "Updated Resume", content: { summary: "Updated" } },
+		});
+		expect(updateResponse.statusCode).toBe(200);
+		expect(updateResponse.json()).toMatchObject({
+			id: "resume-1",
+			name: "Updated Resume",
+			content: { summary: "Updated" },
+		});
+
+		const defaultResponse = await server.inject({
+			method: "PUT",
+			url: "/resumes/resume-1/default",
+		});
+		expect(defaultResponse.statusCode).toBe(200);
+		expect(defaultResponse.json()).toMatchObject({
+			id: "resume-1",
+			isDefault: true,
+		});
+
+		const deleteDefaultResponse = await server.inject({
+			method: "DELETE",
+			url: "/resumes/default",
+		});
+		expect(deleteDefaultResponse.statusCode).toBe(200);
+		expect(deleteDefaultResponse.json()).toEqual({ ok: true });
+
+		const deleteResponse = await server.inject({
+			method: "DELETE",
+			url: "/resumes/resume-1",
+		});
+		expect(deleteResponse.statusCode).toBe(200);
+		expect(deleteResponse.json()).toEqual({ deleted: true });
+	});
+
+	it("returns not found responses for missing resumes", async () => {
+		const { server } = createTestServer();
+
+		const getResponse = await server.inject({
+			method: "GET",
+			url: "/resumes/missing-resume",
+		});
+		expect(getResponse.statusCode).toBe(404);
+		expect(getResponse.json()).toEqual({ error: "Resume not found" });
+
+		const updateResponse = await server.inject({
+			method: "PUT",
+			url: "/resumes/missing-resume",
+			payload: { name: "Missing Resume" },
+		});
+		expect(updateResponse.statusCode).toBe(404);
+		expect(updateResponse.json()).toEqual({ error: "Resume not found" });
+
+		const defaultResponse = await server.inject({
+			method: "PUT",
+			url: "/resumes/missing-resume/default",
+		});
+		expect(defaultResponse.statusCode).toBe(404);
+		expect(defaultResponse.json()).toEqual({ error: "Resume not found" });
+	});
+
+	it("reads and writes profile resume through SQLite", async () => {
+		const { server } = createTestServer();
+
+		const missingResponse = await server.inject({
+			method: "GET",
+			url: "/profile/resume",
+		});
+		expect(missingResponse.statusCode).toBe(404);
+
+		const syncResponse = await server.inject({
+			method: "PUT",
+			url: "/profile/resume",
+			payload: { resume: { personalInfo: { fullName: "Jane Doe" } } },
+		});
+		expect(syncResponse.statusCode).toBe(200);
+		expect(syncResponse.json()).toEqual({ ok: true });
+
+		const getResponse = await server.inject({
+			method: "GET",
+			url: "/profile/resume",
+		});
+		expect(getResponse.statusCode).toBe(200);
+		expect(getResponse.json()).toEqual({
+			personalInfo: { fullName: "Jane Doe" },
+		});
+	});
+
 	it("does not recover runnable jobs unless explicitly enabled", () => {
 		let recovered = false;
 

@@ -17,13 +17,17 @@ import {
 	companionErrorResponseSchema,
 	companionJobSchema,
 	companionJobsResponseSchema,
+	createResumeRequestSchema,
 	createJobRequestSchema,
 	deleteJobResponseSchema,
 	healthResponseSchema,
 	jobIdParamsSchema,
 	okResponseSchema,
+	resumeDetailsSchema,
 	resumeSyncRequestSchema,
+	resumesResponseSchema,
 	syncedResumeResponseSchema,
+	updateResumeRequestSchema,
 } from "./schema.js";
 
 interface LogStream {
@@ -95,6 +99,8 @@ function getResumePath(options: CreateServerOptions) {
 
 // Fastify Swagger crashes when a registered component ref is used for params.
 const routeJobIdParamsSchema = jobIdParamsSchema.extend({});
+const routeResumeIdParamsSchema = jobIdParamsSchema.extend({});
+const profileResumeId = "profile-resume";
 
 export function createServer(options: CreateServerOptions = {}) {
 	const logScrapedData =
@@ -304,18 +310,11 @@ export function createServer(options: CreateServerOptions = {}) {
 				},
 			},
 			async (_request, reply) => {
-				const resumePath = getResumePath(options);
-				if (!existsSync(resumePath)) {
+				const defaultResume = jobRepository.getDefaultResume();
+				if (!defaultResume) {
 					return reply.status(404).send({ error: "Synced resume not found" });
 				}
-				try {
-					const data = readFileSync(resumePath, "utf8");
-					return JSON.parse(data);
-				} catch (_err) {
-					return reply
-						.status(500)
-						.send({ error: "Failed to read synced resume" });
-				}
+				return defaultResume.content;
 			},
 		);
 
@@ -333,19 +332,179 @@ export function createServer(options: CreateServerOptions = {}) {
 					},
 				},
 			},
-			async (request, reply) => {
-				const resumePath = getResumePath(options);
-				mkdirSync(dirname(resumePath), { recursive: true });
-				try {
-					writeFileSync(
-						resumePath,
-						JSON.stringify(request.body.resume, null, 2),
-					);
-					return { ok: true };
-				} catch (_err) {
-					return reply.status(500).send({ error: "Failed to sync resume" });
+			async (request) => {
+				const now = Date.now();
+				const existingResume = jobRepository.getResume(profileResumeId);
+				if (existingResume) {
+					jobRepository.updateResume(profileResumeId, {
+						content: request.body.resume,
+						now,
+					});
+				} else {
+					jobRepository.createResume({
+						id: profileResumeId,
+						name: "Profile Resume",
+						templateId: "default",
+						content: request.body.resume,
+						now,
+					});
 				}
+				jobRepository.setDefaultResume(profileResumeId, now);
+				return { ok: true };
 			},
+		);
+
+		typedServer.get(
+			"/resumes",
+			{
+				schema: {
+					operationId: "listResumes",
+					tags: ["Resumes"],
+					summary: "List saved resumes",
+					response: {
+						200: resumesResponseSchema,
+					},
+				},
+			},
+			async () => ({
+				resumes: jobRepository.listResumes(),
+			}),
+		);
+
+		typedServer.post(
+			"/resumes",
+			{
+				schema: {
+					operationId: "createResume",
+					tags: ["Resumes"],
+					summary: "Create a saved resume",
+					body: createResumeRequestSchema,
+					response: {
+						201: resumeDetailsSchema,
+						400: companionErrorResponseSchema,
+						500: companionErrorResponseSchema,
+					},
+				},
+			},
+			async (request, reply) => {
+				const resume = jobRepository.createResume({
+					...request.body,
+					now: Date.now(),
+				});
+				return reply.status(201).send(resume);
+			},
+		);
+
+		typedServer.get(
+			"/resumes/:id",
+			{
+				schema: {
+					operationId: "getResume",
+					tags: ["Resumes"],
+					summary: "Get a saved resume",
+					params: routeResumeIdParamsSchema,
+					response: {
+						200: resumeDetailsSchema,
+						404: companionErrorResponseSchema,
+					},
+				},
+			},
+			async (request, reply) => {
+				const resume = jobRepository.getResume(request.params.id);
+				if (!resume) {
+					return reply.status(404).send({ error: "Resume not found" });
+				}
+				return reply.send(resume);
+			},
+		);
+
+		typedServer.put(
+			"/resumes/:id",
+			{
+				schema: {
+					operationId: "updateResume",
+					tags: ["Resumes"],
+					summary: "Update a saved resume",
+					params: routeResumeIdParamsSchema,
+					body: updateResumeRequestSchema,
+					response: {
+						200: resumeDetailsSchema,
+						404: companionErrorResponseSchema,
+					},
+				},
+			},
+			async (request, reply) => {
+				const resume = jobRepository.updateResume(request.params.id, {
+					...request.body,
+					now: Date.now(),
+				});
+				if (!resume) {
+					return reply.status(404).send({ error: "Resume not found" });
+				}
+				return reply.send(resume);
+			},
+		);
+
+		typedServer.put(
+			"/resumes/:id/default",
+			{
+				schema: {
+					operationId: "setDefaultResume",
+					tags: ["Resumes"],
+					summary: "Set the default resume",
+					params: routeResumeIdParamsSchema,
+					response: {
+						200: resumeDetailsSchema,
+						404: companionErrorResponseSchema,
+					},
+				},
+			},
+			async (request, reply) => {
+				const resume = jobRepository.setDefaultResume(
+					request.params.id,
+					Date.now(),
+				);
+				if (!resume) {
+					return reply.status(404).send({ error: "Resume not found" });
+				}
+				return reply.send(resume);
+			},
+		);
+
+		typedServer.delete(
+			"/resumes/default",
+			{
+				schema: {
+					operationId: "clearDefaultResume",
+					tags: ["Resumes"],
+					summary: "Clear the default resume",
+					response: {
+						200: okResponseSchema,
+					},
+				},
+			},
+			async () => {
+				jobRepository.clearDefaultResume(Date.now());
+				return { ok: true };
+			},
+		);
+
+		typedServer.delete(
+			"/resumes/:id",
+			{
+				schema: {
+					operationId: "deleteResume",
+					tags: ["Resumes"],
+					summary: "Delete a saved resume",
+					params: routeResumeIdParamsSchema,
+					response: {
+						200: deleteJobResponseSchema,
+					},
+				},
+			},
+			async (request) => ({
+				deleted: jobRepository.deleteResume(request.params.id),
+			}),
 		);
 
 		typedServer.get(
