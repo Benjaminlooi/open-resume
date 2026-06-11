@@ -41,9 +41,9 @@ export function createJobRepository(path: string) {
 	const database = new DatabaseSync(path);
 
 	// Inspect existing table schema
-	const columns = database
-		.prepare("PRAGMA table_info(jobs)")
-		.all() as Array<{ name: string }>;
+	const columns = database.prepare("PRAGMA table_info(jobs)").all() as Array<{
+		name: string;
+	}>;
 	const tableExists = columns.length > 0;
 	const missingColumns =
 		tableExists && !columns.some((col) => col.name === "parsed_title");

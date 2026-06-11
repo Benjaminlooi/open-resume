@@ -1,3 +1,6 @@
+import { randomUUID } from "node:crypto";
+import { rmSync } from "node:fs";
+import { resolve } from "node:path";
 import type { FastifyInstance } from "fastify";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createCrawlQueue } from "./jobs/crawl-queue.js";
@@ -15,6 +18,7 @@ function parseJsonLogs(output: string) {
 describe("companion server", () => {
 	const servers: FastifyInstance[] = [];
 	const repositories: JobRepository[] = [];
+	const tempFiles: string[] = [];
 
 	afterEach(async () => {
 		for (const server of servers) {
@@ -23,6 +27,12 @@ describe("companion server", () => {
 		for (const repository of repositories) {
 			repository.close();
 		}
+		for (const file of tempFiles) {
+			try {
+				rmSync(file, { force: true });
+			} catch (_) {}
+		}
+		tempFiles.length = 0;
 		servers.length = 0;
 		repositories.length = 0;
 		vi.restoreAllMocks();
@@ -50,7 +60,20 @@ describe("companion server", () => {
 			now: () => 1000,
 		});
 		beforeCreate?.({ crawlQueue, repository });
+
+		const profilePath = resolve(
+			process.cwd(),
+			`.open-resume-companion/profile-${randomUUID()}.json`,
+		);
+		const resumePath = resolve(
+			process.cwd(),
+			`.open-resume-companion/resume-${randomUUID()}.json`,
+		);
+		tempFiles.push(profilePath, resumePath);
+
 		const server = createServer({
+			profilePath,
+			resumePath,
 			...options,
 			jobRepository: repository,
 			crawlQueue,

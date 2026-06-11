@@ -38,6 +38,8 @@ interface CreateServerOptions {
 	logScrapedData?: boolean;
 	logStream?: LogStream;
 	recoverJobsOnStartup?: boolean;
+	profilePath?: string;
+	resumePath?: string;
 }
 
 function isScrapedDataLoggingEnabled(value: string | undefined): boolean {
@@ -76,11 +78,17 @@ function getDefaultDatabasePath(options: CreateServerOptions) {
 }
 
 function getProfilePath(options: CreateServerOptions) {
+	if (options.profilePath) {
+		return options.profilePath;
+	}
 	const dbPath = getDefaultDatabasePath(options);
 	return resolve(dirname(dbPath), "profile.json");
 }
 
 function getResumePath(options: CreateServerOptions) {
+	if (options.resumePath) {
+		return options.resumePath;
+	}
 	const dbPath = getDefaultDatabasePath(options);
 	return resolve(dirname(dbPath), "resume.json");
 }
