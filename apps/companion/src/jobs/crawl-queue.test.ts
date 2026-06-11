@@ -69,6 +69,37 @@ describe("crawl queue", () => {
 		});
 	});
 
+	it("logs ordinary crawl failures with job context", async () => {
+		const repository = createTestRepository();
+		repository.createJob({
+			id: "job-1",
+			sourceUrl: "https://example.com/job",
+			now: 1000,
+		});
+		const logger = {
+			error: vi.fn(),
+		};
+		const queue = createCrawlQueue({
+			repository,
+			crawl: async () => {
+				throw new Error("Blocked by site");
+			},
+			logger,
+			now: () => 1200,
+		});
+
+		await queue.runJob("job-1");
+
+		expect(logger.error).toHaveBeenCalledWith(
+			{
+				error: "Blocked by site",
+				jobId: "job-1",
+				sourceUrl: "https://example.com/job",
+			},
+			"crawl queue job failed",
+		);
+	});
+
 	it("marks a job failed when crawling returns empty text", async () => {
 		const repository = createTestRepository();
 		repository.createJob({
@@ -306,6 +337,10 @@ describe("crawl queue", () => {
 		});
 
 		queue.enqueue("job-1");
-		await vi.waitFor(() => expect(logger.error).toHaveBeenCalledOnce());
+		await vi.waitFor(() => expect(logger.error).toHaveBeenCalledTimes(2));
+		expect(logger.error).toHaveBeenLastCalledWith(
+			{ error: expect.any(Error) },
+			"crawl queue job crashed",
+		);
 	});
 });

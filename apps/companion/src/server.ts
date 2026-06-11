@@ -33,6 +33,7 @@ interface CreateServerOptions {
 	logLevel?: string;
 	logScrapedData?: boolean;
 	logStream?: LogStream;
+	recoverJobsOnStartup?: boolean;
 }
 
 function isScrapedDataLoggingEnabled(value: string | undefined): boolean {
@@ -70,6 +71,7 @@ function getDefaultDatabasePath(options: CreateServerOptions) {
 	);
 }
 
+// Fastify Swagger crashes when a registered component ref is used for params.
 const routeJobIdParamsSchema = jobIdParamsSchema.extend({});
 
 export function createServer(options: CreateServerOptions = {}) {
@@ -82,6 +84,7 @@ export function createServer(options: CreateServerOptions = {}) {
 		logger: createLoggerOptions(options),
 	});
 	const typedServer = server.withTypeProvider<ZodTypeProvider>();
+	const ownsRepository = !options.jobRepository;
 	const jobRepository =
 		options.jobRepository ??
 		(() => {
@@ -99,11 +102,17 @@ export function createServer(options: CreateServerOptions = {}) {
 					logScrapedData,
 				}),
 			logger: {
-				error(error, message) {
-					server.log.error({ error }, message);
+				error(bindings, message) {
+					server.log.error(bindings, message);
 				},
 			},
 		});
+
+	server.addHook("onClose", async () => {
+		if (ownsRepository) {
+			jobRepository.close();
+		}
+	});
 
 	registerOpenApi(server);
 
@@ -271,7 +280,9 @@ export function createServer(options: CreateServerOptions = {}) {
 		);
 	});
 
-	crawlQueue.enqueueRunnableJobs();
+	if (options.recoverJobsOnStartup) {
+		crawlQueue.enqueueRunnableJobs();
+	}
 
 	return server;
 }

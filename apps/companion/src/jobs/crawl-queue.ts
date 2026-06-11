@@ -3,7 +3,7 @@ import { crawlCleanedTextWithPlaywright } from "../extract/playwright.js";
 import type { JobRepository } from "./repository.js";
 
 interface CrawlQueueLogger {
-	error(error: unknown, message: string): void;
+	error(bindings: Record<string, unknown>, message: string): void;
 }
 
 interface CrawlQueueOptions {
@@ -39,9 +39,14 @@ export function createCrawlQueue(options: CrawlQueueOptions) {
 				});
 			}
 		} catch (error) {
+			const errorMessage = error instanceof Error ? error.message : String(error);
+			options.logger?.error(
+				{ error: errorMessage, jobId: id, sourceUrl: job.sourceUrl },
+				"crawl queue job failed",
+			);
 			if (options.repository.getJob(id)) {
 				options.repository.markFailed(id, {
-					error: error instanceof Error ? error.message : String(error),
+					error: errorMessage,
 					now: now(),
 				});
 			}
@@ -52,7 +57,7 @@ export function createCrawlQueue(options: CrawlQueueOptions) {
 
 	function enqueue(id: string) {
 		void runJob(id).catch((error) => {
-			options.logger?.error(error, "crawl queue job failed");
+			options.logger?.error({ error }, "crawl queue job crashed");
 		});
 	}
 

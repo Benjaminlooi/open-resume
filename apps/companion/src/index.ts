@@ -8,6 +8,7 @@ const host = process.env.OPEN_RESUME_COMPANION_HOST ?? "127.0.0.1";
 
 const server = createServer({
 	logLevel: process.env.OPEN_RESUME_COMPANION_LOG_LEVEL ?? "info",
+	recoverJobsOnStartup: true,
 });
 
 try {
