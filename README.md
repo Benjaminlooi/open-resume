@@ -1,19 +1,22 @@
 # Open Resume
 
-A modern, fast, and highly customizable resume builder application. Built with cutting-edge web technologies, it features file-based routing, server-side rendering, and AI integration, optimized for deployment on Cloudflare Workers.
+A modern, fast, and highly customizable resume builder application. Built with cutting-edge web technologies, it features file-based routing, server-side rendering, and AI integration, optimized for deployment on Cloudflare Workers. It includes a companion backend service to scrape and track job postings.
 
 ## 🚀 Features
 
+- **Monorepo Architecture:** Organized as a unified `pnpm` workspace with a web frontend and a companion backend.
 - **Modern UI:** Built with React 19, Tailwind CSS v4, and Shadcn UI.
 - **File-Based Routing:** Seamless navigation and code splitting via TanStack Router.
 - **Server-Side Rendering:** Enhanced performance and SEO with TanStack Start.
 - **State Management:** Fast, persistent global state using Zustand.
 - **AI Integration:** Powered by the AI SDK for advanced, intelligent resume building.
+- **Companion Backend:** A local Fastify daemon that handles asynchronous job crawler queues (via Playwright) with SQLite storage, enabling one-click import of job descriptions from URL.
 - **Analytics:** Integrated with PostHog for product analytics.
-- **Edge Deployment:** Optimized for Cloudflare Workers.
+- **Edge Deployment:** Frontend is optimized for Cloudflare Workers.
 
 ## 🛠 Tech Stack
 
+### Frontend (`apps/web`)
 - **Framework:** [TanStack Start](https://tanstack.com/start) (React 19)
 - **State Management:** [Zustand](https://zustand-demo.pmnd.rs/) (LocalStorage persistence)
 - **AI Integration:** [AI SDK](https://sdk.vercel.ai/docs) (`@ai-sdk/react`, OpenAI, Anthropic, Google) & TanStack AI
@@ -21,27 +24,40 @@ A modern, fast, and highly customizable resume builder application. Built with c
 - **Analytics:** [PostHog](https://posthog.com/)
 - **Tooling:** Biome (Linting/Formatting), Vitest (Testing), Wrangler (Cloudflare deployment)
 
+### Companion Backend (`apps/companion`)
+- **Framework:** Fastify 5
+- **Crawler:** Playwright (headless Chromium) for dynamic page retrieval
+- **Database:** SQLite via native Node.js `node:sqlite`
+- **Validation:** Zod 4
+- **API Spec:** OpenAPI 3.0 (verified with Redocly)
+- **Tooling:** tsx, tsup, Vitest
+
+---
+
 ## 📁 Project Structure
 
 ```text
 apps/
-├── web/                    # TanStack Start browser app
+├── web/                    # TanStack Start frontend app
 │   └── src/
 │       ├── routes/         # File-based routing via TanStack Router
-│       ├── lib/            # Stores, schemas, AI helpers, companion client
+│       ├── lib/            # Stores, schemas, AI helpers, and companion client
 │       └── components/     # Editor, dashboard, jobs, and shared UI
-└── companion/              # Optional local Node companion backend
+└── companion/              # Local Node Fastify companion backend daemon
     └── src/
-        ├── extract/        # Job page extraction helpers
-        ├── server.ts       # Fastify app factory
-        └── index.ts        # Local daemon entrypoint
+        ├── extract/        # Job page text extraction and cleaning helpers
+        ├── jobs/           # SQLite repository and background queue
+        ├── server.ts       # Fastify app factory and route registry
+        └── index.ts        # Companion daemon entrypoint
 ```
+
+---
 
 ## 💻 Getting Started
 
 ### Prerequisites
 
-Make sure you have [Node.js](https://nodejs.org/) installed along with [`pnpm`](https://pnpm.io/).
+Make sure you have [Node.js](https://nodejs.org/) (v22+) installed along with [`pnpm`](https://pnpm.io/).
 
 ### Installation
 
@@ -75,9 +91,11 @@ Run only the local companion:
 pnpm companion:dev
 ```
 
-### Local Companion
+---
 
-Open Resume can use the optional local companion service to extract job details from pasted job URLs.
+## 🔌 Local Companion
+
+Open Resume can use the local companion service to extract job details from pasted job URLs.
 
 Configure companion environment variables in `apps/companion/.env`. Start from the checked-in example:
 ```bash
@@ -101,18 +119,22 @@ Expected response:
 
 Open `http://localhost:3000/jobs`, create a job application, paste a job URL, and click **Fetch details**. If the companion is not running, the app keeps working with manual job description paste.
 
-To debug scraping quality, enable scraped-data logs in `apps/companion/.env`. This prints the extracted text and structured data before normalization, then the normalized extraction result:
+### Scraped Data Debugging
+
+To debug scraping quality, enable scraped-data logs in `apps/companion/.env`. This prints the raw text and structured data before normalization:
 ```env
 OPEN_RESUME_COMPANION_LOG_LEVEL=debug
 OPEN_RESUME_COMPANION_LOG_SCRAPED_DATA=1
 ```
 
+### OpenAPI Documentation & Testing
+
 The companion exposes OpenAPI docs for manual testing and client tooling:
 
-- `http://127.0.0.1:47321/openapi.json`: machine-readable OpenAPI 3.0 document.
+- `http://127.0.0.1:47321/openapi.json`: Machine-readable OpenAPI 3.0 document.
 - `http://127.0.0.1:47321/docs`: Swagger UI for browser-based endpoint testing.
 
-Generate the committed OpenAPI artifact for Bruno import:
+Generate the committed OpenAPI artifact for Bruno/Postman import:
 ```bash
 pnpm companion:openapi
 ```
@@ -124,19 +146,9 @@ pnpm --filter @open-resume/companion openapi:lint
 
 In Bruno, import `apps/companion/openapi.json` as an OpenAPI collection to generate requests for the companion endpoints.
 
-### Build & Preview
+---
 
-Build the application for production:
-```bash
-pnpm build
-```
-
-Preview the production build locally:
-```bash
-pnpm preview
-```
-
-## 📜 Scripts
+## 📜 Workspace Scripts
 
 | Command | Description |
 |---|---|
@@ -154,6 +166,8 @@ pnpm preview
 | `pnpm check` | Runs both lint and format checks via Biome. |
 | `pnpm cf-typegen` | Generates TypeScript types for Cloudflare Workers using Wrangler. |
 | `pnpm deploy` | Builds the app and deploys it to Cloudflare Workers via Wrangler. |
+
+---
 
 ## 🌐 Deployment
 
