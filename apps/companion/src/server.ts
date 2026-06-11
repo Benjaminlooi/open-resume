@@ -128,7 +128,10 @@ export function createServer(options: CreateServerOptions = {}) {
 					server.log.error(bindings, message);
 				},
 			},
+			profilePath: getProfilePath(options),
+			resumePath: getResumePath(options),
 		});
+
 
 	server.addHook("onClose", async () => {
 		if (ownsRepository) {
