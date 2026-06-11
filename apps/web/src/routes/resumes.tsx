@@ -6,7 +6,6 @@ import NewResumeModal from "#/components/editor/NewResumeModal";
 import DashboardHeader from "#/components/dashboard/DashboardHeader";
 import { useResumeIndexStore } from "#/lib/resume-index-store";
 import { parseResumeMarkdown } from "#/lib/resume-markdown";
-import type { EditorState } from "#/lib/resume-store";
 
 export const Route = createFileRoute("/resumes")({
 	component: ResumesDashboard,
@@ -15,14 +14,17 @@ export const Route = createFileRoute("/resumes")({
 function ResumesDashboard() {
 	const navigate = useNavigate();
 	const importInputRef = useRef<HTMLInputElement>(null);
-	const { resumes, createResumeIndexEntry, deleteResumeIndexEntry } =
+	const { resumes, loadIndex, createResumeIndexEntry, deleteResumeIndexEntry } =
 		useResumeIndexStore();
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [isMounted, setIsMounted] = useState(false);
 
 	useEffect(() => {
 		setIsMounted(true);
-	}, []);
+		loadIndex().catch((error) => {
+			console.error("Failed to load resumes", error);
+		});
+	}, [loadIndex]);
 
 	const handleImportMarkdown = async (event: ChangeEvent<HTMLInputElement>) => {
 		const file = event.target.files?.[0];
@@ -32,16 +34,9 @@ function ResumesDashboard() {
 		const parsed = parseResumeMarkdown(await file.text());
 		const id = crypto.randomUUID();
 		const name = parsed.resume.personalInfo.fullName || "Imported Resume";
-		const importedResume: EditorState = {
-			id,
-			name,
-			activeSection: "personalInfo",
-			templateId: "demo",
-			...parsed.resume,
-		};
+		const templateId = "demo";
 
-		localStorage.setItem(`resume-${id}`, JSON.stringify(importedResume));
-		createResumeIndexEntry(id, name, importedResume.templateId);
+		await createResumeIndexEntry(id, name, templateId, parsed.resume);
 		if (parsed.warnings.length > 0) {
 			window.alert(`Imported with warnings:\n${parsed.warnings.join("\n")}`);
 		}

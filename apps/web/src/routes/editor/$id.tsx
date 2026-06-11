@@ -30,21 +30,33 @@ function RouteComponent() {
 	const [isLoading, setIsLoading] = useState(true);
 
 	useEffect(() => {
-		const success = loadResume(id);
-		if (!success) {
-			// Initialize new resume state from the index if available
-			const indexEntry = useResumeIndexStore
-				.getState()
-				.resumes.find((r) => r.id === id);
-			useResumeStore
-				.getState()
-				.initNewResume(
-					id,
-					indexEntry?.name || "My Resume",
-					indexEntry?.templateId || "demo",
-				);
+		let isActive = true;
+
+		async function load() {
+			setIsLoading(true);
+			const success = await loadResume(id);
+			if (!isActive) return;
+			if (!success) {
+				// Initialize new resume state from the index if available
+				const indexEntry = useResumeIndexStore
+					.getState()
+					.resumes.find((r) => r.id === id);
+				useResumeStore
+					.getState()
+					.initNewResume(
+						id,
+						indexEntry?.name || "My Resume",
+						indexEntry?.templateId || "demo",
+					);
+			}
+			setIsLoading(false);
 		}
-		setIsLoading(false);
+
+		load();
+
+		return () => {
+			isActive = false;
+		};
 	}, [id, loadResume]);
 
 	if (isLoading)

@@ -15,6 +15,7 @@ export default function EditorHeader() {
 	const resumeName = useResumeStore((state) => state.name);
 	const templateId = useResumeStore((state) => state.templateId);
 	const setTemplateId = useResumeStore((state) => state.setTemplateId);
+	const updateResumeName = useResumeStore((state) => state.updateResumeName);
 	const replaceResumeContent = useResumeStore(
 		(state) => state.replaceResumeContent,
 	);
@@ -81,7 +82,7 @@ export default function EditorHeader() {
 						<Input
 							type="text"
 							value={resumeName}
-							readOnly
+							onChange={(e) => updateResumeName(e.target.value)}
 							className="max-w-[200px] hidden md:inline-flex"
 						/>
 						<div className="flex items-center justify-end gap-4">

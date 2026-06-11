@@ -1,12 +1,37 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { getResume, updateResume } from "./local-companion-client";
 import { useResumeStore } from "./resume-store";
+
+vi.mock("./local-companion-client", () => ({
+	getResume: vi.fn(),
+	updateResume: vi.fn(),
+}));
+
+const getResumeMock = vi.mocked(getResume);
+const updateResumeMock = vi.mocked(updateResume);
 
 // Deep clone the initial state so we can reset the singleton between tests
 const initialState = JSON.parse(JSON.stringify(useResumeStore.getState()));
 
 describe("resumeStore", () => {
 	beforeEach(() => {
+		vi.useFakeTimers();
 		useResumeStore.setState(JSON.parse(JSON.stringify(initialState)));
+		vi.clearAllMocks();
+		vi.clearAllTimers();
+		updateResumeMock.mockResolvedValue({
+			id: "default",
+			name: "My Resume",
+			templateId: "demo",
+			lastModified: 1,
+			isDefault: false,
+			content: {},
+		});
+	});
+
+	afterEach(() => {
+		vi.runOnlyPendingTimers();
+		vi.useRealTimers();
 	});
 
 	it("initializes with the correct dummy data", () => {
@@ -118,6 +143,79 @@ describe("resumeStore", () => {
 		expect(state.personalInfo.fullName).toBe("Imported Person");
 		expect(state.personalInfo.email).toBe("imported@example.com");
 		expect(state.summary).toBe("<p>Imported summary.</p>");
+	});
+
+	it("loads a resume asynchronously from the companion", async () => {
+		getResumeMock.mockResolvedValue({
+			id: "resume-1",
+			name: "Backend Resume",
+			templateId: "modern",
+			lastModified: 123,
+			isDefault: false,
+			content: {
+				...initialState,
+				personalInfo: {
+					...initialState.personalInfo,
+					fullName: "Backend Person",
+				},
+			},
+		});
+
+		const loaded = await useResumeStore.getState().loadResume("resume-1");
+
+		expect(loaded).toBe(true);
+		expect(getResumeMock).toHaveBeenCalledWith("resume-1");
+		expect(useResumeStore.getState()).toMatchObject({
+			id: "resume-1",
+			name: "Backend Resume",
+			templateId: "modern",
+			activeSection: "personalInfo",
+			personalInfo: expect.objectContaining({
+				fullName: "Backend Person",
+			}),
+		});
+	});
+
+	it("returns false when companion resume loading fails", async () => {
+		getResumeMock.mockRejectedValue(new Error("missing"));
+		const consoleErrorSpy = vi
+			.spyOn(console, "error")
+			.mockImplementation(() => {});
+
+		const loaded = await useResumeStore.getState().loadResume("missing");
+
+		expect(loaded).toBe(false);
+		expect(useResumeStore.getState().id).toBe("default");
+		expect(consoleErrorSpy).toHaveBeenCalledWith(
+			"Failed to load resume",
+			expect.any(Error),
+		);
+		consoleErrorSpy.mockRestore();
+	});
+
+	it("updates the resume name and debounces companion saves", async () => {
+		useResumeStore.getState().initNewResume("resume-1", "Old Name", "demo");
+		vi.clearAllMocks();
+		vi.clearAllTimers();
+
+		useResumeStore.getState().updateResumeName("New Name");
+		expect(useResumeStore.getState().name).toBe("New Name");
+		expect(updateResumeMock).not.toHaveBeenCalled();
+
+		await vi.advanceTimersByTimeAsync(500);
+
+		expect(updateResumeMock).toHaveBeenCalledOnce();
+		expect(updateResumeMock).toHaveBeenCalledWith(
+			"resume-1",
+			expect.objectContaining({
+				name: "New Name",
+				templateId: "demo",
+				content: expect.objectContaining({
+					personalInfo: expect.any(Object),
+					sections: expect.any(Array),
+				}),
+			}),
+		);
 	});
 
 	it("adds, updates, and deletes personal contact links", () => {
@@ -465,126 +563,4 @@ describe("resumeStore", () => {
 		});
 	});
 
-	describe("complex logic: legacy migration and side-effects", () => {
-		let originalWindow: any;
-		let originalLocalStorage: any;
-
-		beforeEach(() => {
-			originalWindow = globalThis.window;
-			originalLocalStorage = (globalThis as any).localStorage;
-			const mockStorage = {
-				getItem: vi.fn(),
-				setItem: vi.fn(),
-				removeItem: vi.fn(),
-				clear: vi.fn(),
-				length: 0,
-				key: vi.fn(),
-			};
-			globalThis.window = {
-				localStorage: mockStorage,
-			} as any;
-			(globalThis as any).localStorage = mockStorage;
-		});
-
-		afterEach(() => {
-			globalThis.window = originalWindow;
-			(globalThis as any).localStorage = originalLocalStorage;
-			vi.restoreAllMocks();
-		});
-
-		it("retrieves and parses resume data without altering the store", async () => {
-			const dummyState = {
-				id: "dummy-1",
-				name: "Dummy Resume",
-				templateId: "modern",
-				experience: [{ id: "exp-1", bullets: ["Fixed a bug"] }],
-			};
-			(globalThis.window.localStorage.getItem as any).mockReturnValue(
-				JSON.stringify(dummyState),
-			);
-
-			vi.resetModules();
-			const { getResumeData, useResumeStore } = await import("./resume-store");
-
-			const data = getResumeData("dummy-1");
-
-			expect(data).not.toBeNull();
-			expect(data?.id).toBe("dummy-1");
-			// Legacy migration check
-			expect(data?.experience[0].description).toBe(
-				"<ul><li>Fixed a bug</li></ul>",
-			);
-
-			// Verify global store is unchanged
-			expect(useResumeStore.getState().id).toBe("default");
-		});
-
-		it("migrates legacy bullets to description HTML on loadResume", async () => {
-			const legacyState = {
-				experience: [
-					{
-						id: "exp-1",
-						bullets: ["Fixed a bug", "Wrote a test"],
-					},
-				],
-			};
-			(globalThis.window.localStorage.getItem as any).mockReturnValue(
-				JSON.stringify(legacyState),
-			);
-
-			vi.resetModules();
-			const { useResumeStore } = await import("./resume-store");
-
-			useResumeStore.getState().loadResume("default");
-
-			expect(useResumeStore.getState().experience[0].description).toBe(
-				"<ul><li>Fixed a bug</li><li>Wrote a test</li></ul>",
-			);
-			expect(
-				(useResumeStore.getState().experience[0] as any).bullets,
-			).toBeUndefined();
-		});
-
-		it("migrates a legacy website field into contact links", async () => {
-			const legacyState = {
-				personalInfo: {
-					fullName: "Legacy Person",
-					email: "legacy@example.com",
-					phone: "",
-					location: "",
-					website: "legacy.example.com",
-				},
-			};
-			(globalThis.window.localStorage.getItem as any).mockReturnValue(
-				JSON.stringify(legacyState),
-			);
-
-			vi.resetModules();
-			const { useResumeStore } = await import("./resume-store");
-
-			useResumeStore.getState().loadResume("default");
-
-			expect(useResumeStore.getState().personalInfo.contactLinks).toEqual([
-				{
-					id: "contact-website",
-					label: "Website",
-					url: "legacy.example.com",
-				},
-			]);
-		});
-
-		it("saves state to localStorage on store update", async () => {
-			vi.resetModules();
-			const { useResumeStore } = await import("./resume-store");
-
-			(globalThis.window.localStorage.setItem as any).mockClear();
-
-			useResumeStore.getState().updatePersonalInfo("fullName", "Morty Smith");
-
-			expect(globalThis.window.localStorage.setItem).toHaveBeenCalledWith(
-				"resume-default",
-				expect.stringContaining("Morty Smith"),
-			);
-		});
-	});
 });

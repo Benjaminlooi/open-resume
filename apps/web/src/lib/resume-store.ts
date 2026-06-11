@@ -1,6 +1,11 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import { blankResumeState, dummyResumeData } from "./dummy-resume";
+import {
+	getResume,
+	updateResume,
+	type ResumeContent,
+} from "./local-companion-client";
 import type {
 	Certification,
 	ContactLink,
@@ -22,11 +27,12 @@ export type EditorState = Resume & {
 };
 
 export interface ResumeActions {
-	loadResume: (id: string) => boolean;
+	loadResume: (id: string) => Promise<boolean>;
 	initNewResume: (id: string, name: string, templateId: string) => void;
 	replaceResumeContent: (content: Resume) => void;
 	setActiveSection: (id: string) => void;
 	setTemplateId: (id: string) => void;
+	updateResumeName: (name: string) => void;
 	updatePersonalInfo: (
 		field: Exclude<keyof PersonalInfo, "contactLinks">,
 		value: string,
@@ -171,54 +177,71 @@ const migrateResume = (resume: LegacyEditorState): EditorState => {
 };
 
 export const getResumeData = (id: string): EditorState | null => {
-	if (typeof window !== "undefined") {
-		const saved = localStorage.getItem(`resume-${id}`);
-		if (saved) {
-			try {
-				const parsed = JSON.parse(saved) as LegacyEditorState;
-
-				if (parsed.experience)
-					parsed.experience = migrateBullets(parsed.experience);
-				if (parsed.education)
-					parsed.education = migrateBullets(parsed.education);
-				if (parsed.projects) parsed.projects = migrateBullets(parsed.projects);
-
-				return migrateResume(parsed);
-			} catch (e) {
-				console.error("Failed to parse saved resume state", e);
-			}
-		}
-	}
-	return null;
+	const state = useResumeStore.getState();
+	return state.id === id ? state : null;
 };
+
+const normalizeEditorState = (
+	id: string,
+	name: string,
+	templateId: string,
+	content: Record<string, unknown>,
+): EditorState => {
+	const parsed = {
+		...blankResumeState,
+		...content,
+		id,
+		name,
+		templateId,
+		activeSection: "personalInfo",
+	} as LegacyEditorState;
+
+	if (parsed.experience) parsed.experience = migrateBullets(parsed.experience);
+	if (parsed.education) parsed.education = migrateBullets(parsed.education);
+	if (parsed.projects) parsed.projects = migrateBullets(parsed.projects);
+
+	return migrateResume(parsed);
+};
+
+const toResumeContent = (state: EditorState): ResumeContent => ({
+	personalInfo: state.personalInfo,
+	summary: state.summary,
+	sections: state.sections,
+	experience: state.experience,
+	education: state.education,
+	skills: state.skills,
+	projects: state.projects,
+	certifications: state.certifications,
+	languages: state.languages,
+}) as unknown as ResumeContent;
+
+let isLoadingResume = false;
+let saveTimer: ReturnType<typeof setTimeout> | null = null;
 
 export const useResumeStore = create<ResumeStore>()(
 	devtools(
 		(set, _get) => ({
 			...getInitialState(),
 
-			loadResume: (id: string) => {
-				if (typeof window !== "undefined") {
-					const saved = localStorage.getItem(`resume-${id}`);
-					if (saved) {
-						try {
-							const parsed = JSON.parse(saved) as LegacyEditorState;
-
-							if (parsed.experience)
-								parsed.experience = migrateBullets(parsed.experience);
-							if (parsed.education)
-								parsed.education = migrateBullets(parsed.education);
-							if (parsed.projects)
-								parsed.projects = migrateBullets(parsed.projects);
-
-							set(() => migrateResume(parsed));
-							return true;
-						} catch (e) {
-							console.error("Failed to parse saved resume state", e);
-						}
-					}
+			loadResume: async (id: string) => {
+				try {
+					const resume = await getResume(id);
+					isLoadingResume = true;
+					set(() =>
+						normalizeEditorState(
+							resume.id,
+							resume.name,
+							resume.templateId,
+							resume.content,
+						),
+					);
+					isLoadingResume = false;
+					return true;
+				} catch (e) {
+					console.error("Failed to load resume", e);
+					isLoadingResume = false;
+					return false;
 				}
-				return false;
 			},
 
 			initNewResume: (id, name, templateId) => {
@@ -248,6 +271,11 @@ export const useResumeStore = create<ResumeStore>()(
 			setTemplateId: (id) =>
 				set((_state) => ({
 					templateId: id,
+				})),
+
+			updateResumeName: (name) =>
+				set(() => ({
+					name,
 				})),
 
 			updatePersonalInfo: (field, value) =>
@@ -493,50 +521,20 @@ export const useResumeStore = create<ResumeStore>()(
 	),
 );
 
-if (typeof window !== "undefined") {
-	useResumeStore.subscribe((state) => {
-		if (state.id) {
-			const {
-				loadResume,
-				setActiveSection,
-				replaceResumeContent,
-				setTemplateId,
-				updatePersonalInfo,
-				updateSummary,
-				addContactLink,
-				updateContactLink,
-				deleteContactLink,
-				reorderSections,
-				toggleSectionVisibility,
-				addExperience,
-				updateExperience,
-				deleteExperience,
-				reorderExperience,
-				addEducation,
-				updateEducation,
-				deleteEducation,
-				reorderEducation,
-				addSkillGroup,
-				updateSkillGroup,
-				deleteSkillGroup,
-				reorderSkills,
-				addSection,
-				removeSection,
-				addProject,
-				updateProject,
-				deleteProject,
-				reorderProjects,
-				addCertification,
-				updateCertification,
-				deleteCertification,
-				reorderCertifications,
-				addLanguage,
-				updateLanguage,
-				deleteLanguage,
-				reorderLanguages,
-				...data
-			} = state;
-			localStorage.setItem(`resume-${state.id}`, JSON.stringify(data));
-		}
-	});
-}
+useResumeStore.subscribe((state) => {
+	if (!state.id || isLoadingResume) return;
+
+	if (saveTimer) {
+		clearTimeout(saveTimer);
+	}
+
+	saveTimer = setTimeout(() => {
+		updateResume(state.id, {
+			name: state.name,
+			templateId: state.templateId,
+			content: toResumeContent(state),
+		}).catch((error) => {
+			console.error("Failed to save resume", error);
+		});
+	}, 500);
+});

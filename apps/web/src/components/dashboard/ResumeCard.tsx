@@ -2,8 +2,9 @@ import { Link } from "@tanstack/react-router";
 import { Star } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { getResume } from "#/lib/local-companion-client";
 import { useResumeIndexStore } from "#/lib/resume-index-store";
-import { type EditorState, getResumeData } from "#/lib/resume-store";
+import type { EditorState } from "#/lib/resume-store";
 import { cn } from "#/lib/utils";
 import ResumeThumbnail from "./ResumeThumbnail";
 
@@ -14,7 +15,7 @@ interface ResumeCardProps {
 		templateId: string;
 		lastModified: number;
 	};
-	onDelete: (id: string) => void;
+	onDelete: (id: string) => void | Promise<void>;
 }
 
 export default function ResumeCard({ resumeIndex, onDelete }: ResumeCardProps) {
@@ -29,10 +30,28 @@ export default function ResumeCard({ resumeIndex, onDelete }: ResumeCardProps) {
 	const isDefault = defaultResumeId === resumeIndex.id;
 
 	useEffect(() => {
-		const data = getResumeData(resumeIndex.id);
-		if (data) {
-			setFullResume(data);
-		}
+		let isActive = true;
+
+		getResume(resumeIndex.id)
+			.then((resume) => {
+				if (!isActive) return;
+				setFullResume({
+					...resume.content,
+					id: resume.id,
+					name: resume.name,
+					templateId: resume.templateId,
+					activeSection: "personalInfo",
+				} as EditorState);
+			})
+			.catch(() => {
+				if (isActive) {
+					setFullResume(null);
+				}
+			});
+
+		return () => {
+			isActive = false;
+		};
 	}, [resumeIndex.id]);
 
 	const handleMouseMove = (e: React.MouseEvent) => {
@@ -114,7 +133,7 @@ export default function ResumeCard({ resumeIndex, onDelete }: ResumeCardProps) {
 						onClick={(e) => {
 							e.stopPropagation();
 							e.preventDefault();
-							setDefaultResumeId(isDefault ? null : resumeIndex.id);
+							void setDefaultResumeId(isDefault ? null : resumeIndex.id);
 						}}
 						className={cn(
 							"absolute top-2 right-2 z-30 p-1.5 rounded-full border-2 border-border bg-white text-main hover:scale-110 active:scale-95 transition-all shadow-shadow flex items-center justify-center cursor-pointer",
@@ -149,7 +168,7 @@ export default function ResumeCard({ resumeIndex, onDelete }: ResumeCardProps) {
 
 				{/* Bottom Half: Info and Actions */}
 				<div className="p-4 flex flex-col gap-2 bg-white relative z-20 h-[116px]">
-					<div className="font-heading text-lg truncate">
+					<div className="font-heading text-lg truncate shrink-0">
 						{resumeIndex.name}
 					</div>
 					<div className="text-sm text-muted-foreground">
@@ -165,7 +184,7 @@ export default function ResumeCard({ resumeIndex, onDelete }: ResumeCardProps) {
 						</Link>
 						<button
 							type="button"
-							onClick={() => onDelete(resumeIndex.id)}
+							onClick={() => void onDelete(resumeIndex.id)}
 							className="bg-red-200 text-red-900 border-2 border-border rounded-base px-2 py-1 font-bold text-sm hover:translate-x-boxShadowX hover:translate-y-boxShadowY hover:shadow-none transition-all shadow-shadow"
 						>
 							Delete
