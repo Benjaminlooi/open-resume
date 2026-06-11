@@ -1,10 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { extractWithPlaywright } from "./extract/playwright.js";
+import { createCrawlQueue } from "./jobs/crawl-queue.js";
+import { createJobRepository } from "./jobs/repository.js";
 import { createServer } from "./server.js";
-
-vi.mock("./extract/playwright.js", () => ({
-	extractWithPlaywright: vi.fn(),
-}));
 
 function parseJsonLogs(output: string) {
 	return output
@@ -33,45 +30,72 @@ describe("companion server", () => {
 		});
 	});
 
-	it("rejects invalid extraction requests", async () => {
-		const server = createServer();
+	it("rejects invalid job creation requests", async () => {
+		const repository = createJobRepository(":memory:");
+		const crawlQueue = createCrawlQueue({
+			repository,
+			crawl: async () => ({
+				sourceUrl: "https://example.com/job",
+				cleanedText: "Build useful software.",
+				extractedAt: 1200,
+			}),
+		});
+		const server = createServer({ jobRepository: repository, crawlQueue });
 		const response = await server.inject({
 			method: "POST",
-			url: "/extract-job",
-			payload: { url: "file:///etc/passwd" },
+			url: "/jobs",
+			payload: { sourceUrl: "file:///etc/passwd" },
 		});
 
 		expect(response.statusCode).toBe(400);
 		expect(response.json()).toMatchObject({
-			error: "Invalid extraction request",
+			error: "Invalid companion request",
 		});
-		expect(extractWithPlaywright).not.toHaveBeenCalled();
+		repository.close();
 	});
 
 	it("rejects completely invalid URLs with 400 bad request", async () => {
-		const server = createServer();
+		const repository = createJobRepository(":memory:");
+		const crawlQueue = createCrawlQueue({
+			repository,
+			crawl: async () => ({
+				sourceUrl: "https://example.com/job",
+				cleanedText: "Build useful software.",
+				extractedAt: 1200,
+			}),
+		});
+		const server = createServer({ jobRepository: repository, crawlQueue });
 		const response = await server.inject({
 			method: "POST",
-			url: "/extract-job",
-			payload: { url: "string" },
+			url: "/jobs",
+			payload: { sourceUrl: "string" },
 		});
 
 		expect(response.statusCode).toBe(400);
 		expect(response.json()).toMatchObject({
-			error: "Invalid extraction request",
+			error: "Invalid companion request",
 		});
-		expect(extractWithPlaywright).not.toHaveBeenCalled();
+		repository.close();
 	});
 
-	it("rejects malformed JSON extraction requests without serialization errors", async () => {
-		const server = createServer();
+	it("rejects malformed JSON job requests without serialization errors", async () => {
+		const repository = createJobRepository(":memory:");
+		const crawlQueue = createCrawlQueue({
+			repository,
+			crawl: async () => ({
+				sourceUrl: "https://example.com/job",
+				cleanedText: "Build useful software.",
+				extractedAt: 1200,
+			}),
+		});
+		const server = createServer({ jobRepository: repository, crawlQueue });
 		const response = await server.inject({
 			method: "POST",
-			url: "/extract-job",
+			url: "/jobs",
 			headers: {
 				"content-type": "application/json",
 			},
-			payload: '{ "url":',
+			payload: '{ "sourceUrl":',
 		});
 
 		expect(response.statusCode).toBe(400);
@@ -79,7 +103,7 @@ describe("companion server", () => {
 			error: expect.any(String),
 		});
 		expect(response.body).not.toContain("FST_ERR_FAILED_ERROR_SERIALIZATION");
-		expect(extractWithPlaywright).not.toHaveBeenCalled();
+		repository.close();
 	});
 
 	it("logs request details when logging is enabled", async () => {
@@ -114,95 +138,75 @@ describe("companion server", () => {
 		);
 	});
 
-	it("extracts job details via playwright and logs scraped data when enabled", async () => {
-		let logOutput = "";
-		const mockResult = {
-			sourceUrl: "https://example.com/jobs/1",
-			title: "Senior Engineer",
-			company: "Acme Inc",
-			location: "",
-			description: "Build reliable hiring systems...",
-			rawText: "Build reliable hiring systems...",
-			extractionMethod: "playwright" as const,
-			extractedAt: Date.now(),
-		};
-
-		vi.mocked(extractWithPlaywright).mockImplementationOnce(
-			async (url, options) => {
-				options?.logger?.debug(
-					{ url, rawText: mockResult.rawText, structured: null },
-					"scraped data before normalization",
-				);
-				options?.logger?.debug(
-					{ url, result: mockResult },
-					"scraped data after normalization",
-				);
-				return mockResult;
-			},
-		);
-
-		const server = createServer({
-			logLevel: "debug",
-			logScrapedData: true,
-			logStream: {
-				write(message: string) {
-					logOutput += message;
-				},
-			},
+	it("creates companion jobs immediately without waiting for crawl completion", async () => {
+		const repository = createJobRepository(":memory:");
+		const crawlQueue = createCrawlQueue({
+			repository,
+			crawl: async () => ({
+				sourceUrl: "https://example.com/job",
+				cleanedText: "Build useful software.",
+				extractedAt: 1200,
+			}),
+			now: () => 1000,
 		});
+		vi.spyOn(crawlQueue, "enqueue");
+		const server = createServer({ jobRepository: repository, crawlQueue });
 
 		const response = await server.inject({
 			method: "POST",
-			url: "/extract-job",
-			payload: { url: "https://example.com/jobs/1" },
+			url: "/jobs",
+			payload: { sourceUrl: "https://example.com/job" },
 		});
 
-		expect(response.statusCode).toBe(200);
-		expect(response.json()).toEqual(mockResult);
-		expect(extractWithPlaywright).toHaveBeenCalledWith(
-			"https://example.com/jobs/1",
-			expect.any(Object),
-		);
-
-		const logs = parseJsonLogs(logOutput);
-		expect(logs).toEqual(
-			expect.arrayContaining([
-				expect.objectContaining({
-					level: 20,
-					msg: "scraped data before normalization",
-					rawText: "Build reliable hiring systems...",
-					structured: null,
-				}),
-				expect.objectContaining({
-					level: 20,
-					msg: "scraped data after normalization",
-					result: expect.objectContaining({
-						sourceUrl: "https://example.com/jobs/1",
-						description: "Build reliable hiring systems...",
-						extractionMethod: "playwright",
-					}),
-				}),
-			]),
-		);
+		expect(response.statusCode).toBe(201);
+		expect(response.json()).toMatchObject({
+			sourceUrl: "https://example.com/job",
+			crawlStatus: "pending",
+			cleanedText: "",
+		});
+		expect(crawlQueue.enqueue).toHaveBeenCalledWith(response.json().id);
+		repository.close();
 	});
 
-	it("returns 502 Bad Gateway when playwright extraction throws an error", async () => {
-		vi.mocked(extractWithPlaywright).mockRejectedValueOnce(
-			new Error("Playwright crashed"),
-		);
-
-		const server = createServer();
-		const response = await server.inject({
-			method: "POST",
-			url: "/extract-job",
-			payload: { url: "https://example.com/jobs/fail" },
+	it("lists, retries, gets, and deletes companion jobs", async () => {
+		const repository = createJobRepository(":memory:");
+		const crawlQueue = createCrawlQueue({
+			repository,
+			crawl: async () => ({
+				sourceUrl: "https://example.com/job",
+				cleanedText: "Build useful software.",
+				extractedAt: 1200,
+			}),
+			now: () => 1000,
 		});
-
-		expect(response.statusCode).toBe(502);
-		expect(response.json()).toEqual({
-			error: "Failed to extract job details",
-			details: "Playwright crashed",
+		vi.spyOn(crawlQueue, "enqueue");
+		const created = repository.createJob({
+			id: "job-1",
+			sourceUrl: "https://example.com/job",
+			now: 1000,
 		});
+		repository.markFailed(created.id, { error: "Timeout", now: 1100 });
+		const server = createServer({ jobRepository: repository, crawlQueue });
+
+		expect((await server.inject({ method: "GET", url: "/jobs" })).json())
+			.toMatchObject({ jobs: [expect.objectContaining({ id: "job-1" })] });
+
+		expect(
+			(await server.inject({ method: "POST", url: "/jobs/job-1/retry-crawl" }))
+				.json(),
+		).toMatchObject({ id: "job-1", crawlStatus: "pending" });
+		expect(crawlQueue.enqueue).toHaveBeenCalledWith("job-1");
+
+		expect((await server.inject({ method: "GET", url: "/jobs/job-1" })).json())
+			.toMatchObject({ id: "job-1" });
+
+		const deleteResponse = await server.inject({
+			method: "DELETE",
+			url: "/jobs/job-1",
+		});
+		expect(deleteResponse.statusCode).toBe(200);
+		expect(deleteResponse.json()).toEqual({ deleted: true });
+		repository.close();
 	});
 
 	it("serves an OpenAPI document with companion route contracts", async () => {
@@ -223,28 +227,36 @@ describe("companion server", () => {
 			operationId: "getHealth",
 			tags: ["System"],
 		});
-		expect(document.paths["/extract-job"].post).toMatchObject({
-			operationId: "extractJob",
-			tags: ["Extraction"],
+		expect(document.paths["/jobs"].post).toMatchObject({
+			operationId: "createJob",
+			tags: ["Jobs"],
+		});
+		expect(document.paths["/jobs"].get).toMatchObject({
+			operationId: "listJobs",
+			tags: ["Jobs"],
+		});
+		expect(document.paths["/jobs/{id}"].get).toMatchObject({
+			operationId: "getJob",
+			tags: ["Jobs"],
+		});
+		expect(document.paths["/jobs/{id}/retry-crawl"].post).toMatchObject({
+			operationId: "retryJobCrawl",
+			tags: ["Jobs"],
 		});
 		expect(document.components.schemas).toMatchObject({
-			ExtractJobRequest: expect.any(Object),
-			JobExtractionResult: expect.any(Object),
+			CompanionJob: expect.any(Object),
+			CompanionJobsResponse: expect.any(Object),
+			CreateJobRequest: expect.any(Object),
 			CompanionErrorResponse: expect.any(Object),
+			DeleteJobResponse: expect.any(Object),
 			HealthResponse: expect.any(Object),
 		});
 		expect(
-			document.components.schemas.ExtractJobRequest.properties.url,
+			document.components.schemas.CreateJobRequest.properties.sourceUrl,
 		).toMatchObject({
 			type: "string",
 			format: "uri",
-			description: "HTTP or HTTPS job posting URL to extract.",
-		});
-		expect(
-			document.components.schemas.JobExtractionResult.properties.extractedAt,
-		).toMatchObject({
-			type: "number",
-			description: "Unix timestamp in milliseconds.",
+			description: "HTTP or HTTPS job posting URL to crawl.",
 		});
 		expect(document.paths["/openapi.json"]).toBeUndefined();
 	});

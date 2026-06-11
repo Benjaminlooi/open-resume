@@ -25,8 +25,8 @@ export function registerOpenApi(server: FastifyInstance) {
 			tags: [
 				{ name: "System", description: "Operational companion endpoints." },
 				{
-					name: "Extraction",
-					description: "Job posting extraction endpoints.",
+					name: "Jobs",
+					description: "Companion job intake and crawl lifecycle endpoints.",
 				},
 			],
 		},

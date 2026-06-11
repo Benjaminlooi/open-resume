@@ -3,13 +3,23 @@ import type { FastifyError } from "fastify";
 import Fastify from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
 import { hasZodFastifySchemaValidationErrors } from "fastify-type-provider-zod";
-import { extractWithPlaywright } from "./extract/playwright.js";
+import { randomUUID } from "node:crypto";
+import { mkdirSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { crawlCleanedTextWithPlaywright } from "./extract/playwright.js";
+import type { CrawlQueue } from "./jobs/crawl-queue.js";
+import { createCrawlQueue } from "./jobs/crawl-queue.js";
+import type { JobRepository } from "./jobs/repository.js";
+import { createJobRepository } from "./jobs/repository.js";
 import { registerOpenApi } from "./openapi.js";
 import {
+	companionJobSchema,
 	companionErrorResponseSchema,
-	extractJobRequestSchema,
+	companionJobsResponseSchema,
+	createJobRequestSchema,
+	deleteJobResponseSchema,
 	healthResponseSchema,
-	jobExtractionResultSchema,
+	jobIdParamsSchema,
 } from "./schema.js";
 
 interface LogStream {
@@ -17,6 +27,9 @@ interface LogStream {
 }
 
 interface CreateServerOptions {
+	crawlQueue?: CrawlQueue;
+	databasePath?: string;
+	jobRepository?: JobRepository;
 	logLevel?: string;
 	logScrapedData?: boolean;
 	logStream?: LogStream;
@@ -49,6 +62,16 @@ function createLoggerOptions(options: CreateServerOptions) {
 	return loggerOptions;
 }
 
+function getDefaultDatabasePath(options: CreateServerOptions) {
+	return (
+		options.databasePath ??
+		process.env.OPEN_RESUME_COMPANION_DB_PATH ??
+		resolve(process.cwd(), ".open-resume-companion/jobs.sqlite")
+	);
+}
+
+const routeJobIdParamsSchema = jobIdParamsSchema.extend({});
+
 export function createServer(options: CreateServerOptions = {}) {
 	const logScrapedData =
 		options.logScrapedData ??
@@ -59,6 +82,28 @@ export function createServer(options: CreateServerOptions = {}) {
 		logger: createLoggerOptions(options),
 	});
 	const typedServer = server.withTypeProvider<ZodTypeProvider>();
+	const jobRepository =
+		options.jobRepository ??
+		(() => {
+			const databasePath = getDefaultDatabasePath(options);
+			mkdirSync(dirname(databasePath), { recursive: true });
+			return createJobRepository(databasePath);
+		})();
+	const crawlQueue =
+		options.crawlQueue ??
+		createCrawlQueue({
+			repository: jobRepository,
+			crawl: (sourceUrl) =>
+				crawlCleanedTextWithPlaywright(sourceUrl, {
+					logger: server.log,
+					logScrapedData,
+				}),
+			logger: {
+				error(error, message) {
+					server.log.error({ error }, message);
+				},
+			},
+		});
 
 	registerOpenApi(server);
 
@@ -66,10 +111,10 @@ export function createServer(options: CreateServerOptions = {}) {
 		if (hasZodFastifySchemaValidationErrors(err)) {
 			request.log.warn(
 				{ details: JSON.stringify(err.validation) },
-				"invalid extraction request",
+				"invalid companion request",
 			);
 			return reply.status(400).send({
-				error: "Invalid extraction request",
+				error: "Invalid companion request",
 				details: JSON.stringify(err.validation),
 			});
 		}
@@ -118,50 +163,115 @@ export function createServer(options: CreateServerOptions = {}) {
 		);
 
 		typedServer.post(
-			"/extract-job",
+			"/jobs",
 			{
 				schema: {
-					operationId: "extractJob",
-					tags: ["Extraction"],
-					summary: "Extract job details from a URL",
-					body: extractJobRequestSchema,
+					operationId: "createJob",
+					tags: ["Jobs"],
+					summary: "Create a companion job and enqueue crawling",
+					body: createJobRequestSchema,
 					response: {
-						200: jobExtractionResultSchema,
+						201: companionJobSchema,
 						400: companionErrorResponseSchema,
 						500: companionErrorResponseSchema,
-						502: companionErrorResponseSchema,
 					},
 				},
 			},
 			async (request, reply) => {
-				request.log.info({ url: request.body.url }, "extract job started");
-				try {
-					const result = await extractWithPlaywright(request.body.url, {
-						logger: request.log,
-						logScrapedData,
-					});
-					request.log.info(
-						{
-							method: result.extractionMethod,
-							descriptionLength: result.description.length,
-						},
-						"extracted job details",
-					);
-					return reply.send(result);
-				} catch (err) {
-					const errorMessage = err instanceof Error ? err.message : String(err);
-					request.log.error(
-						{ url: request.body.url, error: errorMessage },
-						"failed to extract job with playwright",
-					);
-					return reply.status(502).send({
-						error: "Failed to extract job details",
-						details: errorMessage,
-					});
-				}
+				const job = jobRepository.createJob({
+					id: randomUUID(),
+					sourceUrl: request.body.sourceUrl,
+					now: Date.now(),
+				});
+				crawlQueue.enqueue(job.id);
+				return reply.status(201).send(job);
 			},
 		);
+
+		typedServer.get(
+			"/jobs",
+			{
+				schema: {
+					operationId: "listJobs",
+					tags: ["Jobs"],
+					summary: "List companion jobs",
+					response: {
+						200: companionJobsResponseSchema,
+					},
+				},
+			},
+			async () => ({
+				jobs: jobRepository.listJobs(),
+			}),
+		);
+
+		typedServer.get(
+			"/jobs/:id",
+			{
+				schema: {
+					operationId: "getJob",
+					tags: ["Jobs"],
+					summary: "Get a companion job",
+					params: routeJobIdParamsSchema,
+					response: {
+						200: companionJobSchema,
+						404: companionErrorResponseSchema,
+					},
+				},
+			},
+			async (request, reply) => {
+				const job = jobRepository.getJob(request.params.id);
+				if (!job) {
+					return reply.status(404).send({ error: "Job not found" });
+				}
+				return reply.send(job);
+			},
+		);
+
+		typedServer.post(
+			"/jobs/:id/retry-crawl",
+			{
+				schema: {
+					operationId: "retryJobCrawl",
+					tags: ["Jobs"],
+					summary: "Retry crawling a companion job",
+					params: routeJobIdParamsSchema,
+					response: {
+						200: companionJobSchema,
+						404: companionErrorResponseSchema,
+					},
+				},
+			},
+			async (request, reply) => {
+				const job = jobRepository.resetForRetry(request.params.id, Date.now());
+				if (!job) {
+					return reply.status(404).send({ error: "Job not found" });
+				}
+				crawlQueue.enqueue(job.id);
+				return reply.send(job);
+			},
+		);
+
+		typedServer.delete(
+			"/jobs/:id",
+			{
+				schema: {
+					operationId: "deleteJob",
+					tags: ["Jobs"],
+					summary: "Delete a companion job",
+					params: routeJobIdParamsSchema,
+					response: {
+						200: deleteJobResponseSchema,
+					},
+				},
+			},
+			async (request) => ({
+				deleted: jobRepository.deleteJob(request.params.id),
+			}),
+		);
 	});
+
+	crawlQueue.enqueueRunnableJobs();
 
 	return server;
 }
