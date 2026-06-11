@@ -96,6 +96,9 @@ importers:
       '@dnd-kit/utilities':
         specifier: ^3.2.2
         version: 3.2.2(react@19.2.6)
+      '@open-resume/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@posthog/react':
         specifier: ^1.9.1
         version: 1.9.1(@types/react@19.2.15)(posthog-js@1.376.6)(react@19.2.6)

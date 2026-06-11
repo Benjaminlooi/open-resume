@@ -1,161 +1,62 @@
 import { z } from "zod";
+import {
+	companionJobSchema,
+	companionJobsResponseSchema,
+	deleteJobResponseSchema,
+	resumeContentSchema,
+	resumeSummarySchema,
+	resumeDetailsSchema,
+	resumesResponseSchema,
+	createResumeRequestSchema,
+	updateResumeRequestSchema,
+	targetRoleArchetypeSchema,
+	candidateProfileSchema,
+	resumeSyncRequestSchema,
+	okResponseSchema,
+} from "@open-resume/contracts";
+
+export {
+	resumeContentSchema,
+	resumeSummarySchema,
+	resumeDetailsSchema,
+	createResumeRequestSchema,
+	updateResumeRequestSchema,
+	targetRoleArchetypeSchema,
+	candidateProfileSchema,
+	resumeSyncRequestSchema,
+	okResponseSchema,
+};
+
+import type {
+	CompanionJob as LocalCompanionJob,
+	TargetRoleArchetype,
+	CandidateProfile,
+	ResumeSyncRequest,
+	OkResponse,
+	ResumeContent,
+	ResumeSummary,
+	ResumeDetails,
+	CreateResumeRequest,
+	UpdateResumeRequest,
+} from "@open-resume/contracts";
+
+export type {
+	LocalCompanionJob,
+	TargetRoleArchetype,
+	CandidateProfile,
+	ResumeSyncRequest,
+	OkResponse,
+	ResumeContent,
+	ResumeSummary,
+	ResumeDetails,
+	CreateResumeRequest,
+	UpdateResumeRequest,
+};
 
 const companionBaseUrl = "http://127.0.0.1:47321";
 
-const companionJobSchema = z.object({
-	id: z.string(),
-	sourceUrl: z.string().url(),
-	crawlStatus: z.enum(["pending", "crawling", "analyzing", "ready", "failed"]),
-	crawlError: z.string().nullable(),
-	cleanedText: z.string(),
-	createdAt: z.number(),
-	updatedAt: z.number(),
-	crawledAt: z.number().nullable(),
-	parsedTitle: z.string().nullable().optional(),
-	parsedCompany: z.string().nullable().optional(),
-	parsedLocation: z.string().nullable().optional(),
-	parsedDescription: z.string().nullable().optional(),
-	fitScore: z.number().nullable().optional(),
-	fitBriefJson: z.string().nullable().optional(),
-});
 
-const companionJobsResponseSchema = z.object({
-	jobs: z.array(companionJobSchema),
-});
 
-const deleteJobResponseSchema = z.object({
-	deleted: z.boolean(),
-});
-
-export const resumeContentSchema = z.record(z.string(), z.unknown());
-
-export const resumeSummarySchema = z
-	.object({
-		id: z.string().min(1),
-		name: z.string().min(1),
-		templateId: z.string().min(1),
-		lastModified: z.number(),
-		isDefault: z.boolean(),
-	})
-	.strict();
-
-export const resumeDetailsSchema = resumeSummarySchema
-	.extend({
-		content: resumeContentSchema,
-	})
-	.strict();
-
-const resumesResponseSchema = z
-	.object({
-		resumes: z.array(resumeSummarySchema),
-	})
-	.strict();
-
-export const createResumeRequestSchema = z
-	.object({
-		id: z.string().min(1),
-		name: z.string().min(1),
-		templateId: z.string().min(1),
-		content: resumeContentSchema,
-	})
-	.strict();
-
-export const updateResumeRequestSchema = z
-	.object({
-		name: z.string().min(1).optional(),
-		templateId: z.string().min(1).optional(),
-		content: resumeContentSchema.optional(),
-	})
-	.strict();
-
-export const targetRoleArchetypeSchema = z
-	.object({
-		name: z.string(),
-		level: z.string(),
-		fit: z.enum(["primary", "secondary", "adjacent"]),
-	})
-	.strict();
-
-export const candidateProfileSchema = z
-	.object({
-		candidate: z
-			.object({
-				fullName: z.string(),
-				email: z.string(),
-				phone: z.string(),
-				location: z.string(),
-				linkedin: z.string(),
-				portfolioUrl: z.string(),
-				github: z.string(),
-				twitter: z.string().optional(),
-			})
-			.strict(),
-		targetRoles: z
-			.object({
-				primary: z.array(z.string()),
-				archetypes: z.array(targetRoleArchetypeSchema),
-			})
-			.strict(),
-		narrative: z
-			.object({
-				headline: z.string(),
-				exitStory: z.string(),
-				superpowers: z.array(z.string()),
-				proofPoints: z.array(
-					z
-						.object({
-							name: z.string(),
-							url: z.string(),
-							heroMetric: z.string(),
-						})
-						.strict(),
-				),
-			})
-			.strict(),
-		compensation: z
-			.object({
-				targetRange: z.string(),
-				currency: z.string(),
-				minimum: z.string(),
-				preferred: z.string(),
-				locationFlexibility: z.string(),
-			})
-			.strict(),
-		location: z
-			.object({
-				country: z.string(),
-				city: z.string(),
-				timezone: z.string(),
-				visaStatus: z.string(),
-				onsiteAvailability: z.string(),
-				remotePolicy: z.string(),
-			})
-			.strict(),
-	})
-	.strict();
-
-export const resumeSyncRequestSchema = z
-	.object({
-		resume: z.record(z.string(), z.unknown()),
-	})
-	.strict();
-
-export const okResponseSchema = z
-	.object({
-		ok: z.boolean(),
-	})
-	.strict();
-
-export type LocalCompanionJob = z.infer<typeof companionJobSchema>;
-export type TargetRoleArchetype = z.infer<typeof targetRoleArchetypeSchema>;
-export type CandidateProfile = z.infer<typeof candidateProfileSchema>;
-export type ResumeSyncRequest = z.infer<typeof resumeSyncRequestSchema>;
-export type OkResponse = z.infer<typeof okResponseSchema>;
-export type ResumeContent = z.infer<typeof resumeContentSchema>;
-export type ResumeSummary = z.infer<typeof resumeSummarySchema>;
-export type ResumeDetails = z.infer<typeof resumeDetailsSchema>;
-export type CreateResumeRequest = z.infer<typeof createResumeRequestSchema>;
-export type UpdateResumeRequest = z.infer<typeof updateResumeRequestSchema>;
 
 async function companionFetch(
 	path: string,
