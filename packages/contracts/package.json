@@ -14,5 +14,9 @@
 	},
 	"peerDependencies": {
 		"zod": "^4.4.3"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.4.5",
+		"typescript": "^5.9.3"
 	}
 }
