@@ -19,9 +19,9 @@ export function createCrawlQueue(options: CrawlQueueOptions) {
 		if (!job || job.crawlStatus === "ready") return;
 
 		activeJobs.add(id);
-		options.repository.markCrawling(id, now());
 
 		try {
+			options.repository.markCrawling(id, now());
 			const result = await crawl(job.sourceUrl);
 			const cleanedText = result.cleanedText.trim();
 			if (!cleanedText) {

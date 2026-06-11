@@ -93,4 +93,40 @@ describe("crawl queue", () => {
 
 		expect(repository.getJob("job-1")).toBeNull();
 	});
+
+	it("clears active job state when marking crawling fails", async () => {
+		const repository = createTestRepository();
+		repository.createJob({
+			id: "job-1",
+			sourceUrl: "https://example.com/job",
+			now: 1000,
+		});
+		const crawl = vi.fn(async () => ({
+			sourceUrl: "https://example.com/job",
+			cleanedText: "Recovered result",
+			extractedAt: 1400,
+		}));
+		const queue = createCrawlQueue({
+			repository,
+			crawl,
+			now: () => 1400,
+		});
+		const markCrawling = repository.markCrawling;
+		repository.markCrawling = vi.fn(() => {
+			throw new Error("Database busy");
+		});
+
+		await queue.runJob("job-1");
+
+		repository.markCrawling = markCrawling;
+		await queue.runJob("job-1");
+
+		expect(crawl).toHaveBeenCalledTimes(1);
+		expect(repository.getJob("job-1")).toMatchObject({
+			crawlStatus: "ready",
+			crawlError: null,
+			cleanedText: "Recovered result",
+			crawledAt: 1400,
+		});
+	});
 });
