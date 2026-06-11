@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { extractJobWithLocalCompanion } from "./local-companion-client";
+import {
+	createCompanionJob,
+	deleteCompanionJob,
+	listCompanionJobs,
+	retryCompanionJobCrawl,
+} from "./local-companion-client";
 
 describe("local companion client", () => {
 	afterEach(() => {
@@ -7,30 +12,71 @@ describe("local companion client", () => {
 		vi.unstubAllGlobals();
 	});
 
-	it("returns extracted job details from the companion", async () => {
+	it("creates a companion job", async () => {
 		vi.stubGlobal(
 			"fetch",
 			vi.fn(async () => ({
 				ok: true,
 				json: async () => ({
+					id: "job-1",
 					sourceUrl: "https://example.com/job",
-					title: "Engineer",
-					company: "Example",
-					location: "Remote",
-					description: "Build software.",
-					rawText: "Engineer at Example. Build software.",
-					extractionMethod: "json-ld",
-					extractedAt: 1791571200000,
+					crawlStatus: "pending",
+					crawlError: null,
+					cleanedText: "",
+					createdAt: 1791571200000,
+					updatedAt: 1791571200000,
+					crawledAt: null,
 				}),
 			})),
 		);
 
-		const result = await extractJobWithLocalCompanion("https://example.com/job");
+		const result = await createCompanionJob("https://example.com/job");
 
 		expect(result).toMatchObject({
-			title: "Engineer",
-			company: "Example",
-			description: "Build software.",
+			id: "job-1",
+			crawlStatus: "pending",
+		});
+		expect(fetch).toHaveBeenCalledWith(
+			"http://127.0.0.1:47321/jobs",
+			expect.objectContaining({ method: "POST" }),
+		);
+	});
+
+	it("lists companion jobs", async () => {
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(async () => ({
+				ok: true,
+				json: async () => ({ jobs: [] }),
+			})),
+		);
+
+		await expect(listCompanionJobs()).resolves.toEqual([]);
+	});
+
+	it("retries and deletes companion jobs", async () => {
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(async () => ({
+				ok: true,
+				json: async () => ({
+					id: "job-1",
+					sourceUrl: "https://example.com/job",
+					crawlStatus: "pending",
+					crawlError: null,
+					cleanedText: "",
+					createdAt: 1,
+					updatedAt: 2,
+					crawledAt: null,
+				}),
+			})),
+		);
+
+		await expect(retryCompanionJobCrawl("job-1")).resolves.toMatchObject({
+			id: "job-1",
+		});
+		await expect(deleteCompanionJob("job-1")).resolves.toEqual({
+			deleted: true,
 		});
 	});
 
@@ -42,8 +88,8 @@ describe("local companion client", () => {
 			}),
 		);
 
-		await expect(
-			extractJobWithLocalCompanion("https://example.com/job"),
-		).rejects.toThrow("Local companion is not reachable");
+		await expect(listCompanionJobs()).rejects.toThrow(
+			"Local companion is not reachable",
+		);
 	});
 });
