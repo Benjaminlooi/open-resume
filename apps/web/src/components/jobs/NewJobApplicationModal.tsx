@@ -1,186 +1,87 @@
-import { useNavigate } from "@tanstack/react-router";
 import { type FormEvent, useState } from "react";
-import { useJobApplicationStore } from "#/lib/job-application-store";
-import { extractJobWithLocalCompanion } from "#/lib/local-companion-client";
+import { createCompanionJob } from "#/lib/local-companion-client";
 
 interface NewJobApplicationModalProps {
 	onClose: () => void;
+	onCreated?: () => void;
+}
+
+function isValidHttpUrl(value: string) {
+	try {
+		const url = new URL(value);
+		return url.protocol === "http:" || url.protocol === "https:";
+	} catch {
+		return false;
+	}
 }
 
 export default function NewJobApplicationModal({
 	onClose,
+	onCreated,
 }: NewJobApplicationModalProps) {
-	const navigate = useNavigate();
-	const createJobApplication = useJobApplicationStore(
-		(state) => state.createJobApplication,
-	);
-	const [company, setCompany] = useState("");
-	const [title, setTitle] = useState("");
-	const [location, setLocation] = useState("");
 	const [sourceUrl, setSourceUrl] = useState("");
-	const [description, setDescription] = useState("");
 	const [error, setError] = useState("");
-	const [isExtracting, setIsExtracting] = useState(false);
+	const [isSubmitting, setIsSubmitting] = useState(false);
 
-	const handleFetchDetails = async () => {
-		if (!sourceUrl.trim()) {
-			setError("Job URL is required before fetching details");
+	const handleSubmit = async (event: FormEvent) => {
+		event.preventDefault();
+		const trimmedUrl = sourceUrl.trim();
+		if (!isValidHttpUrl(trimmedUrl)) {
+			setError("Enter a valid HTTP or HTTPS job URL.");
 			return;
 		}
 
 		setError("");
-		setIsExtracting(true);
-
+		setIsSubmitting(true);
 		try {
-			const extracted = await extractJobWithLocalCompanion(sourceUrl.trim());
-			setCompany(extracted.company);
-			setTitle(extracted.title);
-			setLocation(extracted.location);
-			setDescription(extracted.description);
+			await createCompanionJob(trimmedUrl);
+			onCreated?.();
+			onClose();
 		} catch (err) {
-			setError(err instanceof Error ? err.message : "Failed to fetch job details");
+			setError(err instanceof Error ? err.message : "Failed to add job.");
 		} finally {
-			setIsExtracting(false);
+			setIsSubmitting(false);
 		}
-	};
-
-	const handleSubmit = (e: FormEvent) => {
-		e.preventDefault();
-		if (!company.trim()) {
-			setError("Company name is required");
-			return;
-		}
-		if (!title.trim()) {
-			setError("Job title is required");
-			return;
-		}
-
-		const id = createJobApplication(
-			company.trim(),
-			title.trim(),
-			location.trim(),
-			sourceUrl.trim(),
-			description.trim(),
-		);
-
-		onClose();
-		navigate({ to: "/jobs/$id", params: { id } });
 	};
 
 	return (
 		<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-			<div className="bg-white border-2 border-border rounded-base p-6 w-full max-w-2xl shadow-shadow flex flex-col gap-4 text-[#082F49]">
-				<h2 className="text-2xl font-heading">New Job Application</h2>
-
+			<div className="flex w-full max-w-xl flex-col gap-4 rounded-base border-2 border-border bg-white p-6 text-[#082F49] shadow-shadow">
+				<h2 className="font-heading text-2xl">Add Job URL</h2>
 				{error && (
-					<div className="bg-red-100 text-red-900 border-2 border-border rounded-base p-2 text-sm font-bold">
+					<div className="rounded-base border-2 border-border bg-red-100 p-2 font-bold text-red-900 text-sm">
 						{error}
 					</div>
 				)}
-
 				<form onSubmit={handleSubmit} className="flex flex-col gap-4">
 					<div>
-						<label className="block text-sm font-bold mb-1" htmlFor="job-company">
-							Company <span className="text-red-500">*</span>
+						<label className="mb-1 block font-bold text-sm" htmlFor="job-url">
+							Job URL
 						</label>
 						<input
-							id="job-company"
-							type="text"
+							id="job-url"
+							type="url"
 							required
-							value={company}
-							onChange={(e) => setCompany(e.target.value)}
-							placeholder="e.g. Acme Corp"
-							className="w-full border-2 border-border rounded-base p-2 focus:outline-none focus:ring-2 focus:ring-main bg-white"
+							value={sourceUrl}
+							onChange={(event) => setSourceUrl(event.target.value)}
+							placeholder="https://company.com/careers/job"
+							className="w-full rounded-base border-2 border-border bg-white p-2 focus:outline-none focus:ring-2 focus:ring-main"
 						/>
 					</div>
-
-					<div>
-						<label className="block text-sm font-bold mb-1" htmlFor="job-title">
-							Job Title <span className="text-red-500">*</span>
-						</label>
-						<input
-							id="job-title"
-							type="text"
-							required
-							value={title}
-							onChange={(e) => setTitle(e.target.value)}
-							placeholder="e.g. Software Engineer"
-							className="w-full border-2 border-border rounded-base p-2 focus:outline-none focus:ring-2 focus:ring-main bg-white"
-						/>
-					</div>
-
-					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-						<div>
-							<label
-								className="block text-sm font-bold mb-1"
-								htmlFor="job-location"
-							>
-								Location
-							</label>
-							<input
-								id="job-location"
-								type="text"
-								value={location}
-								onChange={(e) => setLocation(e.target.value)}
-								placeholder="e.g. Remote / New York"
-								className="w-full border-2 border-border rounded-base p-2 focus:outline-none focus:ring-2 focus:ring-main bg-white"
-							/>
-						</div>
-						<div>
-							<label className="block text-sm font-bold mb-1" htmlFor="job-url">
-								Job URL
-							</label>
-							<div className="flex gap-2">
-								<input
-									id="job-url"
-									type="url"
-									value={sourceUrl}
-									onChange={(e) => setSourceUrl(e.target.value)}
-									placeholder="e.g. https://company.com/careers/123"
-									className="w-full border-2 border-border rounded-base p-2 focus:outline-none focus:ring-2 focus:ring-main bg-white"
-								/>
-								<button
-									type="button"
-									onClick={handleFetchDetails}
-									disabled={isExtracting}
-									className="shrink-0 px-3 py-2 border-2 border-border rounded-base font-bold hover:bg-main/5 disabled:opacity-60 cursor-pointer bg-white"
-								>
-									{isExtracting ? "Fetching" : "Fetch details"}
-								</button>
-							</div>
-						</div>
-					</div>
-
-					<div>
-						<label
-							className="block text-sm font-bold mb-1"
-							htmlFor="job-description"
-						>
-							Job Description
-						</label>
-						<textarea
-							id="job-description"
-							value={description}
-							onChange={(e) => setDescription(e.target.value)}
-							placeholder="Paste job description here..."
-							rows={6}
-							className="w-full border-2 border-border rounded-base p-2 focus:outline-none focus:ring-2 focus:ring-main font-mono text-sm bg-white"
-						/>
-					</div>
-
-					<div className="flex justify-end gap-4 mt-2">
+					<div className="mt-2 flex justify-end gap-4">
 						<button
 							type="button"
 							onClick={onClose}
-							className="px-4 py-2 border-2 border-border rounded-base font-bold hover:bg-main/5 cursor-pointer bg-white"
+							className="cursor-pointer rounded-base border-2 border-border bg-white px-4 py-2 font-bold hover:bg-main/5"
 						>
 							Cancel
 						</button>
 						<button
 							type="submit"
-							className="px-4 py-2 bg-main text-main-foreground border-2 border-border rounded-base font-bold shadow-shadow hover:translate-x-boxShadowX hover:translate-y-boxShadowY hover:shadow-none transition-all cursor-pointer"
+							disabled={isSubmitting}
+							className="cursor-pointer rounded-base border-2 border-border bg-main px-4 py-2 font-bold text-main-foreground shadow-shadow transition-all hover:translate-x-boxShadowX hover:translate-y-boxShadowY hover:shadow-none disabled:opacity-60"
 						>
-							Add Job
+							{isSubmitting ? "Adding..." : "Add Job"}
 						</button>
 					</div>
 				</form>

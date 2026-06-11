@@ -57,19 +57,29 @@ describe("local companion client", () => {
 	it("retries and deletes companion jobs", async () => {
 		vi.stubGlobal(
 			"fetch",
-			vi.fn(async () => ({
-				ok: true,
-				json: async () => ({
-					id: "job-1",
-					sourceUrl: "https://example.com/job",
-					crawlStatus: "pending",
-					crawlError: null,
-					cleanedText: "",
-					createdAt: 1,
-					updatedAt: 2,
-					crawledAt: null,
-				}),
-			})),
+			vi.fn(async (url: string) => {
+				if (url.endsWith("/jobs/job-1")) {
+					return {
+						ok: true,
+						json: async () => ({
+							deleted: true,
+						}),
+					};
+				}
+				return {
+					ok: true,
+					json: async () => ({
+						id: "job-1",
+						sourceUrl: "https://example.com/job",
+						crawlStatus: "pending",
+						crawlError: null,
+						cleanedText: "",
+						createdAt: 1,
+						updatedAt: 2,
+						crawledAt: null,
+					}),
+				};
+			}),
 		);
 
 		await expect(retryCompanionJobCrawl("job-1")).resolves.toMatchObject({
