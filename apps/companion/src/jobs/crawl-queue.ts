@@ -41,7 +41,7 @@ export function createCrawlQueue(options: CrawlQueueOptions) {
 			if (options.repository.getJob(id)) {
 				options.repository.markAnalyzing(id, now());
 				const defaultResume = options.repository.getDefaultResume();
-				if (!defaultResume) {
+				if (!defaultResume && !options.resumePath) {
 					throw new Error(
 						"Synced default resume not found. Please sync your resume in the settings panel.",
 					);
@@ -49,7 +49,9 @@ export function createCrawlQueue(options: CrawlQueueOptions) {
 
 				const aiResult = await analyze({
 					profilePath: options.profilePath ?? "",
-					resumeContent: JSON.stringify(defaultResume.content),
+					...(defaultResume
+						? { resumeContent: JSON.stringify(defaultResume.content) }
+						: { resumePath: options.resumePath }),
 					cleanedText,
 				});
 

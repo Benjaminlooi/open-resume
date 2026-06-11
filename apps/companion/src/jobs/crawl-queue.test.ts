@@ -506,6 +506,52 @@ describe("crawl queue", () => {
 		});
 	});
 
+	it("falls back to resumePath when no SQLite default resume exists", async () => {
+		const repository = createTestRepository();
+		repository.createJob({
+			id: "job-1",
+			sourceUrl: "https://example.com/job",
+			now: 1000,
+		});
+		const customAnalyze = vi.fn().mockResolvedValue({
+			title: "AI Engineer",
+			company: "OpenAI",
+			location: "Remote",
+			description: "Work on AI",
+			fitScore: 95,
+			fitBrief: {
+				roleSummary: "Strong fit",
+				requirements: ["TypeScript"],
+				keywords: ["frontend"],
+				strengths: ["shipping"],
+				gaps: [],
+				risks: [],
+				nextActions: ["apply"],
+				generatedAt: 1200,
+			},
+		});
+		const queue = createCrawlQueue({
+			repository,
+			crawl: async () => ({
+				sourceUrl: "https://example.com/job",
+				cleanedText: "Cleaned job text",
+				extractedAt: 1200,
+			}),
+			analyze: customAnalyze,
+			profilePath: "/path/to/profile.json",
+			resumePath: "/path/to/resume.json",
+			now: () => 1200,
+		});
+
+		await queue.runJob("job-1");
+
+		expect(customAnalyze).toHaveBeenCalledWith({
+			profilePath: "/path/to/profile.json",
+			resumePath: "/path/to/resume.json",
+			cleanedText: "Cleaned job text",
+		});
+	});
+
 	it("fails analysis with a useful error when no default resume is synced", async () => {
 		const repository = createTestRepository();
 		repository.createJob({
