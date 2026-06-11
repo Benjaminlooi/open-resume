@@ -1,7 +1,6 @@
-import { writeFileSync, unlinkSync } from "node:fs";
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { unlinkSync, writeFileSync } from "node:fs";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { analyzeJobPosting } from "./ai-analyzer.js";
-
 
 vi.mock("@ai-sdk/openai", () => ({
 	createOpenAI: vi.fn().mockImplementation((config) => {
@@ -67,7 +66,13 @@ describe("analyzeJobPosting", () => {
 	const mockResumePath = "test-resume-temp.json";
 
 	beforeEach(() => {
-		writeFileSync(mockProfilePath, JSON.stringify({ name: "Bob", targetRoles: { primary: ["Staff Engineer"] } }));
+		writeFileSync(
+			mockProfilePath,
+			JSON.stringify({
+				name: "Bob",
+				targetRoles: { primary: ["Staff Engineer"] },
+			}),
+		);
 		writeFileSync(mockResumePath, JSON.stringify({ resume: "details" }));
 		lastGenerateObjectArgs = null;
 		// Clean up env variables
@@ -83,8 +88,12 @@ describe("analyzeJobPosting", () => {
 	});
 
 	afterEach(() => {
-		try { unlinkSync(mockProfilePath); } catch {}
-		try { unlinkSync(mockResumePath); } catch {}
+		try {
+			unlinkSync(mockProfilePath);
+		} catch {}
+		try {
+			unlinkSync(mockResumePath);
+		} catch {}
 	});
 
 	describe("File Validations", () => {
@@ -95,7 +104,9 @@ describe("analyzeJobPosting", () => {
 					resumePath: mockResumePath,
 					cleanedText: "Some job posting content",
 				}),
-			).rejects.toThrow("Candidate profile not found. Please set up your profile in the settings panel.");
+			).rejects.toThrow(
+				"Candidate profile not found. Please set up your profile in the settings panel.",
+			);
 		});
 
 		it("should throw a descriptive error if default resume does not exist", async () => {
@@ -105,7 +116,9 @@ describe("analyzeJobPosting", () => {
 					resumePath: "nonexistent-resume.json",
 					cleanedText: "Some job posting content",
 				}),
-			).rejects.toThrow("Synced default resume not found. Please sync your resume in the settings panel.");
+			).rejects.toThrow(
+				"Synced default resume not found. Please sync your resume in the settings panel.",
+			);
 		});
 
 		it("should throw if profile is empty", async () => {

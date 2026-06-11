@@ -2,6 +2,11 @@
 	"name": "@open-resume/companion",
 	"private": true,
 	"type": "module",
+	"tsup": {
+		"noExternal": [
+			"@open-resume/contracts"
+		]
+	},
 	"scripts": {
 		"dev": "node --watch --env-file-if-exists=.env --import tsx src/index.ts",
 		"start": "node --env-file-if-exists=.env dist/index.js",
@@ -15,6 +20,7 @@
 		"check": "biome check"
 	},
 	"dependencies": {
+		"@open-resume/contracts": "workspace:*",
 		"@ai-sdk/anthropic": "^3.0.81",
 		"@ai-sdk/google": "^3.0.80",
 		"@ai-sdk/openai": "^3.0.67",

@@ -32,6 +32,9 @@ importers:
       '@fastify/swagger-ui':
         specifier: ^5.2.6
         version: 5.2.6
+      '@open-resume/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       ai:
         specifier: ^6.0.193
         version: 6.0.193(zod@4.4.3)

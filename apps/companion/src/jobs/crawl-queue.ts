@@ -1,7 +1,7 @@
 import type { CleanedPageCrawlResult } from "../extract/playwright.js";
 import { crawlCleanedTextWithPlaywright } from "../extract/playwright.js";
-import type { JobRepository } from "./repository.js";
 import { analyzeJobPosting } from "./ai-analyzer.js";
+import type { JobRepository } from "./repository.js";
 
 interface CrawlQueueLogger {
 	error(bindings: Record<string, unknown>, message: string): void;
@@ -56,8 +56,6 @@ export function createCrawlQueue(options: CrawlQueueOptions) {
 				});
 
 				if (options.repository.getJob(id)) {
-
-
 					options.repository.markReady(id, {
 						cleanedText,
 						parsedTitle: aiResult.title,

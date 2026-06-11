@@ -338,9 +338,7 @@ export function createJobRepository(path: string) {
 
 		listResumes() {
 			return database
-				.prepare(
-					"select * from resumes order by last_modified desc, name asc",
-				)
+				.prepare("select * from resumes order by last_modified desc, name asc")
 				.all()
 				.map((row) => mapResumeSummary(row as unknown as ResumeRow));
 		},
@@ -381,7 +379,9 @@ export function createJobRepository(path: string) {
 		},
 
 		deleteResume(id: string) {
-			const result = database.prepare("delete from resumes where id = ?").run(id);
+			const result = database
+				.prepare("delete from resumes where id = ?")
+				.run(id);
 			return result.changes > 0;
 		},
 
@@ -394,9 +394,7 @@ export function createJobRepository(path: string) {
 			database.exec("BEGIN TRANSACTION;");
 			try {
 				database
-					.prepare(
-						"update resumes set is_default = 0 where is_default = 1",
-					)
+					.prepare("update resumes set is_default = 0 where is_default = 1")
 					.run();
 				database
 					.prepare(

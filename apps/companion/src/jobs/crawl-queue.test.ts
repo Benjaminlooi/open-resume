@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { analyzeJobPosting } from "./ai-analyzer.js";
 import { createCrawlQueue } from "./crawl-queue.js";
 import { createJobRepository } from "./repository.js";
-import { analyzeJobPosting } from "./ai-analyzer.js";
 
 vi.mock("./ai-analyzer.js", () => ({
 	analyzeJobPosting: vi.fn(),
@@ -27,10 +27,8 @@ describe("crawl queue", () => {
 				nextActions: ["Apply through website"],
 				generatedAt: 1200,
 			},
-
 		});
 	});
-
 
 	afterEach(() => {
 		for (const repository of repositories) {
@@ -454,7 +452,6 @@ describe("crawl queue", () => {
 				generatedAt: 1200,
 			}),
 		});
-
 	});
 
 	it("passes the SQLite default resume content to the analyzer", async () => {
@@ -590,7 +587,9 @@ describe("crawl queue", () => {
 			now: 1000,
 		});
 
-		const failingAnalyze = vi.fn().mockRejectedValue(new Error("AI Key Mismatch"));
+		const failingAnalyze = vi
+			.fn()
+			.mockRejectedValue(new Error("AI Key Mismatch"));
 
 		const queue = createCrawlQueue({
 			repository,
