@@ -23,3 +23,6 @@ routeTree.gen.ts
 # Python cache
 __pycache__/
 *.pyc
+
+# Local SQLite database
+apps/companion/.open-resume-companion/
