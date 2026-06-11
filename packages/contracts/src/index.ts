@@ -29,28 +29,32 @@ export * from "./jobs.js";
 export * from "./profiles.js";
 export * from "./resumes.js";
 
-// Register schemas globally for fastify-type-provider-zod swagger generators
-z.globalRegistry.add(healthResponseSchema, { id: "HealthResponse" });
-z.globalRegistry.add(extractJobRequestSchema, { id: "ExtractJobRequest" });
-z.globalRegistry.add(jobExtractionResultSchema, { id: "JobExtractionResult" });
-z.globalRegistry.add(companionErrorResponseSchema, {
-	id: "CompanionErrorResponse",
-});
-z.globalRegistry.add(crawlStatusSchema, { id: "CrawlStatus" });
-z.globalRegistry.add(createJobRequestSchema, { id: "CreateJobRequest" });
-z.globalRegistry.add(jobIdParamsSchema, { id: "JobIdParams" });
-z.globalRegistry.add(companionJobSchema, { id: "CompanionJob" });
-z.globalRegistry.add(companionJobsResponseSchema, {
-	id: "CompanionJobsResponse",
-});
-z.globalRegistry.add(deleteJobResponseSchema, { id: "DeleteJobResponse" });
-z.globalRegistry.add(resumeContentSchema, { id: "ResumeContent" });
-z.globalRegistry.add(resumeSummarySchema, { id: "ResumeSummary" });
-z.globalRegistry.add(resumeDetailsSchema, { id: "ResumeDetails" });
-z.globalRegistry.add(resumesResponseSchema, { id: "ResumesResponse" });
-z.globalRegistry.add(createResumeRequestSchema, { id: "CreateResumeRequest" });
-z.globalRegistry.add(updateResumeRequestSchema, { id: "UpdateResumeRequest" });
-z.globalRegistry.add(candidateProfileSchema, { id: "CandidateProfile" });
-z.globalRegistry.add(resumeSyncRequestSchema, { id: "ResumeSyncRequest" });
-z.globalRegistry.add(okResponseSchema, { id: "OkResponse" });
-z.globalRegistry.add(jobFitBriefSchema, { id: "JobFitBrief" });
+// Register schemas globally for fastify-type-provider-zod swagger generators if registry exists
+const registry = (z as any).globalRegistry;
+if (registry) {
+	registry.add(healthResponseSchema, { id: "HealthResponse" });
+	registry.add(extractJobRequestSchema, { id: "ExtractJobRequest" });
+	registry.add(jobExtractionResultSchema, { id: "JobExtractionResult" });
+	registry.add(companionErrorResponseSchema, {
+		id: "CompanionErrorResponse",
+	});
+	registry.add(crawlStatusSchema, { id: "CrawlStatus" });
+	registry.add(createJobRequestSchema, { id: "CreateJobRequest" });
+	registry.add(jobIdParamsSchema, { id: "JobIdParams" });
+	registry.add(companionJobSchema, { id: "CompanionJob" });
+	registry.add(companionJobsResponseSchema, {
+		id: "CompanionJobsResponse",
+	});
+	registry.add(deleteJobResponseSchema, { id: "DeleteJobResponse" });
+	registry.add(resumeContentSchema, { id: "ResumeContent" });
+	registry.add(resumeSummarySchema, { id: "ResumeSummary" });
+	registry.add(resumeDetailsSchema, { id: "ResumeDetails" });
+	registry.add(resumesResponseSchema, { id: "ResumesResponse" });
+	registry.add(createResumeRequestSchema, { id: "CreateResumeRequest" });
+	registry.add(updateResumeRequestSchema, { id: "UpdateResumeRequest" });
+	registry.add(candidateProfileSchema, { id: "CandidateProfile" });
+	registry.add(resumeSyncRequestSchema, { id: "ResumeSyncRequest" });
+	registry.add(okResponseSchema, { id: "OkResponse" });
+	registry.add(jobFitBriefSchema, { id: "JobFitBrief" });
+}
+
