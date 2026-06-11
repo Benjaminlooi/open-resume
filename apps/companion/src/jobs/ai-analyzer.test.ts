@@ -129,6 +129,19 @@ describe("analyzeJobPosting", () => {
 				}),
 			).rejects.toThrow("Synced default resume is empty.");
 		});
+
+		it("should accept direct resume content without requiring a resume file", async () => {
+			process.env.OPENAI_API_KEY = "sk-test-openai";
+			await analyzeJobPosting({
+				profilePath: mockProfilePath,
+				resumeContent: JSON.stringify({ resume: "sqlite details" }),
+				cleanedText: "Job posting text",
+			});
+
+			expect(lastGenerateObjectArgs.system).toContain(
+				'{"resume":"sqlite details"}',
+			);
+		});
 	});
 
 	describe("Provider Configuration & Resolution", () => {

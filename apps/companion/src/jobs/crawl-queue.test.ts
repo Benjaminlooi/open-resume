@@ -46,8 +46,22 @@ describe("crawl queue", () => {
 		return repository;
 	}
 
+	function createDefaultResume(
+		repository: ReturnType<typeof createJobRepository>,
+	) {
+		repository.createResume({
+			id: "resume-1",
+			name: "Default Resume",
+			templateId: "modern",
+			content: { personalInfo: { fullName: "Jane Doe" } },
+			now: 1000,
+		});
+		repository.setDefaultResume("resume-1", 1000);
+	}
+
 	it("marks a job ready when crawling succeeds", async () => {
 		const repository = createTestRepository();
+		createDefaultResume(repository);
 		repository.createJob({
 			id: "job-1",
 			sourceUrl: "https://example.com/job",
@@ -179,6 +193,7 @@ describe("crawl queue", () => {
 
 	it("clears active job state when marking crawling fails", async () => {
 		const repository = createTestRepository();
+		createDefaultResume(repository);
 		repository.createJob({
 			id: "job-1",
 			sourceUrl: "https://example.com/job",
@@ -215,6 +230,7 @@ describe("crawl queue", () => {
 
 	it("runs a job only once concurrently and clears active state afterward", async () => {
 		const repository = createTestRepository();
+		createDefaultResume(repository);
 		repository.createJob({
 			id: "job-1",
 			sourceUrl: "https://example.com/job",
@@ -288,6 +304,7 @@ describe("crawl queue", () => {
 
 	it("enqueues only runnable jobs", async () => {
 		const repository = createTestRepository();
+		createDefaultResume(repository);
 		repository.createJob({
 			id: "pending-job",
 			sourceUrl: "https://example.com/pending",
@@ -369,6 +386,7 @@ describe("crawl queue", () => {
 
 	it("transitions status to analyzing and updates to ready with all AI details on success", async () => {
 		const repository = createTestRepository();
+		createDefaultResume(repository);
 		repository.createJob({
 			id: "job-1",
 			sourceUrl: "https://example.com/job",
@@ -410,7 +428,9 @@ describe("crawl queue", () => {
 
 		expect(customAnalyze).toHaveBeenCalledWith({
 			profilePath: "/path/to/profile.json",
-			resumePath: "/path/to/resume.json",
+			resumeContent: JSON.stringify({
+				personalInfo: { fullName: "Jane Doe" },
+			}),
 			cleanedText: "Cleaned job text",
 		});
 
@@ -437,8 +457,87 @@ describe("crawl queue", () => {
 
 	});
 
+	it("passes the SQLite default resume content to the analyzer", async () => {
+		const repository = createTestRepository();
+		createDefaultResume(repository);
+		repository.createJob({
+			id: "job-1",
+			sourceUrl: "https://example.com/job",
+			now: 1000,
+		});
+		const customAnalyze = vi.fn().mockResolvedValue({
+			title: "AI Engineer",
+			company: "OpenAI",
+			location: "Remote",
+			description: "Work on AI",
+			fitScore: 95,
+			fitBrief: {
+				roleSummary: "Strong fit",
+				requirements: ["TypeScript"],
+				keywords: ["frontend"],
+				strengths: ["shipping"],
+				gaps: [],
+				risks: [],
+				nextActions: ["apply"],
+				generatedAt: 1200,
+			},
+		});
+		const queue = createCrawlQueue({
+			repository,
+			crawl: async () => ({
+				sourceUrl: "https://example.com/job",
+				cleanedText: "Cleaned job text",
+				extractedAt: 1200,
+			}),
+			analyze: customAnalyze,
+			profilePath: "/path/to/profile.json",
+			resumePath: "/missing/resume.json",
+			now: () => 1200,
+		});
+
+		await queue.runJob("job-1");
+
+		expect(customAnalyze).toHaveBeenCalledWith({
+			profilePath: "/path/to/profile.json",
+			resumeContent: JSON.stringify({
+				personalInfo: { fullName: "Jane Doe" },
+			}),
+			cleanedText: "Cleaned job text",
+		});
+	});
+
+	it("fails analysis with a useful error when no default resume is synced", async () => {
+		const repository = createTestRepository();
+		repository.createJob({
+			id: "job-1",
+			sourceUrl: "https://example.com/job",
+			now: 1000,
+		});
+		const customAnalyze = vi.fn();
+		const queue = createCrawlQueue({
+			repository,
+			crawl: async () => ({
+				sourceUrl: "https://example.com/job",
+				cleanedText: "Cleaned job text",
+				extractedAt: 1200,
+			}),
+			analyze: customAnalyze,
+			now: () => 1200,
+		});
+
+		await queue.runJob("job-1");
+
+		expect(customAnalyze).not.toHaveBeenCalled();
+		expect(repository.getJob("job-1")).toMatchObject({
+			crawlStatus: "failed",
+			crawlError:
+				"Synced default resume not found. Please sync your resume in the settings panel.",
+		});
+	});
+
 	it("transitions status to failed if AI analysis fails", async () => {
 		const repository = createTestRepository();
+		createDefaultResume(repository);
 		repository.createJob({
 			id: "job-1",
 			sourceUrl: "https://example.com/job",
@@ -466,4 +565,3 @@ describe("crawl queue", () => {
 		});
 	});
 });
-

@@ -46,7 +46,8 @@ const aiAnalysisOutputSchema = z.object({
 
 export async function analyzeJobPosting(input: {
 	profilePath: string;
-	resumePath: string;
+	resumePath?: string;
+	resumeContent?: string;
 	cleanedText: string;
 }): Promise<AIAnalysisResult> {
 	if (!existsSync(input.profilePath)) {
@@ -54,7 +55,10 @@ export async function analyzeJobPosting(input: {
 			"Candidate profile not found. Please set up your profile in the settings panel.",
 		);
 	}
-	if (!existsSync(input.resumePath)) {
+	if (
+		input.resumeContent === undefined &&
+		(!input.resumePath || !existsSync(input.resumePath))
+	) {
 		throw new Error(
 			"Synced default resume not found. Please sync your resume in the settings panel.",
 		);
@@ -65,7 +69,13 @@ export async function analyzeJobPosting(input: {
 		throw new Error("Candidate profile is empty.");
 	}
 
-	const resumeContent = readFileSync(input.resumePath, "utf8").trim();
+	let resumeContent: string;
+	if (input.resumeContent !== undefined) {
+		resumeContent = input.resumeContent.trim();
+	} else {
+		const resumePath = input.resumePath as string;
+		resumeContent = readFileSync(resumePath, "utf8").trim();
+	}
 	if (!resumeContent) {
 		throw new Error("Synced default resume is empty.");
 	}
