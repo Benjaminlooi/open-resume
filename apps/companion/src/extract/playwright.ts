@@ -1,8 +1,5 @@
 import { chromium } from "playwright";
-import type { JobExtractionResult } from "../schema.js";
 import { extractReadableText } from "./html.js";
-import { extractJobPostingJsonLd } from "./json-ld.js";
-import { normalizeExtraction } from "./normalize.js";
 
 interface ExtractionLogger {
 	debug(bindings: Record<string, unknown>, message: string): void;
@@ -13,43 +10,38 @@ interface ExtractionLogOptions {
 	logScrapedData?: boolean;
 }
 
-export function normalizePlaywrightExtraction(input: {
+export interface CleanedPageCrawlResult {
+	sourceUrl: string;
+	cleanedText: string;
+	extractedAt: number;
+}
+
+export function normalizePlaywrightCrawl(input: {
 	sourceUrl: string;
 	html: string;
 	logger?: ExtractionLogger;
 	logScrapedData?: boolean;
-}): JobExtractionResult {
-	const rawText = extractReadableText(input.html);
-	const structured = extractJobPostingJsonLd(input.html);
+}): CleanedPageCrawlResult {
+	const cleanedText = extractReadableText(input.html).trim();
 
 	if (input.logScrapedData) {
 		input.logger?.debug(
-			{ url: input.sourceUrl, rawText, structured },
-			"scraped data before normalization",
+			{ url: input.sourceUrl, cleanedText },
+			"scraped text after cleanup",
 		);
 	}
 
-	const result = normalizeExtraction({
+	return {
 		sourceUrl: input.sourceUrl,
-		rawText,
-		method: "playwright",
-		structured,
-	});
-
-	if (input.logScrapedData) {
-		input.logger?.debug(
-			{ url: input.sourceUrl, result },
-			"scraped data after normalization",
-		);
-	}
-
-	return result;
+		cleanedText,
+		extractedAt: Date.now(),
+	};
 }
 
-export async function extractWithPlaywright(
+export async function crawlCleanedTextWithPlaywright(
 	sourceUrl: string,
 	options: ExtractionLogOptions = {},
-): Promise<JobExtractionResult> {
+): Promise<CleanedPageCrawlResult> {
 	const browser = await chromium.launch({ headless: true });
 
 	try {
@@ -63,19 +55,18 @@ export async function extractWithPlaywright(
 			.catch(() => {});
 		let html = await page.content();
 
-		// Append content of child frames (e.g., Ashby, Greenhouse, Lever iframes)
 		for (const frame of page.frames()) {
 			if (frame !== page.mainFrame()) {
 				try {
 					const frameContent = await frame.content();
 					html += `\n<!-- FRAME: ${frame.url()} -->\n${frameContent}`;
 				} catch {
-					// Ignore frames that we cannot access or read
+					// Ignore frames that cannot be read.
 				}
 			}
 		}
 
-		return normalizePlaywrightExtraction({
+		return normalizePlaywrightCrawl({
 			sourceUrl,
 			html,
 			logger: options.logger,
@@ -85,3 +76,5 @@ export async function extractWithPlaywright(
 		await browser.close();
 	}
 }
+
+export const extractWithPlaywright = crawlCleanedTextWithPlaywright;
