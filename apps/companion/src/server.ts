@@ -132,7 +132,6 @@ export function createServer(options: CreateServerOptions = {}) {
 			resumePath: getResumePath(options),
 		});
 
-
 	server.addHook("onClose", async () => {
 		if (ownsRepository) {
 			jobRepository.close();
@@ -165,6 +164,7 @@ export function createServer(options: CreateServerOptions = {}) {
 
 	server.register(cors, {
 		origin: [/^http:\/\/localhost:\d+$/, /^http:\/\/127\.0\.0\.1:\d+$/],
+		methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE", "OPTIONS"],
 	});
 
 	server.after(() => {
