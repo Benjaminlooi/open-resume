@@ -1,6 +1,7 @@
 import type { CleanedPageCrawlResult } from "../extract/playwright.js";
 import { crawlCleanedTextWithPlaywright } from "../extract/playwright.js";
 import type { JobRepository } from "./repository.js";
+import { analyzeJobPosting } from "./ai-analyzer.js";
 
 interface CrawlQueueLogger {
 	error(bindings: Record<string, unknown>, message: string): void;
@@ -11,10 +12,14 @@ interface CrawlQueueOptions {
 	crawl?: (sourceUrl: string) => Promise<CleanedPageCrawlResult>;
 	logger?: CrawlQueueLogger;
 	now?: () => number;
+	profilePath?: string;
+	resumePath?: string;
+	analyze?: typeof analyzeJobPosting;
 }
 
 export function createCrawlQueue(options: CrawlQueueOptions) {
 	const crawl = options.crawl ?? crawlCleanedTextWithPlaywright;
+	const analyze = options.analyze ?? analyzeJobPosting;
 	const now = options.now ?? Date.now;
 	const activeJobs = new Set<string>();
 
@@ -32,11 +37,30 @@ export function createCrawlQueue(options: CrawlQueueOptions) {
 			if (!cleanedText) {
 				throw new Error("Crawl completed but no useful text was found.");
 			}
+
 			if (options.repository.getJob(id)) {
-				options.repository.markReady(id, {
+				options.repository.markAnalyzing(id, now());
+
+				const aiResult = await analyze({
+					profilePath: options.profilePath ?? "",
+					resumePath: options.resumePath ?? "",
 					cleanedText,
-					now: result.extractedAt,
 				});
+
+				if (options.repository.getJob(id)) {
+
+
+					options.repository.markReady(id, {
+						cleanedText,
+						parsedTitle: aiResult.title,
+						parsedCompany: aiResult.company,
+						parsedLocation: aiResult.location,
+						parsedDescription: aiResult.description,
+						fitScore: aiResult.fitScore,
+						fitBriefJson: JSON.stringify(aiResult.fitBrief),
+						now: result.extractedAt || now(),
+					});
+				}
 			}
 		} catch (error) {
 			const errorMessage =
@@ -76,3 +100,4 @@ export function createCrawlQueue(options: CrawlQueueOptions) {
 }
 
 export type CrawlQueue = ReturnType<typeof createCrawlQueue>;
+

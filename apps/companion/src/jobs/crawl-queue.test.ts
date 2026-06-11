@@ -1,9 +1,36 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createCrawlQueue } from "./crawl-queue.js";
 import { createJobRepository } from "./repository.js";
+import { analyzeJobPosting } from "./ai-analyzer.js";
+
+vi.mock("./ai-analyzer.js", () => ({
+	analyzeJobPosting: vi.fn(),
+}));
 
 describe("crawl queue", () => {
 	const repositories: Array<ReturnType<typeof createJobRepository>> = [];
+
+	beforeEach(() => {
+		vi.mocked(analyzeJobPosting).mockResolvedValue({
+			title: "Mocked Staff Engineer",
+			company: "Mocked Acme Corp",
+			location: "Remote",
+			description: "Mocked job description",
+			fitScore: 92,
+			fitBrief: {
+				roleSummary: "Mocked summary",
+				requirements: ["React", "TypeScript"],
+				keywords: ["frontend", "staff"],
+				strengths: ["Highly aligned experience"],
+				gaps: ["No direct management mentioned"],
+				risks: ["Fast-paced environment"],
+				nextActions: ["Apply through website"],
+				generatedAt: 1200,
+			},
+
+		});
+	});
+
 
 	afterEach(() => {
 		for (const repository of repositories) {
@@ -339,4 +366,104 @@ describe("crawl queue", () => {
 			"crawl queue job crashed",
 		);
 	});
+
+	it("transitions status to analyzing and updates to ready with all AI details on success", async () => {
+		const repository = createTestRepository();
+		repository.createJob({
+			id: "job-1",
+			sourceUrl: "https://example.com/job",
+			now: 1000,
+		});
+
+		const customAnalyze = vi.fn().mockResolvedValue({
+			title: "AI Engineer",
+			company: "OpenAI",
+			location: "San Francisco",
+			description: "Work on AI",
+			fitScore: 95,
+			fitBrief: {
+				roleSummary: "Excellent candidate fit",
+				requirements: ["Python"],
+				keywords: ["ai"],
+				strengths: ["coding"],
+				gaps: ["none"],
+				risks: ["none"],
+				nextActions: ["apply"],
+				generatedAt: 1200,
+			},
+		});
+
+		const queue = createCrawlQueue({
+			repository,
+			crawl: async () => ({
+				sourceUrl: "https://example.com/job",
+				cleanedText: "Cleaned job text",
+				extractedAt: 1200,
+			}),
+			analyze: customAnalyze,
+			profilePath: "/path/to/profile.json",
+			resumePath: "/path/to/resume.json",
+			now: () => 1200,
+		});
+
+		await queue.runJob("job-1");
+
+		expect(customAnalyze).toHaveBeenCalledWith({
+			profilePath: "/path/to/profile.json",
+			resumePath: "/path/to/resume.json",
+			cleanedText: "Cleaned job text",
+		});
+
+		expect(repository.getJob("job-1")).toMatchObject({
+			crawlStatus: "ready",
+			crawlError: null,
+			cleanedText: "Cleaned job text",
+			parsedTitle: "AI Engineer",
+			parsedCompany: "OpenAI",
+			parsedLocation: "San Francisco",
+			parsedDescription: "Work on AI",
+			fitScore: 95,
+			fitBriefJson: JSON.stringify({
+				roleSummary: "Excellent candidate fit",
+				requirements: ["Python"],
+				keywords: ["ai"],
+				strengths: ["coding"],
+				gaps: ["none"],
+				risks: ["none"],
+				nextActions: ["apply"],
+				generatedAt: 1200,
+			}),
+		});
+
+	});
+
+	it("transitions status to failed if AI analysis fails", async () => {
+		const repository = createTestRepository();
+		repository.createJob({
+			id: "job-1",
+			sourceUrl: "https://example.com/job",
+			now: 1000,
+		});
+
+		const failingAnalyze = vi.fn().mockRejectedValue(new Error("AI Key Mismatch"));
+
+		const queue = createCrawlQueue({
+			repository,
+			crawl: async () => ({
+				sourceUrl: "https://example.com/job",
+				cleanedText: "Cleaned job text",
+				extractedAt: 1200,
+			}),
+			analyze: failingAnalyze,
+			now: () => 1200,
+		});
+
+		await queue.runJob("job-1");
+
+		expect(repository.getJob("job-1")).toMatchObject({
+			crawlStatus: "failed",
+			crawlError: "AI Key Mismatch",
+		});
+	});
 });
+
