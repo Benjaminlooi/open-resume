@@ -201,6 +201,21 @@ export const candidateProfileSchema = z
 
 export type CandidateProfile = z.infer<typeof candidateProfileSchema>;
 
+export const jobFitBriefSchema = z
+	.object({
+		roleSummary: z.string(),
+		requirements: z.array(z.string()),
+		keywords: z.array(z.string()),
+		strengths: z.array(z.string()),
+		gaps: z.array(z.string()),
+		risks: z.array(z.string()),
+		nextActions: z.array(z.string()),
+		generatedAt: z.number(),
+	})
+	.strict();
+
+export type JobFitBrief = z.infer<typeof jobFitBriefSchema>;
+
 export const resumeSyncRequestSchema = z
 	.object({
 		resume: z.record(z.string(), z.unknown()),
@@ -236,3 +251,5 @@ z.globalRegistry.add(deleteJobResponseSchema, { id: "DeleteJobResponse" });
 z.globalRegistry.add(candidateProfileSchema, { id: "CandidateProfile" });
 z.globalRegistry.add(resumeSyncRequestSchema, { id: "ResumeSyncRequest" });
 z.globalRegistry.add(okResponseSchema, { id: "OkResponse" });
+z.globalRegistry.add(jobFitBriefSchema, { id: "JobFitBrief" });
+
