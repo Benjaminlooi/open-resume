@@ -119,6 +119,20 @@ Expected response:
 
 Open `http://localhost:3000/jobs`, create a job application, paste a job URL, and click **Fetch details**. If the companion is not running, the app keeps working with manual job description paste.
 
+### 👤 Candidate Profile & Resume Integration
+
+The Local Companion uses two files stored inside the `.open-resume-companion/` configuration folder to perform background AI evaluations and suitability scoring:
+
+1. **Candidate Profile (`profile.json`)**
+   - **Purpose**: Defines your job preferences, target roles/archetypes, exit stories, superpowers, compensation ranges, location flexibility, and visa status.
+   - **Management**: Edited dynamically through the **My Profile** GUI on the frontend (`/profile`). Saving the form pushes the update to the companion server via `PUT /profile`.
+   - **Scoring**: Used by the AI to assess role-narrative alignment, salary threshold matches, location compatibility, and timezone restrictions.
+
+2. **Synced Default Resume (`resume.json`)**
+   - **Purpose**: Holds your current professional resume (experience, summary, skills, and projects).
+   - **Management**: Automatically synced from the frontend to the companion daemon on mount, or manually triggered using the **Sync Resume** button on `/profile`.
+   - **Scoring**: Analyzed by the AI to calculate keyword alignment, evaluate experience matches, call out skill gaps, and identify relevant strengths.
+
 ### Scraped Data Debugging
 
 To debug scraping quality, enable scraped-data logs in `apps/companion/.env`. This prints the raw text and structured data before normalization:
