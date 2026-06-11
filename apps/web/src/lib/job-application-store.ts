@@ -9,7 +9,7 @@ import type {
 } from "./job-application-schema";
 import { useResumeIndexStore } from "./resume-index-store";
 import { getResumeData } from "./resume-store";
-import type { Resume } from "./resume-schema";
+import { resumeSchema, type Resume } from "./resume-schema";
 
 export interface JobApplicationState {
 	jobApplications: JobApplication[];
@@ -146,14 +146,7 @@ export const useJobApplicationStore = create<JobApplicationState>()(
 					? resumeIndexEntry.name
 					: defaultResume.name || "Default Resume";
 
-				const {
-					id: _id,
-					name: _name,
-					activeSection: _activeSection,
-					templateId: _templateId,
-					...sourceResumeSnapshot
-				} = defaultResume;
-
+				const sourceResumeSnapshot = resumeSchema.parse(defaultResume);
 				const tailoredResume = JSON.parse(JSON.stringify(sourceResumeSnapshot));
 
 				set((state) => ({
@@ -419,14 +412,7 @@ export const useJobApplicationStore = create<JobApplicationState>()(
 					? resumeIndexEntry.name
 					: resume.name || "Selected Resume";
 
-				const {
-					id: _id,
-					name: _name,
-					activeSection: _activeSection,
-					templateId: _templateId,
-					...sourceResumeSnapshot
-				} = resume;
-
+				const sourceResumeSnapshot = resumeSchema.parse(resume);
 				const tailoredResume = JSON.parse(JSON.stringify(sourceResumeSnapshot));
 
 				set((state) => ({
