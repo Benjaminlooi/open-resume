@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { ZodError, z } from "zod";
 import {
+	candidateProfileSchema,
 	companionJobSchema,
 	companionJobsResponseSchema,
 	crawlStatusSchema,
@@ -10,6 +11,7 @@ import {
 	healthResponseSchema,
 	jobExtractionResultSchema,
 	jobIdParamsSchema,
+	resumeSyncRequestSchema,
 } from "./schema.js";
 
 describe("companion schema", () => {
@@ -112,6 +114,59 @@ describe("companion schema", () => {
 		});
 	});
 
+	it("accepts a valid candidate profile", () => {
+		const parsed = candidateProfileSchema.parse({
+			candidate: {
+				fullName: "Benjamin Looi",
+				email: "hello@benjaminlooi.dev",
+				phone: "+60 12-4065-711",
+				location: "Kuala Lumpur, Malaysia",
+				linkedin: "linkedin.com/in/benjaminlooi",
+				portfolioUrl: "https://www.benjaminlooi.dev",
+				github: "github.com/benjaminlooi",
+			},
+			targetRoles: {
+				primary: ["Senior Full Stack Engineer"],
+				archetypes: [
+					{
+						name: "Full Stack Product Engineer",
+						level: "Senior",
+						fit: "primary",
+					},
+				],
+			},
+			narrative: {
+				headline: "Product-minded Full Stack Engineer",
+				exitStory: "After 5+ years shipping web systems...",
+				superpowers: ["Modernizing legacy frontends"],
+				proofPoints: [
+					{
+						name: "TalentCloud HRMS",
+						url: "https://example.com",
+						heroMetric: "Reduced feature deployment by 25%",
+					},
+				],
+			},
+			compensation: {
+				targetRange: "Global remote",
+				currency: "USD",
+				minimum: "$50k",
+				preferred: "$60k+",
+				locationFlexibility: "Global remote-first",
+			},
+			location: {
+				country: "Malaysia",
+				city: "Kuala Lumpur",
+				timezone: "ICT / UTC+7",
+				visaStatus: "Unspecified",
+				onsiteAvailability: "Remote-first preferred",
+				remotePolicy: "Prioritize global remote",
+			},
+		});
+
+		expect(parsed.candidate.fullName).toBe("Benjamin Looi");
+	});
+
 	it("registers named API schemas", () => {
 		expect(z.globalRegistry.get(healthResponseSchema)?.id).toBe(
 			"HealthResponse",
@@ -136,6 +191,12 @@ describe("companion schema", () => {
 		);
 		expect(z.globalRegistry.get(deleteJobResponseSchema)?.id).toBe(
 			"DeleteJobResponse",
+		);
+		expect(z.globalRegistry.get(candidateProfileSchema)?.id).toBe(
+			"CandidateProfile",
+		);
+		expect(z.globalRegistry.get(resumeSyncRequestSchema)?.id).toBe(
+			"ResumeSyncRequest",
 		);
 	});
 });

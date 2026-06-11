@@ -124,6 +124,94 @@ export const deleteJobResponseSchema = z
 
 export type DeleteJobResponse = z.infer<typeof deleteJobResponseSchema>;
 
+export const targetRoleArchetypeSchema = z
+	.object({
+		name: z.string(),
+		level: z.string(),
+		fit: z.enum(["primary", "secondary", "adjacent"]),
+	})
+	.strict();
+
+export type TargetRoleArchetype = z.infer<typeof targetRoleArchetypeSchema>;
+
+export const candidateProfileSchema = z
+	.object({
+		candidate: z
+			.object({
+				fullName: z.string(),
+				email: z.string(),
+				phone: z.string(),
+				location: z.string(),
+				linkedin: z.string(),
+				portfolioUrl: z.string(),
+				github: z.string(),
+				twitter: z.string().optional(),
+			})
+			.strict(),
+		targetRoles: z
+			.object({
+				primary: z.array(z.string()),
+				archetypes: z.array(targetRoleArchetypeSchema),
+			})
+			.strict(),
+		narrative: z
+			.object({
+				headline: z.string(),
+				exitStory: z.string(),
+				superpowers: z.array(z.string()),
+				proofPoints: z.array(
+					z
+						.object({
+							name: z.string(),
+							url: z.string(),
+							heroMetric: z.string(),
+						})
+						.strict(),
+				),
+			})
+			.strict(),
+		compensation: z
+			.object({
+				targetRange: z.string(),
+				currency: z.string(),
+				minimum: z.string(),
+				preferred: z.string(),
+				locationFlexibility: z.string(),
+			})
+			.strict(),
+		location: z
+			.object({
+				country: z.string(),
+				city: z.string(),
+				timezone: z.string(),
+				visaStatus: z.string(),
+				onsiteAvailability: z.string(),
+				remotePolicy: z.string(),
+			})
+			.strict(),
+	})
+	.strict();
+
+export type CandidateProfile = z.infer<typeof candidateProfileSchema>;
+
+export const resumeSyncRequestSchema = z
+	.object({
+		resume: z.record(z.unknown()),
+	})
+	.strict();
+
+export type ResumeSyncRequest = z.infer<typeof resumeSyncRequestSchema>;
+
+export const okResponseSchema = z
+	.object({
+		ok: z.boolean(),
+	})
+	.strict();
+
+export type OkResponse = z.infer<typeof okResponseSchema>;
+
+export const syncedResumeResponseSchema = z.record(z.unknown());
+
 z.globalRegistry.add(healthResponseSchema, { id: "HealthResponse" });
 z.globalRegistry.add(extractJobRequestSchema, { id: "ExtractJobRequest" });
 z.globalRegistry.add(jobExtractionResultSchema, { id: "JobExtractionResult" });
@@ -138,3 +226,6 @@ z.globalRegistry.add(companionJobsResponseSchema, {
 	id: "CompanionJobsResponse",
 });
 z.globalRegistry.add(deleteJobResponseSchema, { id: "DeleteJobResponse" });
+z.globalRegistry.add(candidateProfileSchema, { id: "CandidateProfile" });
+z.globalRegistry.add(resumeSyncRequestSchema, { id: "ResumeSyncRequest" });
+z.globalRegistry.add(okResponseSchema, { id: "OkResponse" });

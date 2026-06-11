@@ -221,6 +221,234 @@
         ],
         "additionalProperties": false
       },
+      "CandidateProfileInput": {
+        "type": "object",
+        "properties": {
+          "candidate": {
+            "type": "object",
+            "properties": {
+              "fullName": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string"
+              },
+              "phone": {
+                "type": "string"
+              },
+              "location": {
+                "type": "string"
+              },
+              "linkedin": {
+                "type": "string"
+              },
+              "portfolioUrl": {
+                "type": "string"
+              },
+              "github": {
+                "type": "string"
+              },
+              "twitter": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "fullName",
+              "email",
+              "phone",
+              "location",
+              "linkedin",
+              "portfolioUrl",
+              "github"
+            ],
+            "additionalProperties": false
+          },
+          "targetRoles": {
+            "type": "object",
+            "properties": {
+              "primary": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "archetypes": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "level": {
+                      "type": "string"
+                    },
+                    "fit": {
+                      "type": "string",
+                      "enum": [
+                        "primary",
+                        "secondary",
+                        "adjacent"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "level",
+                    "fit"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "primary",
+              "archetypes"
+            ],
+            "additionalProperties": false
+          },
+          "narrative": {
+            "type": "object",
+            "properties": {
+              "headline": {
+                "type": "string"
+              },
+              "exitStory": {
+                "type": "string"
+              },
+              "superpowers": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "proofPoints": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "url": {
+                      "type": "string"
+                    },
+                    "heroMetric": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "url",
+                    "heroMetric"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "headline",
+              "exitStory",
+              "superpowers",
+              "proofPoints"
+            ],
+            "additionalProperties": false
+          },
+          "compensation": {
+            "type": "object",
+            "properties": {
+              "targetRange": {
+                "type": "string"
+              },
+              "currency": {
+                "type": "string"
+              },
+              "minimum": {
+                "type": "string"
+              },
+              "preferred": {
+                "type": "string"
+              },
+              "locationFlexibility": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "targetRange",
+              "currency",
+              "minimum",
+              "preferred",
+              "locationFlexibility"
+            ],
+            "additionalProperties": false
+          },
+          "location": {
+            "type": "object",
+            "properties": {
+              "country": {
+                "type": "string"
+              },
+              "city": {
+                "type": "string"
+              },
+              "timezone": {
+                "type": "string"
+              },
+              "visaStatus": {
+                "type": "string"
+              },
+              "onsiteAvailability": {
+                "type": "string"
+              },
+              "remotePolicy": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "country",
+              "city",
+              "timezone",
+              "visaStatus",
+              "onsiteAvailability",
+              "remotePolicy"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "candidate",
+          "targetRoles",
+          "narrative",
+          "compensation",
+          "location"
+        ],
+        "additionalProperties": false
+      },
+      "ResumeSyncRequestInput": {
+        "type": "object",
+        "properties": {
+          "resume": {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        },
+        "required": [
+          "resume"
+        ],
+        "additionalProperties": false
+      },
+      "OkResponseInput": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ok"
+        ],
+        "additionalProperties": false
+      },
       "HealthResponse": {
         "type": "object",
         "properties": {
@@ -434,6 +662,234 @@
           "deleted"
         ],
         "additionalProperties": false
+      },
+      "CandidateProfile": {
+        "type": "object",
+        "properties": {
+          "candidate": {
+            "type": "object",
+            "properties": {
+              "fullName": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string"
+              },
+              "phone": {
+                "type": "string"
+              },
+              "location": {
+                "type": "string"
+              },
+              "linkedin": {
+                "type": "string"
+              },
+              "portfolioUrl": {
+                "type": "string"
+              },
+              "github": {
+                "type": "string"
+              },
+              "twitter": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "fullName",
+              "email",
+              "phone",
+              "location",
+              "linkedin",
+              "portfolioUrl",
+              "github"
+            ],
+            "additionalProperties": false
+          },
+          "targetRoles": {
+            "type": "object",
+            "properties": {
+              "primary": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "archetypes": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "level": {
+                      "type": "string"
+                    },
+                    "fit": {
+                      "type": "string",
+                      "enum": [
+                        "primary",
+                        "secondary",
+                        "adjacent"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "level",
+                    "fit"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "primary",
+              "archetypes"
+            ],
+            "additionalProperties": false
+          },
+          "narrative": {
+            "type": "object",
+            "properties": {
+              "headline": {
+                "type": "string"
+              },
+              "exitStory": {
+                "type": "string"
+              },
+              "superpowers": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "proofPoints": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "url": {
+                      "type": "string"
+                    },
+                    "heroMetric": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "url",
+                    "heroMetric"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "headline",
+              "exitStory",
+              "superpowers",
+              "proofPoints"
+            ],
+            "additionalProperties": false
+          },
+          "compensation": {
+            "type": "object",
+            "properties": {
+              "targetRange": {
+                "type": "string"
+              },
+              "currency": {
+                "type": "string"
+              },
+              "minimum": {
+                "type": "string"
+              },
+              "preferred": {
+                "type": "string"
+              },
+              "locationFlexibility": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "targetRange",
+              "currency",
+              "minimum",
+              "preferred",
+              "locationFlexibility"
+            ],
+            "additionalProperties": false
+          },
+          "location": {
+            "type": "object",
+            "properties": {
+              "country": {
+                "type": "string"
+              },
+              "city": {
+                "type": "string"
+              },
+              "timezone": {
+                "type": "string"
+              },
+              "visaStatus": {
+                "type": "string"
+              },
+              "onsiteAvailability": {
+                "type": "string"
+              },
+              "remotePolicy": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "country",
+              "city",
+              "timezone",
+              "visaStatus",
+              "onsiteAvailability",
+              "remotePolicy"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "candidate",
+          "targetRoles",
+          "narrative",
+          "compensation",
+          "location"
+        ],
+        "additionalProperties": false
+      },
+      "ResumeSyncRequest": {
+        "type": "object",
+        "properties": {
+          "resume": {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        },
+        "required": [
+          "resume"
+        ],
+        "additionalProperties": false
+      },
+      "OkResponse": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ok"
+        ],
+        "additionalProperties": false
       }
     }
   },
@@ -452,6 +908,157 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/profile": {
+      "get": {
+        "operationId": "getProfile",
+        "summary": "Get candidate profile",
+        "tags": [
+          "Profile"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CandidateProfile"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateProfile",
+        "summary": "Update candidate profile",
+        "tags": [
+          "Profile"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CandidateProfileInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CandidateProfile"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/profile/resume": {
+      "get": {
+        "operationId": "getSyncedResume",
+        "summary": "Get synced default resume",
+        "tags": [
+          "Profile"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "syncResume",
+        "summary": "Sync default resume",
+        "tags": [
+          "Profile"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResumeSyncRequestInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OkResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionErrorResponse"
                 }
               }
             }

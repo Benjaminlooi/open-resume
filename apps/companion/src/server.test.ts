@@ -255,6 +255,77 @@ describe("companion server", () => {
 		expect(recovered).toBe(true);
 	});
 
+	it("serves candidate profile GET and PUT requests", async () => {
+		const { server } = createTestServer();
+
+		// 1. Initial GET should return default profile
+		const getRes1 = await server.inject({
+			method: "GET",
+			url: "/profile",
+		});
+		expect(getRes1.statusCode).toBe(200);
+		expect(getRes1.json().candidate.fullName).toBe("Benjamin Looi");
+
+		// 2. PUT to update profile
+		const newProfile = {
+			...getRes1.json(),
+			candidate: {
+				...getRes1.json().candidate,
+				fullName: "John Doe",
+			},
+		};
+		const putRes = await server.inject({
+			method: "PUT",
+			url: "/profile",
+			payload: newProfile,
+		});
+		expect(putRes.statusCode).toBe(200);
+		expect(putRes.json().candidate.fullName).toBe("John Doe");
+
+		// 3. GET should return updated profile
+		const getRes2 = await server.inject({
+			method: "GET",
+			url: "/profile",
+		});
+		expect(getRes2.statusCode).toBe(200);
+		expect(getRes2.json().candidate.fullName).toBe("John Doe");
+	});
+
+	it("handles resume sync GET and PUT requests", async () => {
+		const { server } = createTestServer();
+
+		// 1. Initial GET should return 404
+		const getRes1 = await server.inject({
+			method: "GET",
+			url: "/profile/resume",
+		});
+		expect(getRes1.statusCode).toBe(404);
+
+		// 2. PUT to sync resume
+		const syncRes = await server.inject({
+			method: "PUT",
+			url: "/profile/resume",
+			payload: {
+				resume: {
+					personalInfo: { fullName: "John Doe" },
+					experience: [],
+					education: [],
+					skills: [],
+				},
+			},
+		});
+		expect(syncRes.statusCode).toBe(200);
+		expect(syncRes.json()).toEqual({ ok: true });
+
+		// 3. GET should return synced resume
+		const getRes2 = await server.inject({
+			method: "GET",
+			url: "/profile/resume",
+		});
+		expect(getRes2.statusCode).toBe(200);
+		expect(getRes2.json().personalInfo.fullName).toBe("John Doe");
+	});
+
 	it("serves an OpenAPI document with companion route contracts", async () => {
 		const { server } = createTestServer();
 		const response = await server.inject({

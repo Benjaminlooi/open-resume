@@ -7,6 +7,9 @@ openapi.json:
     - '#/info'
   operation-4xx-response:
     - '#/paths/~1health/get/responses'
+    - '#/paths/~1profile/get/responses'
+    - '#/paths/~1profile/put/responses'
+    - '#/paths/~1profile~1resume/put/responses'
     - '#/paths/~1jobs/get/responses'
     - '#/paths/~1jobs~1{id}/delete/responses'
   struct:
@@ -22,12 +25,18 @@ openapi.json:
     - '#/components/schemas/JobIdParamsInput'
     - '#/components/schemas/CompanionJobsResponseInput'
     - '#/components/schemas/DeleteJobResponseInput'
+    - '#/components/schemas/OkResponseInput'
     - '#/components/schemas/ExtractJobRequest'
     - '#/components/schemas/JobExtractionResult'
     - '#/components/schemas/CreateJobRequest'
     - '#/components/schemas/JobIdParams'
+    - '#/components/schemas/ResumeSyncRequest'
   security-defined:
     - '#/paths/~1health/get'
+    - '#/paths/~1profile/get'
+    - '#/paths/~1profile/put'
+    - '#/paths/~1profile~1resume/get'
+    - '#/paths/~1profile~1resume/put'
     - '#/paths/~1jobs/get'
     - '#/paths/~1jobs/post'
     - '#/paths/~1jobs~1{id}/get'
