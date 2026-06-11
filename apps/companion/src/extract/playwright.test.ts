@@ -14,6 +14,22 @@ describe("normalizePlaywrightCrawl", () => {
 					<body>
 						<nav>Site navigation</nav>
 						<main><h1>AI Engineer</h1><p>Build hiring tools.</p></main>
+						<script type="application/ld+json">
+							{
+								"@context": "https://schema.org",
+								"@type": "JobPosting",
+								"title": "Misleading Semantic Title",
+								"hiringOrganization": {
+									"name": "Semantic Corp"
+								},
+								"jobLocation": {
+									"address": {
+										"addressLocality": "Remote",
+										"addressCountry": "US"
+									}
+								}
+							}
+						</script>
 						<script>window.analytics = true;</script>
 					</body>
 				</html>
@@ -25,6 +41,10 @@ describe("normalizePlaywrightCrawl", () => {
 		expect(result.cleanedText).toContain("Build hiring tools.");
 		expect(result.cleanedText).not.toContain("window.analytics");
 		expect(result.extractedAt).toEqual(expect.any(Number));
+		expect("title" in result).toBe(false);
+		expect("company" in result).toBe(false);
+		expect("location" in result).toBe(false);
+		expect("description" in result).toBe(false);
 	});
 });
 

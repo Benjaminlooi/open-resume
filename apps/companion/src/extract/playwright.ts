@@ -76,5 +76,3 @@ export async function crawlCleanedTextWithPlaywright(
 		await browser.close();
 	}
 }
-
-export const extractWithPlaywright = crawlCleanedTextWithPlaywright;
