@@ -2,9 +2,14 @@ import type { CleanedPageCrawlResult } from "../extract/playwright.js";
 import { crawlCleanedTextWithPlaywright } from "../extract/playwright.js";
 import type { JobRepository } from "./repository.js";
 
+interface CrawlQueueLogger {
+	error(error: unknown, message: string): void;
+}
+
 interface CrawlQueueOptions {
 	repository: JobRepository;
 	crawl?: (sourceUrl: string) => Promise<CleanedPageCrawlResult>;
+	logger?: CrawlQueueLogger;
 	now?: () => number;
 }
 
@@ -46,7 +51,9 @@ export function createCrawlQueue(options: CrawlQueueOptions) {
 	}
 
 	function enqueue(id: string) {
-		void runJob(id);
+		void runJob(id).catch((error) => {
+			options.logger?.error(error, "crawl queue job failed");
+		});
 	}
 
 	function enqueueRunnableJobs() {

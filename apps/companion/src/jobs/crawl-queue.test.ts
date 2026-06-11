@@ -46,7 +46,7 @@ describe("crawl queue", () => {
 		});
 	});
 
-	it("marks a job failed when crawling throws or returns empty text", async () => {
+	it("marks a job failed when crawling throws", async () => {
 		const repository = createTestRepository();
 		repository.createJob({
 			id: "job-1",
@@ -66,6 +66,31 @@ describe("crawl queue", () => {
 		expect(repository.getJob("job-1")).toMatchObject({
 			crawlStatus: "failed",
 			crawlError: "Blocked by site",
+		});
+	});
+
+	it("marks a job failed when crawling returns empty text", async () => {
+		const repository = createTestRepository();
+		repository.createJob({
+			id: "job-1",
+			sourceUrl: "https://example.com/job",
+			now: 1000,
+		});
+		const queue = createCrawlQueue({
+			repository,
+			crawl: async () => ({
+				sourceUrl: "https://example.com/job",
+				cleanedText: "   ",
+				extractedAt: 1200,
+			}),
+			now: () => 1200,
+		});
+
+		await queue.runJob("job-1");
+
+		expect(repository.getJob("job-1")).toMatchObject({
+			crawlStatus: "failed",
+			crawlError: "Crawl completed but no useful text was found.",
 		});
 	});
 
@@ -128,5 +153,159 @@ describe("crawl queue", () => {
 			cleanedText: "Recovered result",
 			crawledAt: 1400,
 		});
+	});
+
+	it("runs a job only once concurrently and clears active state afterward", async () => {
+		const repository = createTestRepository();
+		repository.createJob({
+			id: "job-1",
+			sourceUrl: "https://example.com/job",
+			now: 1000,
+		});
+		let resolveCrawl: (value: {
+			sourceUrl: string;
+			cleanedText: string;
+			extractedAt: number;
+		}) => void;
+		const crawlResult = new Promise<{
+			sourceUrl: string;
+			cleanedText: string;
+			extractedAt: number;
+		}>((resolve) => {
+			resolveCrawl = resolve;
+		});
+		const crawl = vi.fn(() => crawlResult);
+		const queue = createCrawlQueue({
+			repository,
+			crawl,
+			now: () => 1500,
+		});
+
+		const firstRun = queue.runJob("job-1");
+		const secondRun = queue.runJob("job-1");
+
+		expect(crawl).toHaveBeenCalledTimes(1);
+
+		resolveCrawl!({
+			sourceUrl: "https://example.com/job",
+			cleanedText: "First result",
+			extractedAt: 1500,
+		});
+		await Promise.all([firstRun, secondRun]);
+
+		repository.resetForRetry("job-1", 1600);
+		await queue.runJob("job-1");
+
+		expect(crawl).toHaveBeenCalledTimes(2);
+	});
+
+	it("does nothing for missing or ready jobs", async () => {
+		const repository = createTestRepository();
+		repository.createJob({
+			id: "job-1",
+			sourceUrl: "https://example.com/job",
+			now: 1000,
+		});
+		repository.markReady("job-1", {
+			cleanedText: "Already done",
+			now: 1100,
+		});
+		const crawl = vi.fn(async () => ({
+			sourceUrl: "https://example.com/job",
+			cleanedText: "Should not run",
+			extractedAt: 1200,
+		}));
+		const queue = createCrawlQueue({
+			repository,
+			crawl,
+			now: () => 1200,
+		});
+
+		await queue.runJob("missing-job");
+		await queue.runJob("job-1");
+
+		expect(crawl).not.toHaveBeenCalled();
+		expect(repository.getJob("job-1")).toMatchObject({
+			crawlStatus: "ready",
+			cleanedText: "Already done",
+			crawledAt: 1100,
+		});
+	});
+
+	it("enqueues only runnable jobs", async () => {
+		const repository = createTestRepository();
+		repository.createJob({
+			id: "pending-job",
+			sourceUrl: "https://example.com/pending",
+			now: 1000,
+		});
+		repository.createJob({
+			id: "crawling-job",
+			sourceUrl: "https://example.com/crawling",
+			now: 1100,
+		});
+		repository.markCrawling("crawling-job", 1200);
+		repository.createJob({
+			id: "ready-job",
+			sourceUrl: "https://example.com/ready",
+			now: 1300,
+		});
+		repository.markReady("ready-job", {
+			cleanedText: "Done",
+			now: 1400,
+		});
+		repository.createJob({
+			id: "failed-job",
+			sourceUrl: "https://example.com/failed",
+			now: 1500,
+		});
+		repository.markFailed("failed-job", {
+			error: "Nope",
+			now: 1600,
+		});
+		const crawl = vi.fn(async (sourceUrl: string) => ({
+			sourceUrl,
+			cleanedText: `Text for ${sourceUrl}`,
+			extractedAt: 1700,
+		}));
+		const queue = createCrawlQueue({
+			repository,
+			crawl,
+			now: () => 1700,
+		});
+
+		queue.enqueueRunnableJobs();
+		await vi.waitFor(() => expect(crawl).toHaveBeenCalledTimes(2));
+
+		expect(crawl).toHaveBeenCalledWith("https://example.com/pending");
+		expect(crawl).toHaveBeenCalledWith("https://example.com/crawling");
+		expect(crawl).not.toHaveBeenCalledWith("https://example.com/ready");
+		expect(crawl).not.toHaveBeenCalledWith("https://example.com/failed");
+	});
+
+	it("swallows unexpected enqueue rejections", async () => {
+		const repository = createTestRepository();
+		repository.createJob({
+			id: "job-1",
+			sourceUrl: "https://example.com/job",
+			now: 1000,
+		});
+		repository.markFailed = vi.fn(() => {
+			throw new Error("Failed state unavailable");
+		});
+		const logger = {
+			error: vi.fn(),
+		};
+		const queue = createCrawlQueue({
+			repository,
+			crawl: async () => {
+				throw new Error("Crawler crashed");
+			},
+			logger,
+			now: () => 1200,
+		});
+
+		queue.enqueue("job-1");
+		await vi.waitFor(() => expect(logger.error).toHaveBeenCalledOnce());
 	});
 });
