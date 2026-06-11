@@ -106,6 +106,79 @@ describe("job repository", () => {
 		});
 	});
 
+	it("creates, lists, updates, and deletes resumes", () => {
+		const repository = createTestRepository();
+
+		const created = repository.createResume({
+			id: "resume-1",
+			name: "Backend Resume",
+			templateId: "modern",
+			content: { personalInfo: { fullName: "Jane Doe" } },
+			now: 1000,
+		});
+
+		expect(created).toMatchObject({
+			id: "resume-1",
+			name: "Backend Resume",
+			templateId: "modern",
+			lastModified: 1000,
+			isDefault: false,
+			content: { personalInfo: { fullName: "Jane Doe" } },
+		});
+		expect(repository.listResumes()).toEqual([
+			{
+				id: "resume-1",
+				name: "Backend Resume",
+				templateId: "modern",
+				lastModified: 1000,
+				isDefault: false,
+			},
+		]);
+
+		expect(
+			repository.updateResume("resume-1", {
+				name: "Renamed Resume",
+				templateId: "demo",
+				content: { summary: "Updated" },
+				now: 1100,
+			}),
+		).toMatchObject({
+			name: "Renamed Resume",
+			templateId: "demo",
+			lastModified: 1100,
+			content: { summary: "Updated" },
+		});
+
+		expect(repository.deleteResume("resume-1")).toBe(true);
+		expect(repository.getResume("resume-1")).toBeNull();
+	});
+
+	it("allows at most one default resume and can clear it", () => {
+		const repository = createTestRepository();
+		repository.createResume({
+			id: "resume-1",
+			name: "One",
+			templateId: "demo",
+			content: { summary: "One" },
+			now: 1000,
+		});
+		repository.createResume({
+			id: "resume-2",
+			name: "Two",
+			templateId: "modern",
+			content: { summary: "Two" },
+			now: 1000,
+		});
+
+		expect(repository.setDefaultResume("resume-1", 1100)?.isDefault).toBe(true);
+		expect(repository.setDefaultResume("resume-2", 1200)?.isDefault).toBe(true);
+		expect(repository.getDefaultResume()?.id).toBe("resume-2");
+		expect(repository.getResume("resume-1")?.isDefault).toBe(false);
+
+		repository.clearDefaultResume(1300);
+		expect(repository.getDefaultResume()).toBeNull();
+	});
+
 	it("lists runnable jobs ordered by creation time", () => {
 		const repository = createTestRepository();
 		repository.createJob({

@@ -131,6 +131,59 @@ export const deleteJobResponseSchema = z
 
 export type DeleteJobResponse = z.infer<typeof deleteJobResponseSchema>;
 
+export const resumeContentSchema = z.record(z.string(), z.unknown());
+
+export type ResumeContent = z.infer<typeof resumeContentSchema>;
+
+export const resumeSummarySchema = z
+	.object({
+		id: z.string().min(1),
+		name: z.string().min(1),
+		templateId: z.string().min(1),
+		lastModified: z.number().describe("Unix timestamp in milliseconds."),
+		isDefault: z.boolean(),
+	})
+	.strict();
+
+export type ResumeSummary = z.infer<typeof resumeSummarySchema>;
+
+export const resumeDetailsSchema = resumeSummarySchema
+	.extend({
+		content: resumeContentSchema,
+	})
+	.strict();
+
+export type ResumeDetails = z.infer<typeof resumeDetailsSchema>;
+
+export const resumesResponseSchema = z
+	.object({
+		resumes: z.array(resumeSummarySchema),
+	})
+	.strict();
+
+export type ResumesResponse = z.infer<typeof resumesResponseSchema>;
+
+export const createResumeRequestSchema = z
+	.object({
+		id: z.string().min(1),
+		name: z.string().min(1),
+		templateId: z.string().min(1),
+		content: resumeContentSchema,
+	})
+	.strict();
+
+export type CreateResumeRequest = z.infer<typeof createResumeRequestSchema>;
+
+export const updateResumeRequestSchema = z
+	.object({
+		name: z.string().min(1).optional(),
+		templateId: z.string().min(1).optional(),
+		content: resumeContentSchema.optional(),
+	})
+	.strict();
+
+export type UpdateResumeRequest = z.infer<typeof updateResumeRequestSchema>;
+
 export const targetRoleArchetypeSchema = z
 	.object({
 		name: z.string(),
@@ -248,8 +301,13 @@ z.globalRegistry.add(companionJobsResponseSchema, {
 	id: "CompanionJobsResponse",
 });
 z.globalRegistry.add(deleteJobResponseSchema, { id: "DeleteJobResponse" });
+z.globalRegistry.add(resumeContentSchema, { id: "ResumeContent" });
+z.globalRegistry.add(resumeSummarySchema, { id: "ResumeSummary" });
+z.globalRegistry.add(resumeDetailsSchema, { id: "ResumeDetails" });
+z.globalRegistry.add(resumesResponseSchema, { id: "ResumesResponse" });
+z.globalRegistry.add(createResumeRequestSchema, { id: "CreateResumeRequest" });
+z.globalRegistry.add(updateResumeRequestSchema, { id: "UpdateResumeRequest" });
 z.globalRegistry.add(candidateProfileSchema, { id: "CandidateProfile" });
 z.globalRegistry.add(resumeSyncRequestSchema, { id: "ResumeSyncRequest" });
 z.globalRegistry.add(okResponseSchema, { id: "OkResponse" });
 z.globalRegistry.add(jobFitBriefSchema, { id: "JobFitBrief" });
-
