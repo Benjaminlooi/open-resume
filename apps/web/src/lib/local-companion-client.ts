@@ -27,6 +27,47 @@ const deleteJobResponseSchema = z.object({
 	deleted: z.boolean(),
 });
 
+export const resumeContentSchema = z.record(z.string(), z.unknown());
+
+export const resumeSummarySchema = z
+	.object({
+		id: z.string().min(1),
+		name: z.string().min(1),
+		templateId: z.string().min(1),
+		lastModified: z.number(),
+		isDefault: z.boolean(),
+	})
+	.strict();
+
+export const resumeDetailsSchema = resumeSummarySchema
+	.extend({
+		content: resumeContentSchema,
+	})
+	.strict();
+
+const resumesResponseSchema = z
+	.object({
+		resumes: z.array(resumeSummarySchema),
+	})
+	.strict();
+
+export const createResumeRequestSchema = z
+	.object({
+		id: z.string().min(1),
+		name: z.string().min(1),
+		templateId: z.string().min(1),
+		content: resumeContentSchema,
+	})
+	.strict();
+
+export const updateResumeRequestSchema = z
+	.object({
+		name: z.string().min(1).optional(),
+		templateId: z.string().min(1).optional(),
+		content: resumeContentSchema.optional(),
+	})
+	.strict();
+
 export const targetRoleArchetypeSchema = z
 	.object({
 		name: z.string(),
@@ -110,6 +151,11 @@ export type TargetRoleArchetype = z.infer<typeof targetRoleArchetypeSchema>;
 export type CandidateProfile = z.infer<typeof candidateProfileSchema>;
 export type ResumeSyncRequest = z.infer<typeof resumeSyncRequestSchema>;
 export type OkResponse = z.infer<typeof okResponseSchema>;
+export type ResumeContent = z.infer<typeof resumeContentSchema>;
+export type ResumeSummary = z.infer<typeof resumeSummarySchema>;
+export type ResumeDetails = z.infer<typeof resumeDetailsSchema>;
+export type CreateResumeRequest = z.infer<typeof createResumeRequestSchema>;
+export type UpdateResumeRequest = z.infer<typeof updateResumeRequestSchema>;
 
 async function companionFetch(
 	path: string,
@@ -228,5 +274,95 @@ export async function syncResume(
 		response,
 		okResponseSchema,
 		"Local companion could not sync default resume.",
+	);
+}
+
+export async function listResumes(): Promise<ResumeSummary[]> {
+	const response = await companionFetch("/resumes");
+	const parsed = await parseCompanionResponse(
+		response,
+		resumesResponseSchema,
+		"Local companion could not list resumes.",
+	);
+	return parsed.resumes;
+}
+
+export async function getResume(id: string): Promise<ResumeDetails> {
+	const response = await companionFetch(`/resumes/${id}`);
+	return parseCompanionResponse(
+		response,
+		resumeDetailsSchema,
+		"Local companion could not retrieve this resume.",
+	);
+}
+
+export async function createResume(
+	id: string,
+	name: string,
+	templateId: string,
+	content: ResumeContent,
+): Promise<ResumeDetails> {
+	const response = await companionFetch("/resumes", {
+		method: "POST",
+		headers: {
+			"content-type": "application/json",
+		},
+		body: JSON.stringify({ id, name, templateId, content }),
+	});
+	return parseCompanionResponse(
+		response,
+		resumeDetailsSchema,
+		"Local companion could not create this resume.",
+	);
+}
+
+export async function updateResume(
+	id: string,
+	data: UpdateResumeRequest,
+): Promise<ResumeDetails> {
+	const response = await companionFetch(`/resumes/${id}`, {
+		method: "PUT",
+		headers: {
+			"content-type": "application/json",
+		},
+		body: JSON.stringify(data),
+	});
+	return parseCompanionResponse(
+		response,
+		resumeDetailsSchema,
+		"Local companion could not update this resume.",
+	);
+}
+
+export async function deleteResume(id: string): Promise<{ deleted: boolean }> {
+	const response = await companionFetch(`/resumes/${id}`, {
+		method: "DELETE",
+	});
+	return parseCompanionResponse(
+		response,
+		deleteJobResponseSchema,
+		"Local companion could not delete this resume.",
+	);
+}
+
+export async function setDefaultResume(id: string): Promise<ResumeDetails> {
+	const response = await companionFetch(`/resumes/${id}/default`, {
+		method: "PUT",
+	});
+	return parseCompanionResponse(
+		response,
+		resumeDetailsSchema,
+		"Local companion could not set the default resume.",
+	);
+}
+
+export async function clearDefaultResume(): Promise<OkResponse> {
+	const response = await companionFetch("/resumes/default", {
+		method: "DELETE",
+	});
+	return parseCompanionResponse(
+		response,
+		okResponseSchema,
+		"Local companion could not clear the default resume.",
 	);
 }

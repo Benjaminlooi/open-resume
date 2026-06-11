@@ -1,12 +1,19 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+	clearDefaultResume,
 	createCompanionJob,
+	createResume,
 	deleteCompanionJob,
-	listCompanionJobs,
-	retryCompanionJobCrawl,
+	deleteResume,
 	getProfile,
-	updateProfile,
+	getResume,
+	listCompanionJobs,
+	listResumes,
+	retryCompanionJobCrawl,
+	setDefaultResume,
 	syncResume,
+	updateProfile,
+	updateResume,
 } from "./local-companion-client";
 
 const mockProfile = {
@@ -22,13 +29,17 @@ const mockProfile = {
 	},
 	targetRoles: {
 		primary: ["Software Engineer"],
-		archetypes: [{ name: "Product Dev", level: "Senior", fit: "primary" as const }],
+		archetypes: [
+			{ name: "Product Dev", level: "Senior", fit: "primary" as const },
+		],
 	},
 	narrative: {
 		headline: "Great dev",
 		exitStory: "Moved on",
 		superpowers: ["Coding"],
-		proofPoints: [{ name: "Shipped app", url: "https://app.com", heroMetric: "10x" }],
+		proofPoints: [
+			{ name: "Shipped app", url: "https://app.com", heroMetric: "10x" },
+		],
 	},
 	compensation: {
 		targetRange: "100k-120k",
@@ -44,6 +55,23 @@ const mockProfile = {
 		visaStatus: "Citizen",
 		onsiteAvailability: "2 days",
 		remotePolicy: "Flexible",
+	},
+};
+
+const mockResumeSummary = {
+	id: "resume-1",
+	name: "Senior Engineer Resume",
+	templateId: "modern",
+	lastModified: 1791571200000,
+	isDefault: false,
+};
+
+const mockResumeDetails = {
+	...mockResumeSummary,
+	content: {
+		personalInfo: {
+			fullName: "John Doe",
+		},
 	},
 };
 
@@ -186,6 +214,158 @@ describe("local companion client", () => {
 				method: "PUT",
 				body: JSON.stringify({ resume: resumeData }),
 			}),
+		);
+	});
+
+	it("lists resumes", async () => {
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(async () => ({
+				ok: true,
+				json: async () => ({ resumes: [mockResumeSummary] }),
+			})),
+		);
+
+		await expect(listResumes()).resolves.toEqual([mockResumeSummary]);
+		expect(fetch).toHaveBeenCalledWith(
+			"http://127.0.0.1:47321/resumes",
+			undefined,
+		);
+	});
+
+	it("gets a resume", async () => {
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(async () => ({
+				ok: true,
+				json: async () => mockResumeDetails,
+			})),
+		);
+
+		await expect(getResume("resume-1")).resolves.toEqual(mockResumeDetails);
+		expect(fetch).toHaveBeenCalledWith(
+			"http://127.0.0.1:47321/resumes/resume-1",
+			undefined,
+		);
+	});
+
+	it("creates a resume", async () => {
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(async () => ({
+				ok: true,
+				json: async () => mockResumeDetails,
+			})),
+		);
+
+		await expect(
+			createResume(
+				"resume-1",
+				"Senior Engineer Resume",
+				"modern",
+				mockResumeDetails.content,
+			),
+		).resolves.toEqual(mockResumeDetails);
+		expect(fetch).toHaveBeenCalledWith(
+			"http://127.0.0.1:47321/resumes",
+			expect.objectContaining({
+				method: "POST",
+				body: JSON.stringify({
+					id: "resume-1",
+					name: "Senior Engineer Resume",
+					templateId: "modern",
+					content: mockResumeDetails.content,
+				}),
+			}),
+		);
+	});
+
+	it("updates a resume", async () => {
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(async () => ({
+				ok: true,
+				json: async () => mockResumeDetails,
+			})),
+		);
+
+		const update = {
+			name: "Updated Resume",
+			content: mockResumeDetails.content,
+		};
+		await expect(updateResume("resume-1", update)).resolves.toEqual(
+			mockResumeDetails,
+		);
+		expect(fetch).toHaveBeenCalledWith(
+			"http://127.0.0.1:47321/resumes/resume-1",
+			expect.objectContaining({
+				method: "PUT",
+				body: JSON.stringify(update),
+			}),
+		);
+	});
+
+	it("deletes a resume", async () => {
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(async () => ({
+				ok: true,
+				json: async () => ({ deleted: true }),
+			})),
+		);
+
+		await expect(deleteResume("resume-1")).resolves.toEqual({
+			deleted: true,
+		});
+		expect(fetch).toHaveBeenCalledWith(
+			"http://127.0.0.1:47321/resumes/resume-1",
+			expect.objectContaining({ method: "DELETE" }),
+		);
+	});
+
+	it("sets and clears the default resume", async () => {
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(async (url: string) => {
+				if (url.endsWith("/resumes/default")) {
+					return {
+						ok: true,
+						json: async () => ({ ok: true }),
+					};
+				}
+				return {
+					ok: true,
+					json: async () => ({ ...mockResumeDetails, isDefault: true }),
+				};
+			}),
+		);
+
+		await expect(setDefaultResume("resume-1")).resolves.toMatchObject({
+			id: "resume-1",
+			isDefault: true,
+		});
+		await expect(clearDefaultResume()).resolves.toEqual({ ok: true });
+		expect(fetch).toHaveBeenCalledWith(
+			"http://127.0.0.1:47321/resumes/resume-1/default",
+			expect.objectContaining({ method: "PUT" }),
+		);
+		expect(fetch).toHaveBeenCalledWith(
+			"http://127.0.0.1:47321/resumes/default",
+			expect.objectContaining({ method: "DELETE" }),
+		);
+	});
+
+	it("returns a user-facing error when a resume request fails", async () => {
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(async () => ({
+				ok: false,
+				json: async () => ({ error: "Resume not found" }),
+			})),
+		);
+
+		await expect(getResume("missing")).rejects.toThrow(
+			"Local companion could not retrieve this resume.",
 		);
 	});
 
