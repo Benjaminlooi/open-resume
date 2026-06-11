@@ -64,6 +64,7 @@ export type CompanionErrorResponse = z.infer<
 export const crawlStatusSchema = z.enum([
 	"pending",
 	"crawling",
+	"analyzing",
 	"ready",
 	"failed",
 ]);
@@ -103,6 +104,12 @@ export const companionJobSchema = z
 			.describe(
 				"Unix timestamp in milliseconds, or null before crawl success.",
 			),
+		parsedTitle: z.string().nullable().optional(),
+		parsedCompany: z.string().nullable().optional(),
+		parsedLocation: z.string().nullable().optional(),
+		parsedDescription: z.string().nullable().optional(),
+		fitScore: z.number().nullable().optional(),
+		fitBriefJson: z.string().nullable().optional(),
 	})
 	.strict();
 
@@ -196,7 +203,7 @@ export type CandidateProfile = z.infer<typeof candidateProfileSchema>;
 
 export const resumeSyncRequestSchema = z
 	.object({
-		resume: z.record(z.unknown()),
+		resume: z.record(z.string(), z.unknown()),
 	})
 	.strict();
 
@@ -210,7 +217,7 @@ export const okResponseSchema = z
 
 export type OkResponse = z.infer<typeof okResponseSchema>;
 
-export const syncedResumeResponseSchema = z.record(z.unknown());
+export const syncedResumeResponseSchema = z.record(z.string(), z.unknown());
 
 z.globalRegistry.add(healthResponseSchema, { id: "HealthResponse" });
 z.globalRegistry.add(extractJobRequestSchema, { id: "ExtractJobRequest" });

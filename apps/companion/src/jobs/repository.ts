@@ -10,6 +10,12 @@ interface JobRow {
 	created_at: number;
 	updated_at: number;
 	crawled_at: number | null;
+	parsed_title: string | null;
+	parsed_company: string | null;
+	parsed_location: string | null;
+	parsed_description: string | null;
+	fit_score: number | null;
+	fit_brief_json: string | null;
 }
 
 function mapJob(row: JobRow): CompanionJob {
@@ -22,23 +28,100 @@ function mapJob(row: JobRow): CompanionJob {
 		createdAt: row.created_at,
 		updatedAt: row.updated_at,
 		crawledAt: row.crawled_at,
+		parsedTitle: row.parsed_title,
+		parsedCompany: row.parsed_company,
+		parsedLocation: row.parsed_location,
+		parsedDescription: row.parsed_description,
+		fitScore: row.fit_score,
+		fitBriefJson: row.fit_brief_json,
 	};
 }
 
 export function createJobRepository(path: string) {
 	const database = new DatabaseSync(path);
+
+	// Inspect existing table schema
+	const columns = database
+		.prepare("PRAGMA table_info(jobs)")
+		.all() as Array<{ name: string }>;
+	const tableExists = columns.length > 0;
+	const missingColumns =
+		tableExists && !columns.some((col) => col.name === "parsed_title");
+
+	if (missingColumns) {
+		const oldJobs = database.prepare("select * from jobs").all() as any[];
+		database.exec("BEGIN TRANSACTION;");
+		try {
+			database.exec("drop table jobs;");
+			database.exec(`
+				create table jobs (
+					id text primary key,
+					source_url text not null,
+					crawl_status text not null check (
+						crawl_status in ('pending', 'crawling', 'analyzing', 'ready', 'failed')
+					),
+					crawl_error text,
+					cleaned_text text not null default '',
+					created_at integer not null,
+					updated_at integer not null,
+					crawled_at integer,
+					parsed_title text,
+					parsed_company text,
+					parsed_location text,
+					parsed_description text,
+					fit_score real,
+					fit_brief_json text
+				);
+			`);
+
+			// Restore backup
+			const insertStmt = database.prepare(`
+				insert into jobs (
+					id, source_url, crawl_status, crawl_error, cleaned_text,
+					created_at, updated_at, crawled_at,
+					parsed_title, parsed_company, parsed_location, parsed_description,
+					fit_score, fit_brief_json
+				) values (?, ?, ?, ?, ?, ?, ?, ?, null, null, null, null, null, null)
+			`);
+
+			for (const job of oldJobs) {
+				insertStmt.run(
+					job.id,
+					job.source_url,
+					job.crawl_status,
+					job.crawl_error,
+					job.cleaned_text,
+					job.created_at,
+					job.updated_at,
+					job.crawled_at,
+				);
+			}
+
+			database.exec("COMMIT;");
+		} catch (error) {
+			database.exec("ROLLBACK;");
+			throw error;
+		}
+	}
+
 	database.exec(`
 		create table if not exists jobs (
 			id text primary key,
 			source_url text not null,
 			crawl_status text not null check (
-				crawl_status in ('pending', 'crawling', 'ready', 'failed')
+				crawl_status in ('pending', 'crawling', 'analyzing', 'ready', 'failed')
 			),
 			crawl_error text,
 			cleaned_text text not null default '',
 			created_at integer not null,
 			updated_at integer not null,
-			crawled_at integer
+			crawled_at integer,
+			parsed_title text,
+			parsed_company text,
+			parsed_location text,
+			parsed_description text,
+			fit_score real,
+			fit_brief_json text
 		);
 		create index if not exists jobs_updated_at_idx on jobs(updated_at desc);
 		create index if not exists jobs_runnable_idx
@@ -96,7 +179,30 @@ export function createJobRepository(path: string) {
 			return getJob(id);
 		},
 
-		markReady(id: string, input: { cleanedText: string; now: number }) {
+		markAnalyzing(id: string, now: number) {
+			database
+				.prepare(`
+					update jobs
+					set crawl_status = 'analyzing', crawl_error = null, updated_at = ?
+					where id = ?
+				`)
+				.run(now, id);
+			return getJob(id);
+		},
+
+		markReady(
+			id: string,
+			input: {
+				cleanedText: string;
+				parsedTitle?: string | null;
+				parsedCompany?: string | null;
+				parsedLocation?: string | null;
+				parsedDescription?: string | null;
+				fitScore?: number | null;
+				fitBriefJson?: string | null;
+				now: number;
+			},
+		) {
 			database
 				.prepare(`
 					update jobs
@@ -104,10 +210,27 @@ export function createJobRepository(path: string) {
 						crawl_error = null,
 						cleaned_text = ?,
 						updated_at = ?,
-						crawled_at = ?
+						crawled_at = ?,
+						parsed_title = ?,
+						parsed_company = ?,
+						parsed_location = ?,
+						parsed_description = ?,
+						fit_score = ?,
+						fit_brief_json = ?
 					where id = ?
 				`)
-				.run(input.cleanedText, input.now, input.now, id);
+				.run(
+					input.cleanedText,
+					input.now,
+					input.now,
+					input.parsedTitle ?? null,
+					input.parsedCompany ?? null,
+					input.parsedLocation ?? null,
+					input.parsedDescription ?? null,
+					input.fitScore ?? null,
+					input.fitBriefJson ?? null,
+					id,
+				);
 			return getJob(id);
 		},
 

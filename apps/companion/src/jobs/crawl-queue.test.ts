@@ -193,11 +193,7 @@ describe("crawl queue", () => {
 			sourceUrl: "https://example.com/job",
 			now: 1000,
 		});
-		let resolveCrawl: (value: {
-			sourceUrl: string;
-			cleanedText: string;
-			extractedAt: number;
-		}) => void;
+		let resolveCrawl: any;
 		const crawlResult = new Promise<{
 			sourceUrl: string;
 			cleanedText: string;
@@ -217,7 +213,7 @@ describe("crawl queue", () => {
 
 		expect(crawl).toHaveBeenCalledTimes(1);
 
-		resolveCrawl!({
+		resolveCrawl?.({
 			sourceUrl: "https://example.com/job",
 			cleanedText: "First result",
 			extractedAt: 1500,

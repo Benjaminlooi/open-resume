@@ -1,6 +1,7 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { DatabaseSync } from "node:sqlite";
 import { afterEach, describe, expect, it } from "vitest";
 import { createJobRepository } from "./repository.js";
 
@@ -53,6 +54,12 @@ describe("job repository", () => {
 			cleanedText: "",
 			createdAt: 1000,
 			updatedAt: 1000,
+			parsedTitle: null,
+			parsedCompany: null,
+			parsedLocation: null,
+			parsedDescription: null,
+			fitScore: null,
+			fitBriefJson: null,
 		});
 		expect(repository.listJobs()).toEqual([second, first]);
 	});
@@ -191,5 +198,121 @@ describe("job repository", () => {
 		expect(repository.deleteJob("job-1")).toBe(true);
 		expect(repository.getJob("job-1")).toBeNull();
 		expect(repository.deleteJob("job-1")).toBe(false);
+	});
+
+	it("transitions status to analyzing correctly", () => {
+		const repository = createTestRepository();
+		repository.createJob({
+			id: "job-1",
+			sourceUrl: "https://example.com/job",
+			now: 1000,
+		});
+
+		repository.markCrawling("job-1", 1100);
+		expect(repository.getJob("job-1")).toMatchObject({
+			crawlStatus: "crawling",
+			updatedAt: 1100,
+		});
+
+		repository.markAnalyzing("job-1", 1150);
+		expect(repository.getJob("job-1")).toMatchObject({
+			crawlStatus: "analyzing",
+			updatedAt: 1150,
+		});
+	});
+
+	it("saves parsed details, fit score, and fit brief json on markReady", () => {
+		const repository = createTestRepository();
+		repository.createJob({
+			id: "job-1",
+			sourceUrl: "https://example.com/job",
+			now: 1000,
+		});
+
+		repository.markReady("job-1", {
+			cleanedText: "Build useful software.",
+			parsedTitle: "Software Engineer",
+			parsedCompany: "Acme Corp",
+			parsedLocation: "Remote",
+			parsedDescription: "Develop great features.",
+			fitScore: 85,
+			fitBriefJson: '{"reason":"good fit"}',
+			now: 1200,
+		});
+
+		expect(repository.getJob("job-1")).toMatchObject({
+			crawlStatus: "ready",
+			crawlError: null,
+			cleanedText: "Build useful software.",
+			parsedTitle: "Software Engineer",
+			parsedCompany: "Acme Corp",
+			parsedLocation: "Remote",
+			parsedDescription: "Develop great features.",
+			fitScore: 85,
+			fitBriefJson: '{"reason":"good fit"}',
+			updatedAt: 1200,
+			crawledAt: 1200,
+		});
+	});
+
+	it("migrates existing database schema automatically on startup", () => {
+		const path = createTempDatabasePath();
+
+		// Initialize DB with the old schema manually
+		const db = new DatabaseSync(path);
+		db.exec(`
+			create table jobs (
+				id text primary key,
+				source_url text not null,
+				crawl_status text not null check (
+					crawl_status in ('pending', 'crawling', 'ready', 'failed')
+				),
+				crawl_error text,
+				cleaned_text text not null default '',
+				created_at integer not null,
+				updated_at integer not null,
+				crawled_at integer
+			);
+			insert into jobs (
+				id, source_url, crawl_status, crawl_error, cleaned_text,
+				created_at, updated_at, crawled_at
+			) values ('old-job', 'https://example.com/old', 'ready', null, 'Cleaned text', 1000, 1100, 1100);
+		`);
+		db.close();
+
+		// Open it with createJobRepository and make sure it migrates and preserves data
+		const repository = createJobRepository(path);
+		repositories.push(repository);
+
+		const migratedJob = repository.getJob("old-job");
+		expect(migratedJob).toMatchObject({
+			id: "old-job",
+			sourceUrl: "https://example.com/old",
+			crawlStatus: "ready",
+			cleanedText: "Cleaned text",
+			createdAt: 1000,
+			updatedAt: 1100,
+			crawledAt: 1100,
+			parsedTitle: null,
+			parsedCompany: null,
+			parsedLocation: null,
+			parsedDescription: null,
+			fitScore: null,
+			fitBriefJson: null,
+		});
+
+		// Make sure we can write new fields to it
+		repository.markReady("old-job", {
+			cleanedText: "Cleaned text",
+			parsedTitle: "Senior dev",
+			fitScore: 90,
+			now: 1200,
+		});
+
+		expect(repository.getJob("old-job")).toMatchObject({
+			parsedTitle: "Senior dev",
+			fitScore: 90,
+			updatedAt: 1200,
+		});
 	});
 });
