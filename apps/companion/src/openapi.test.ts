@@ -12,6 +12,14 @@ const requiredSchemas = [
 	"CompanionJob",
 	"CompanionJobsResponse",
 	"DeleteJobResponse",
+	"CandidateProfile",
+	"ResumeSyncRequest",
+	"OkResponse",
+	"ResumeDetails",
+	"ResumesResponse",
+	"CreateResumeRequest",
+	"UpdateResumeRequest",
+	"DeleteResumeResponse",
 ] as const;
 
 const requiredOperations = [
@@ -20,6 +28,83 @@ const requiredOperations = [
 		method: "get",
 		operationId: "getHealth",
 		tags: ["System"],
+		responses: ["200"],
+	},
+	{
+		path: "/profile",
+		method: "get",
+		operationId: "getProfile",
+		tags: ["Profile"],
+		responses: ["200", "500"],
+	},
+	{
+		path: "/profile",
+		method: "put",
+		operationId: "updateProfile",
+		tags: ["Profile"],
+		responses: ["200", "500"],
+	},
+	{
+		path: "/profile/resume",
+		method: "get",
+		operationId: "getSyncedResume",
+		tags: ["Profile"],
+		responses: ["200", "404", "500"],
+	},
+	{
+		path: "/profile/resume",
+		method: "put",
+		operationId: "syncResume",
+		tags: ["Profile"],
+		responses: ["200", "500"],
+	},
+	{
+		path: "/resumes",
+		method: "get",
+		operationId: "listResumes",
+		tags: ["Resumes"],
+		responses: ["200"],
+	},
+	{
+		path: "/resumes",
+		method: "post",
+		operationId: "createResume",
+		tags: ["Resumes"],
+		responses: ["201", "400", "500"],
+	},
+	{
+		path: "/resumes/{id}",
+		method: "get",
+		operationId: "getResume",
+		tags: ["Resumes"],
+		responses: ["200", "404"],
+	},
+	{
+		path: "/resumes/{id}",
+		method: "put",
+		operationId: "updateResume",
+		tags: ["Resumes"],
+		responses: ["200", "404"],
+	},
+	{
+		path: "/resumes/{id}",
+		method: "delete",
+		operationId: "deleteResume",
+		tags: ["Resumes"],
+		responses: ["200"],
+	},
+	{
+		path: "/resumes/{id}/default",
+		method: "put",
+		operationId: "setDefaultResume",
+		tags: ["Resumes"],
+		responses: ["200", "404"],
+	},
+	{
+		path: "/resumes/default",
+		method: "delete",
+		operationId: "clearDefaultResume",
+		tags: ["Resumes"],
 		responses: ["200"],
 	},
 	{
@@ -111,6 +196,16 @@ describe("OpenAPI Contract Validation", () => {
 				}
 			});
 		}
+	});
+
+	it("should use a resume-specific delete response schema", () => {
+		expect(
+			spec.paths?.["/resumes/{id}"]?.delete?.responses?.["200"]?.content?.[
+				"application/json"
+			]?.schema,
+		).toEqual({
+			$ref: "#/components/schemas/DeleteResumeResponse",
+		});
 	});
 
 	it("should hide internal /openapi.json route", () => {

@@ -15,6 +15,7 @@ import {
 import { candidateProfileSchema } from "./profiles.js";
 import {
 	createResumeRequestSchema,
+	deleteResumeResponseSchema,
 	resumeContentSchema,
 	resumeDetailsSchema,
 	resumeSummarySchema,
@@ -50,6 +51,7 @@ if (registry) {
 	registry.add(resumeSummarySchema, { id: "ResumeSummary" });
 	registry.add(resumeDetailsSchema, { id: "ResumeDetails" });
 	registry.add(resumesResponseSchema, { id: "ResumesResponse" });
+	registry.add(deleteResumeResponseSchema, { id: "DeleteResumeResponse" });
 	registry.add(createResumeRequestSchema, { id: "CreateResumeRequest" });
 	registry.add(updateResumeRequestSchema, { id: "UpdateResumeRequest" });
 	registry.add(candidateProfileSchema, { id: "CandidateProfile" });
@@ -57,4 +59,3 @@ if (registry) {
 	registry.add(okResponseSchema, { id: "OkResponse" });
 	registry.add(jobFitBriefSchema, { id: "JobFitBrief" });
 }
-

@@ -3,7 +3,7 @@ import type { ZodTypeProvider } from "fastify-type-provider-zod";
 import {
 	companionErrorResponseSchema,
 	createResumeRequestSchema,
-	deleteJobResponseSchema,
+	deleteResumeResponseSchema,
 	jobIdParamsSchema,
 	okResponseSchema,
 	resumeDetailsSchema,
@@ -168,7 +168,7 @@ export function createResumeRoutes(
 					summary: "Delete a saved resume",
 					params: routeResumeIdParamsSchema,
 					response: {
-						200: deleteJobResponseSchema,
+						200: deleteResumeResponseSchema,
 					},
 				},
 			},

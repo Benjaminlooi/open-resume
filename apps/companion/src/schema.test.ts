@@ -7,6 +7,7 @@ import {
 	crawlStatusSchema,
 	createJobRequestSchema,
 	deleteJobResponseSchema,
+	deleteResumeResponseSchema,
 	extractJobRequestSchema,
 	healthResponseSchema,
 	jobExtractionResultSchema,
@@ -112,6 +113,9 @@ describe("companion schema", () => {
 		expect(deleteJobResponseSchema.parse({ deleted: true })).toEqual({
 			deleted: true,
 		});
+		expect(deleteResumeResponseSchema.parse({ deleted: true })).toEqual({
+			deleted: true,
+		});
 	});
 
 	it("accepts a valid candidate profile", () => {
@@ -191,6 +195,9 @@ describe("companion schema", () => {
 		);
 		expect(z.globalRegistry.get(deleteJobResponseSchema)?.id).toBe(
 			"DeleteJobResponse",
+		);
+		expect(z.globalRegistry.get(deleteResumeResponseSchema)?.id).toBe(
+			"DeleteResumeResponse",
 		);
 		expect(z.globalRegistry.get(candidateProfileSchema)?.id).toBe(
 			"CandidateProfile",

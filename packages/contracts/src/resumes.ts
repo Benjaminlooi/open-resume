@@ -32,6 +32,14 @@ export const resumesResponseSchema = z
 
 export type ResumesResponse = z.infer<typeof resumesResponseSchema>;
 
+export const deleteResumeResponseSchema = z
+	.object({
+		deleted: z.boolean(),
+	})
+	.strict();
+
+export type DeleteResumeResponse = z.infer<typeof deleteResumeResponseSchema>;
+
 export const createResumeRequestSchema = z
 	.object({
 		id: z.string().min(1),

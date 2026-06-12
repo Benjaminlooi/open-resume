@@ -43,6 +43,7 @@ openapi.json:
     - '#/components/schemas/OkResponseInput'
     - '#/components/schemas/ResumeDetailsInput'
     - '#/components/schemas/ResumesResponseInput'
+    - '#/components/schemas/DeleteResumeResponseInput'
     - '#/components/schemas/JobFitBriefInput'
     - '#/components/schemas/ExtractJobRequest'
     - '#/components/schemas/JobExtractionResult'

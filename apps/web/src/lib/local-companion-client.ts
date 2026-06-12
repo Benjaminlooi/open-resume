@@ -1,19 +1,20 @@
-import { z } from "zod";
 import {
+	candidateProfileSchema,
 	companionJobSchema,
 	companionJobsResponseSchema,
-	deleteJobResponseSchema,
-	resumeContentSchema,
-	resumeSummarySchema,
-	resumeDetailsSchema,
-	resumesResponseSchema,
 	createResumeRequestSchema,
-	updateResumeRequestSchema,
-	targetRoleArchetypeSchema,
-	candidateProfileSchema,
-	resumeSyncRequestSchema,
+	deleteJobResponseSchema,
+	deleteResumeResponseSchema,
 	okResponseSchema,
+	resumeContentSchema,
+	resumeDetailsSchema,
+	resumeSummarySchema,
+	resumeSyncRequestSchema,
+	resumesResponseSchema,
+	targetRoleArchetypeSchema,
+	updateResumeRequestSchema,
 } from "@open-resume/contracts";
+import type { z } from "zod";
 
 export {
 	resumeContentSchema,
@@ -28,15 +29,15 @@ export {
 };
 
 import type {
-	CompanionJob as LocalCompanionJob,
-	TargetRoleArchetype,
 	CandidateProfile,
-	ResumeSyncRequest,
+	CreateResumeRequest,
+	CompanionJob as LocalCompanionJob,
 	OkResponse,
 	ResumeContent,
-	ResumeSummary,
 	ResumeDetails,
-	CreateResumeRequest,
+	ResumeSummary,
+	ResumeSyncRequest,
+	TargetRoleArchetype,
 	UpdateResumeRequest,
 } from "@open-resume/contracts";
 
@@ -54,9 +55,6 @@ export type {
 };
 
 const companionBaseUrl = "http://127.0.0.1:47321";
-
-
-
 
 async function companionFetch(
 	path: string,
@@ -241,7 +239,7 @@ export async function deleteResume(id: string): Promise<{ deleted: boolean }> {
 	});
 	return parseCompanionResponse(
 		response,
-		deleteJobResponseSchema,
+		deleteResumeResponseSchema,
 		"Local companion could not delete this resume.",
 	);
 }

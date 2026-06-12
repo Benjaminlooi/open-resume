@@ -369,6 +369,18 @@
         ],
         "additionalProperties": false
       },
+      "DeleteResumeResponseInput": {
+        "type": "object",
+        "properties": {
+          "deleted": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "deleted"
+        ],
+        "additionalProperties": false
+      },
       "CreateResumeRequestInput": {
         "type": "object",
         "properties": {
@@ -1061,6 +1073,18 @@
         ],
         "additionalProperties": false
       },
+      "DeleteResumeResponse": {
+        "type": "object",
+        "properties": {
+          "deleted": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "deleted"
+        ],
+        "additionalProperties": false
+      },
       "CreateResumeRequest": {
         "type": "object",
         "properties": {
@@ -1750,7 +1774,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DeleteJobResponse"
+                  "$ref": "#/components/schemas/DeleteResumeResponse"
                 }
               }
             }

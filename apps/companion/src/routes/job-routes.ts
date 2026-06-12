@@ -14,9 +14,7 @@ import type { JobRouteContext } from "./context.js";
 // Fastify Swagger crashes when a registered component ref is used for params.
 const routeJobIdParamsSchema = jobIdParamsSchema.extend({});
 
-export function createJobRoutes(
-	context: JobRouteContext,
-): FastifyPluginAsync {
+export function createJobRoutes(context: JobRouteContext): FastifyPluginAsync {
 	return async (server) => {
 		const typedServer = server.withTypeProvider<ZodTypeProvider>();
 
