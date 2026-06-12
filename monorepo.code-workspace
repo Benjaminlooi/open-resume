@@ -1,0 +1,19 @@
+{
+    "folders": [
+        {
+            "name": "ð¦ ROOT",
+            "path": "."
+        },
+        {
+            "name": "ð APP: Web",
+            "path": "apps/web"
+        },
+        {
+            "name": "ð PKG: UI",
+            "path": "packages/ui"
+        }
+    ],
+    "settings": {
+        // Workspace-wide settings go here
+    }
+}
