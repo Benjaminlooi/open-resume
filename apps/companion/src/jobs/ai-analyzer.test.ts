@@ -65,6 +65,12 @@ describe("analyzeJobPosting", () => {
 	const mockProfilePath = "test-profile-temp.json";
 	const mockResumePath = "test-resume-temp.json";
 
+	const defaultAiConfig = {
+		provider: "openai" as const,
+		apiKey: "sk-test-openai",
+		modelName: "gpt-4o-mini",
+	};
+
 	beforeEach(() => {
 		writeFileSync(
 			mockProfilePath,
@@ -75,16 +81,6 @@ describe("analyzeJobPosting", () => {
 		);
 		writeFileSync(mockResumePath, JSON.stringify({ resume: "details" }));
 		lastGenerateObjectArgs = null;
-		// Clean up env variables
-		delete process.env.OPEN_RESUME_COMPANION_AI_PROVIDER;
-		delete process.env.OPENAI_API_KEY;
-		delete process.env.GEMINI_API_KEY;
-		delete process.env.ANTHROPIC_API_KEY;
-		delete process.env.DEEPSEEK_API_KEY;
-		delete process.env.OPENAI_MODEL;
-		delete process.env.GEMINI_MODEL;
-		delete process.env.ANTHROPIC_MODEL;
-		delete process.env.DEEPSEEK_MODEL;
 	});
 
 	afterEach(() => {
@@ -103,6 +99,7 @@ describe("analyzeJobPosting", () => {
 					profilePath: "nonexistent-profile.json",
 					resumePath: mockResumePath,
 					cleanedText: "Some job posting content",
+					aiConfig: defaultAiConfig,
 				}),
 			).rejects.toThrow(
 				"Candidate profile not found. Please set up your profile in the settings panel.",
@@ -115,6 +112,7 @@ describe("analyzeJobPosting", () => {
 					profilePath: mockProfilePath,
 					resumePath: "nonexistent-resume.json",
 					cleanedText: "Some job posting content",
+					aiConfig: defaultAiConfig,
 				}),
 			).rejects.toThrow(
 				"Synced default resume not found. Please sync your resume in the settings panel.",
@@ -128,6 +126,7 @@ describe("analyzeJobPosting", () => {
 					profilePath: mockProfilePath,
 					resumePath: mockResumePath,
 					cleanedText: "Some job posting content",
+					aiConfig: defaultAiConfig,
 				}),
 			).rejects.toThrow("Candidate profile is empty.");
 		});
@@ -139,16 +138,17 @@ describe("analyzeJobPosting", () => {
 					profilePath: mockProfilePath,
 					resumePath: mockResumePath,
 					cleanedText: "Some job posting content",
+					aiConfig: defaultAiConfig,
 				}),
 			).rejects.toThrow("Synced default resume is empty.");
 		});
 
 		it("should accept direct resume content without requiring a resume file", async () => {
-			process.env.OPENAI_API_KEY = "sk-test-openai";
 			await analyzeJobPosting({
 				profilePath: mockProfilePath,
 				resumeContent: JSON.stringify({ resume: "sqlite details" }),
 				cleanedText: "Job posting text",
+				aiConfig: defaultAiConfig,
 			});
 
 			expect(lastGenerateObjectArgs.system).toContain(
@@ -158,118 +158,76 @@ describe("analyzeJobPosting", () => {
 	});
 
 	describe("Provider Configuration & Resolution", () => {
-		it("should use openai by default if no provider is configured, throwing if API key is missing", async () => {
-			await expect(
-				analyzeJobPosting({
-					profilePath: mockProfilePath,
-					resumePath: mockResumePath,
-					cleanedText: "Job posting text",
-				}),
-			).rejects.toThrow("OPENAI_API_KEY environment variable is not set.");
-		});
-
-		it("should resolve openai provider and default model if key is present", async () => {
-			process.env.OPENAI_API_KEY = "sk-test-openai";
+		it("should resolve openai provider and model", async () => {
 			const result = await analyzeJobPosting({
 				profilePath: mockProfilePath,
 				resumePath: mockResumePath,
 				cleanedText: "Job posting text",
+				aiConfig: {
+					provider: "openai",
+					apiKey: "openai-test-key",
+					modelName: "gpt-4o",
+				},
 			});
 
 			expect(result.title).toBe("Mocked Staff Engineer");
 			expect(lastGenerateObjectArgs.model).toEqual({
 				provider: "openai",
-				modelName: "gpt-4o-mini",
-				config: { apiKey: "sk-test-openai" },
+				modelName: "gpt-4o",
+				config: { apiKey: "openai-test-key" },
 			});
 			expect(lastGenerateObjectArgs.system).toContain("Candidate Profile");
 			expect(lastGenerateObjectArgs.prompt).toContain("Job posting text");
 		});
 
-		it("should use custom model name if specified for openai", async () => {
-			process.env.OPENAI_API_KEY = "sk-test-openai";
-			process.env.OPENAI_MODEL = "gpt-4o";
+		it("should resolve google provider and model", async () => {
 			await analyzeJobPosting({
 				profilePath: mockProfilePath,
 				resumePath: mockResumePath,
 				cleanedText: "Job posting text",
-			});
-
-			expect(lastGenerateObjectArgs.model.modelName).toBe("gpt-4o");
-		});
-
-		it("should resolve google provider and throw if GEMINI_API_KEY is missing", async () => {
-			process.env.OPEN_RESUME_COMPANION_AI_PROVIDER = "google";
-			await expect(
-				analyzeJobPosting({
-					profilePath: mockProfilePath,
-					resumePath: mockResumePath,
-					cleanedText: "Job posting text",
-				}),
-			).rejects.toThrow("GEMINI_API_KEY environment variable is not set.");
-		});
-
-		it("should resolve google provider if key is present", async () => {
-			process.env.OPEN_RESUME_COMPANION_AI_PROVIDER = "google";
-			process.env.GEMINI_API_KEY = "gemini-test-key";
-			await analyzeJobPosting({
-				profilePath: mockProfilePath,
-				resumePath: mockResumePath,
-				cleanedText: "Job posting text",
+				aiConfig: {
+					provider: "google",
+					apiKey: "gemini-test-key",
+					modelName: "gemini-1.5-pro",
+				},
 			});
 
 			expect(lastGenerateObjectArgs.model).toEqual({
 				provider: "google",
-				modelName: "gemini-1.5-flash",
+				modelName: "gemini-1.5-pro",
 				config: { apiKey: "gemini-test-key" },
 			});
 		});
 
-		it("should resolve anthropic provider and throw if ANTHROPIC_API_KEY is missing", async () => {
-			process.env.OPEN_RESUME_COMPANION_AI_PROVIDER = "anthropic";
-			await expect(
-				analyzeJobPosting({
-					profilePath: mockProfilePath,
-					resumePath: mockResumePath,
-					cleanedText: "Job posting text",
-				}),
-			).rejects.toThrow("ANTHROPIC_API_KEY environment variable is not set.");
-		});
-
-		it("should resolve anthropic provider if key is present", async () => {
-			process.env.OPEN_RESUME_COMPANION_AI_PROVIDER = "anthropic";
-			process.env.ANTHROPIC_API_KEY = "anthropic-test-key";
+		it("should resolve anthropic provider and model", async () => {
 			await analyzeJobPosting({
 				profilePath: mockProfilePath,
 				resumePath: mockResumePath,
 				cleanedText: "Job posting text",
+				aiConfig: {
+					provider: "anthropic",
+					apiKey: "anthropic-test-key",
+					modelName: "claude-3-5-sonnet-latest",
+				},
 			});
 
 			expect(lastGenerateObjectArgs.model).toEqual({
 				provider: "anthropic",
-				modelName: "claude-3-5-haiku-latest",
+				modelName: "claude-3-5-sonnet-latest",
 				config: { apiKey: "anthropic-test-key" },
 			});
 		});
 
-		it("should resolve deepseek provider and throw if DEEPSEEK_API_KEY is missing", async () => {
-			process.env.OPEN_RESUME_COMPANION_AI_PROVIDER = "deepseek";
-			await expect(
-				analyzeJobPosting({
-					profilePath: mockProfilePath,
-					resumePath: mockResumePath,
-					cleanedText: "Job posting text",
-				}),
-			).rejects.toThrow("DEEPSEEK_API_KEY environment variable is not set.");
-		});
-
-		it("should resolve deepseek provider via createOpenAI helper if key is present", async () => {
-			process.env.OPEN_RESUME_COMPANION_AI_PROVIDER = "deepseek";
-			process.env.DEEPSEEK_API_KEY = "deepseek-test-key";
+		it("should resolve deepseek provider via createOpenAI helper", async () => {
 			await analyzeJobPosting({
 				profilePath: mockProfilePath,
 				resumePath: mockResumePath,
 				cleanedText: "Job posting text",
+				aiConfig: {
+					provider: "deepseek",
+					apiKey: "deepseek-test-key",
+					modelName: "deepseek-chat",
+				},
 			});
 
 			expect(lastGenerateObjectArgs.model).toEqual({
@@ -280,17 +238,6 @@ describe("analyzeJobPosting", () => {
 					baseURL: "https://api.deepseek.com/v1",
 				},
 			});
-		});
-
-		it("should throw if an unsupported provider is configured", async () => {
-			process.env.OPEN_RESUME_COMPANION_AI_PROVIDER = "unsupported";
-			await expect(
-				analyzeJobPosting({
-					profilePath: mockProfilePath,
-					resumePath: mockResumePath,
-					cleanedText: "Job posting text",
-				}),
-			).rejects.toThrow("Unsupported AI provider: unsupported");
 		});
 	});
 });

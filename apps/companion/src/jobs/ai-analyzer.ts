@@ -4,6 +4,7 @@ import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createOpenAI } from "@ai-sdk/openai";
 import { generateObject } from "ai";
 import { z } from "zod";
+import type { AIConfig } from "../config.js";
 
 export interface JobFitBrief {
 	roleSummary: string;
@@ -49,6 +50,7 @@ export async function analyzeJobPosting(input: {
 	resumePath?: string;
 	resumeContent?: string;
 	cleanedText: string;
+	aiConfig: AIConfig;
 }): Promise<AIAnalysisResult> {
 	if (!existsSync(input.profilePath)) {
 		throw new Error(
@@ -80,39 +82,19 @@ export async function analyzeJobPosting(input: {
 		throw new Error("Synced default resume is empty.");
 	}
 
-	const provider = process.env.OPEN_RESUME_COMPANION_AI_PROVIDER || "openai";
+	const { provider, apiKey, modelName } = input.aiConfig;
 	let modelInstance: any;
 
 	if (provider === "openai") {
-		const apiKey = process.env.OPENAI_API_KEY;
-		if (!apiKey) {
-			throw new Error("OPENAI_API_KEY environment variable is not set.");
-		}
-		const modelName = process.env.OPENAI_MODEL || "gpt-4o-mini";
 		const openai = createOpenAI({ apiKey });
 		modelInstance = openai(modelName);
 	} else if (provider === "google") {
-		const apiKey = process.env.GEMINI_API_KEY;
-		if (!apiKey) {
-			throw new Error("GEMINI_API_KEY environment variable is not set.");
-		}
-		const modelName = process.env.GEMINI_MODEL || "gemini-1.5-flash";
 		const google = createGoogleGenerativeAI({ apiKey });
 		modelInstance = google(modelName);
 	} else if (provider === "anthropic") {
-		const apiKey = process.env.ANTHROPIC_API_KEY;
-		if (!apiKey) {
-			throw new Error("ANTHROPIC_API_KEY environment variable is not set.");
-		}
-		const modelName = process.env.ANTHROPIC_MODEL || "claude-3-5-haiku-latest";
 		const anthropic = createAnthropic({ apiKey });
 		modelInstance = anthropic(modelName);
 	} else if (provider === "deepseek") {
-		const apiKey = process.env.DEEPSEEK_API_KEY;
-		if (!apiKey) {
-			throw new Error("DEEPSEEK_API_KEY environment variable is not set.");
-		}
-		const modelName = process.env.DEEPSEEK_MODEL || "deepseek-chat";
 		const deepseek = createOpenAI({
 			apiKey,
 			baseURL: "https://api.deepseek.com/v1",
