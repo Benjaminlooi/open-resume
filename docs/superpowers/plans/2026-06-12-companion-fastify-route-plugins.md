@@ -50,7 +50,7 @@
 - Modify: `apps/companion/package.json`
 - Modify: `pnpm-lock.yaml`
 
-- [ ] **Step 1: Add the dependency**
+- [x] **Step 1: Add the dependency**
 
 Run:
 
@@ -64,7 +64,7 @@ Expected:
 - `pnpm-lock.yaml` is updated.
 - The command exits with code 0.
 
-- [ ] **Step 2: Verify dependency metadata**
+- [x] **Step 2: Verify dependency metadata**
 
 Run:
 
@@ -78,7 +78,7 @@ Expected output includes:
 fastify-plugin
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 Run:
 
@@ -99,7 +99,7 @@ Expected: commit succeeds.
 - Create: `apps/companion/src/plugins/openapi.ts`
 - Modify: `apps/companion/src/openapi.ts`
 
-- [ ] **Step 1: Create the CORS plugin**
+- [x] **Step 1: Create the CORS plugin**
 
 Create `apps/companion/src/plugins/cors.ts`:
 
@@ -115,7 +115,7 @@ export const registerCors = fp(async (server) => {
 });
 ```
 
-- [ ] **Step 2: Create the error handler plugin**
+- [x] **Step 2: Create the error handler plugin**
 
 Create `apps/companion/src/plugins/error-handler.ts`:
 
@@ -149,7 +149,7 @@ export const registerErrorHandler = fp(async (server) => {
 });
 ```
 
-- [ ] **Step 3: Create OpenAPI registration plugin**
+- [x] **Step 3: Create OpenAPI registration plugin**
 
 Create `apps/companion/src/plugins/openapi.ts`:
 
@@ -208,7 +208,7 @@ export const registerOpenApi = fp(async (server) => {
 });
 ```
 
-- [ ] **Step 4: Keep the old OpenAPI import path working temporarily**
+- [x] **Step 4: Keep the old OpenAPI import path working temporarily**
 
 Replace `apps/companion/src/openapi.ts` with:
 
@@ -216,7 +216,7 @@ Replace `apps/companion/src/openapi.ts` with:
 export { registerOpenApi } from "./plugins/openapi.js";
 ```
 
-- [ ] **Step 5: Typecheck the extracted plugins**
+- [x] **Step 5: Typecheck the extracted plugins**
 
 Run:
 
@@ -226,7 +226,7 @@ pnpm --filter @open-resume/companion typecheck
 
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 Run:
 
@@ -245,7 +245,7 @@ Expected: commit succeeds.
 - Create: `apps/companion/src/routes/context.ts`
 - Create: `apps/companion/src/profile/default-profile.ts`
 
-- [ ] **Step 1: Create route context type**
+- [x] **Step 1: Create route context type**
 
 Create `apps/companion/src/routes/context.ts`:
 
@@ -260,7 +260,7 @@ export interface CompanionRouteContext {
 }
 ```
 
-- [ ] **Step 2: Extract the default profile**
+- [x] **Step 2: Extract the default profile**
 
 Create `apps/companion/src/profile/default-profile.ts`:
 
@@ -310,7 +310,7 @@ export const defaultProfile = {
 };
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 Run:
 
@@ -331,7 +331,7 @@ Expected: commit succeeds.
 - Create: `apps/companion/src/routes/resume-routes.ts`
 - Create: `apps/companion/src/routes/job-routes.ts`
 
-- [ ] **Step 1: Create system routes**
+- [x] **Step 1: Create system routes**
 
 Create `apps/companion/src/routes/system-routes.ts`:
 
@@ -378,7 +378,7 @@ export function createSystemRoutes(
 }
 ```
 
-- [ ] **Step 2: Create profile routes**
+- [x] **Step 2: Create profile routes**
 
 Create `apps/companion/src/routes/profile-routes.ts`:
 
@@ -525,7 +525,7 @@ export function createProfileRoutes(
 }
 ```
 
-- [ ] **Step 3: Create resume routes**
+- [x] **Step 3: Create resume routes**
 
 Create `apps/companion/src/routes/resume-routes.ts`:
 
@@ -710,7 +710,7 @@ export function createResumeRoutes(
 }
 ```
 
-- [ ] **Step 4: Create job routes**
+- [x] **Step 4: Create job routes**
 
 Create `apps/companion/src/routes/job-routes.ts`:
 
@@ -849,7 +849,7 @@ export function createJobRoutes(
 }
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 Run:
 
@@ -868,7 +868,7 @@ Expected: commit succeeds.
 - Modify: `apps/companion/src/server.ts`
 - Delete: `apps/companion/src/openapi.ts`
 
-- [ ] **Step 1: Replace imports at the top of `server.ts`**
+- [x] **Step 1: Replace imports at the top of `server.ts`**
 
 Change the top of `apps/companion/src/server.ts` to:
 
@@ -892,7 +892,7 @@ import { createSystemRoutes } from "./routes/system-routes.js";
 
 Keep the existing `LogStream`, `CreateServerOptions`, `isScrapedDataLoggingEnabled`, `createLoggerOptions`, `getDefaultDatabasePath`, `getProfilePath`, and `getResumePath` definitions.
 
-- [ ] **Step 2: Replace the body of `createServer` after crawl queue creation**
+- [x] **Step 2: Replace the body of `createServer` after crawl queue creation**
 
 Inside `createServer`, remove:
 
@@ -935,7 +935,7 @@ After the `crawlQueue` definition, use:
 	return server;
 ```
 
-- [ ] **Step 3: Run typecheck**
+- [x] **Step 3: Run typecheck**
 
 Delete the temporary compatibility re-export:
 
@@ -945,7 +945,7 @@ git rm apps/companion/src/openapi.ts
 
 Expected: `apps/companion/src/openapi.ts` is staged for deletion.
 
-- [ ] **Step 4: Run typecheck**
+- [x] **Step 4: Run typecheck**
 
 Run:
 
@@ -955,7 +955,7 @@ pnpm --filter @open-resume/companion typecheck
 
 Expected: PASS.
 
-- [ ] **Step 5: Run companion tests**
+- [x] **Step 5: Run companion tests**
 
 Run:
 
@@ -965,7 +965,7 @@ pnpm --filter @open-resume/companion test
 
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 Run:
 
@@ -983,7 +983,7 @@ Expected: commit succeeds.
 **Files:**
 - Modify if generated output changes: `apps/companion/openapi.json`
 
-- [ ] **Step 1: Regenerate OpenAPI**
+- [x] **Step 1: Regenerate OpenAPI**
 
 Run:
 
@@ -998,7 +998,7 @@ Expected:
 - Existing route paths remain `/health`, `/profile`, `/profile/resume`, `/resumes`, `/resumes/{id}`, `/jobs`, `/jobs/{id}`, and `/jobs/{id}/retry-crawl`.
 - No `/api` route prefix appears.
 
-- [ ] **Step 2: Lint OpenAPI**
+- [x] **Step 2: Lint OpenAPI**
 
 Run:
 
@@ -1008,7 +1008,7 @@ pnpm --filter @open-resume/companion openapi:lint
 
 Expected: PASS.
 
-- [ ] **Step 3: Run final companion verification**
+- [x] **Step 3: Run final companion verification**
 
 Run:
 
@@ -1019,7 +1019,7 @@ pnpm --filter @open-resume/companion test
 
 Expected: both commands PASS.
 
-- [ ] **Step 4: Inspect public diff**
+- [x] **Step 4: Inspect public diff**
 
 Run:
 
@@ -1033,7 +1033,7 @@ Expected:
 - No URL paths are renamed.
 - No operation IDs are renamed.
 
-- [ ] **Step 5: Commit generated OpenAPI if it changed**
+- [x] **Step 5: Commit generated OpenAPI if it changed**
 
 If `apps/companion/openapi.json` changed only because of expected metadata updates, run:
 
@@ -1051,7 +1051,7 @@ If `apps/companion/openapi.json` did not change, skip this commit.
 **Files:**
 - Review: all changed files
 
-- [ ] **Step 1: Check working tree**
+- [x] **Step 1: Check working tree**
 
 Run:
 
@@ -1061,7 +1061,7 @@ git status --short
 
 Expected: no unstaged or uncommitted files unless intentionally left for user review.
 
-- [ ] **Step 2: Review final server size and responsibilities**
+- [x] **Step 2: Review final server size and responsibilities**
 
 Run:
 
@@ -1075,7 +1075,7 @@ Expected:
 - `server.ts` does not define endpoint handlers inline.
 - `server.ts` does not contain default profile object literals.
 
-- [ ] **Step 3: Review route plugin files**
+- [x] **Step 3: Review route plugin files**
 
 Run:
 
@@ -1093,7 +1093,7 @@ Expected:
 - Route files do not read environment variables.
 - Route files do not create repositories, crawl queues, or Fastify instances.
 
-- [ ] **Step 4: Final commit if review fixes were needed**
+- [x] **Step 4: Final commit if review fixes were needed**
 
 If review required fixes, commit them:
 
