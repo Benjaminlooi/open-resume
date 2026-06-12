@@ -36,9 +36,10 @@ export function createProfileRoutes(
 			async () => {
 				const profilePath = context.getProfilePath();
 				if (!existsSync(profilePath)) {
+					const profile = structuredClone(defaultProfile);
 					mkdirSync(dirname(profilePath), { recursive: true });
-					writeFileSync(profilePath, JSON.stringify(defaultProfile, null, 2));
-					return defaultProfile;
+					writeFileSync(profilePath, JSON.stringify(profile, null, 2));
+					return profile;
 				}
 
 				try {
