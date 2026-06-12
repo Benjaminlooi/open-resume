@@ -1,0 +1,136 @@
+import { randomUUID } from "node:crypto";
+import type { FastifyPluginAsync } from "fastify";
+import type { ZodTypeProvider } from "fastify-type-provider-zod";
+import {
+	companionErrorResponseSchema,
+	companionJobSchema,
+	companionJobsResponseSchema,
+	createJobRequestSchema,
+	deleteJobResponseSchema,
+	jobIdParamsSchema,
+} from "../schema.js";
+import type { CompanionRouteContext } from "./context.js";
+
+// Fastify Swagger crashes when a registered component ref is used for params.
+const routeJobIdParamsSchema = jobIdParamsSchema.extend({});
+
+export function createJobRoutes(
+	context: CompanionRouteContext,
+): FastifyPluginAsync {
+	return async (server) => {
+		const typedServer = server.withTypeProvider<ZodTypeProvider>();
+
+		typedServer.post(
+			"/jobs",
+			{
+				schema: {
+					operationId: "createJob",
+					tags: ["Jobs"],
+					summary: "Create a companion job and enqueue crawling",
+					body: createJobRequestSchema,
+					response: {
+						201: companionJobSchema,
+						400: companionErrorResponseSchema,
+						500: companionErrorResponseSchema,
+					},
+				},
+			},
+			async (request, reply) => {
+				const job = context.jobRepository.createJob({
+					id: randomUUID(),
+					sourceUrl: request.body.sourceUrl,
+					now: Date.now(),
+				});
+				context.crawlQueue.enqueue(job.id);
+				return reply.status(201).send(job);
+			},
+		);
+
+		typedServer.get(
+			"/jobs",
+			{
+				schema: {
+					operationId: "listJobs",
+					tags: ["Jobs"],
+					summary: "List companion jobs",
+					response: {
+						200: companionJobsResponseSchema,
+					},
+				},
+			},
+			async () => ({
+				jobs: context.jobRepository.listJobs(),
+			}),
+		);
+
+		typedServer.get(
+			"/jobs/:id",
+			{
+				schema: {
+					operationId: "getJob",
+					tags: ["Jobs"],
+					summary: "Get a companion job",
+					params: routeJobIdParamsSchema,
+					response: {
+						200: companionJobSchema,
+						404: companionErrorResponseSchema,
+					},
+				},
+			},
+			async (request, reply) => {
+				const job = context.jobRepository.getJob(request.params.id);
+				if (!job) {
+					return reply.status(404).send({ error: "Job not found" });
+				}
+
+				return reply.send(job);
+			},
+		);
+
+		typedServer.post(
+			"/jobs/:id/retry-crawl",
+			{
+				schema: {
+					operationId: "retryJobCrawl",
+					tags: ["Jobs"],
+					summary: "Retry crawling a companion job",
+					params: routeJobIdParamsSchema,
+					response: {
+						200: companionJobSchema,
+						404: companionErrorResponseSchema,
+					},
+				},
+			},
+			async (request, reply) => {
+				const job = context.jobRepository.resetForRetry(
+					request.params.id,
+					Date.now(),
+				);
+				if (!job) {
+					return reply.status(404).send({ error: "Job not found" });
+				}
+
+				context.crawlQueue.enqueue(job.id);
+				return reply.send(job);
+			},
+		);
+
+		typedServer.delete(
+			"/jobs/:id",
+			{
+				schema: {
+					operationId: "deleteJob",
+					tags: ["Jobs"],
+					summary: "Delete a companion job",
+					params: routeJobIdParamsSchema,
+					response: {
+						200: deleteJobResponseSchema,
+					},
+				},
+			},
+			async (request) => ({
+				deleted: context.jobRepository.deleteJob(request.params.id),
+			}),
+		);
+	};
+}
