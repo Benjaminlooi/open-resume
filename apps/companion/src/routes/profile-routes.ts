@@ -10,12 +10,12 @@ import {
 	resumeSyncRequestSchema,
 	syncedResumeResponseSchema,
 } from "../schema.js";
-import type { CompanionRouteContext } from "./context.js";
+import type { ProfileRouteContext } from "./context.js";
 
 const profileResumeId = "profile-resume";
 
 export function createProfileRoutes(
-	context: CompanionRouteContext,
+	context: ProfileRouteContext,
 ): FastifyPluginAsync {
 	return async (server) => {
 		const typedServer = server.withTypeProvider<ZodTypeProvider>();

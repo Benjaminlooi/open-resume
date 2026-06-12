@@ -10,13 +10,13 @@ import {
 	resumesResponseSchema,
 	updateResumeRequestSchema,
 } from "../schema.js";
-import type { CompanionRouteContext } from "./context.js";
+import type { ResumeRouteContext } from "./context.js";
 
 // Fastify Swagger crashes when a registered component ref is used for params.
 const routeResumeIdParamsSchema = jobIdParamsSchema.extend({});
 
 export function createResumeRoutes(
-	context: CompanionRouteContext,
+	context: ResumeRouteContext,
 ): FastifyPluginAsync {
 	return async (server) => {
 		const typedServer = server.withTypeProvider<ZodTypeProvider>();

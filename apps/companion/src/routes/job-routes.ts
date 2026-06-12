@@ -9,13 +9,13 @@ import {
 	deleteJobResponseSchema,
 	jobIdParamsSchema,
 } from "../schema.js";
-import type { CompanionRouteContext } from "./context.js";
+import type { JobRouteContext } from "./context.js";
 
 // Fastify Swagger crashes when a registered component ref is used for params.
 const routeJobIdParamsSchema = jobIdParamsSchema.extend({});
 
 export function createJobRoutes(
-	context: CompanionRouteContext,
+	context: JobRouteContext,
 ): FastifyPluginAsync {
 	return async (server) => {
 		const typedServer = server.withTypeProvider<ZodTypeProvider>();

@@ -1,11 +1,8 @@
 import type { FastifyPluginAsync } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
 import { healthResponseSchema } from "../schema.js";
-import type { CompanionRouteContext } from "./context.js";
 
-export function createSystemRoutes(
-	_context: CompanionRouteContext,
-): FastifyPluginAsync {
+export function createSystemRoutes(): FastifyPluginAsync {
 	return async (server) => {
 		const typedServer = server.withTypeProvider<ZodTypeProvider>();
 

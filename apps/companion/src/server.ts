@@ -127,16 +127,15 @@ export function createServer(options: CreateServerOptions = {}) {
 	server.register(registerCors);
 
 	server.after(() => {
-		const routeContext = {
-			jobRepository,
-			crawlQueue,
-			getProfilePath: () => getProfilePath(options),
-		};
-
-		server.register(createSystemRoutes(routeContext));
-		server.register(createProfileRoutes(routeContext));
-		server.register(createResumeRoutes(routeContext));
-		server.register(createJobRoutes(routeContext));
+		server.register(createSystemRoutes());
+		server.register(
+			createProfileRoutes({
+				jobRepository,
+				getProfilePath: () => getProfilePath(options),
+			}),
+		);
+		server.register(createResumeRoutes({ jobRepository }));
+		server.register(createJobRoutes({ jobRepository, crawlQueue }));
 	});
 
 	if (options.recoverJobsOnStartup) {
