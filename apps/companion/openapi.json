@@ -104,6 +104,7 @@
         "enum": [
           "pending",
           "crawling",
+          "analyzing",
           "ready",
           "failed"
         ]
@@ -180,6 +181,66 @@
               }
             ],
             "description": "Unix timestamp in milliseconds, or null before crawl success."
+          },
+          "parsedTitle": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "parsedCompany": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "parsedLocation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "parsedDescription": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "fitScore": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "fitBriefJson": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -219,6 +280,137 @@
         "required": [
           "deleted"
         ],
+        "additionalProperties": false
+      },
+      "ResumeContentInput": {
+        "type": "object",
+        "additionalProperties": {}
+      },
+      "ResumeSummaryInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "templateId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "lastModified": {
+            "type": "number",
+            "description": "Unix timestamp in milliseconds."
+          },
+          "isDefault": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "templateId",
+          "lastModified",
+          "isDefault"
+        ],
+        "additionalProperties": false
+      },
+      "ResumeDetailsInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "templateId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "lastModified": {
+            "type": "number",
+            "description": "Unix timestamp in milliseconds."
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "content": {
+            "$ref": "#/components/schemas/ResumeContentInput"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "templateId",
+          "lastModified",
+          "isDefault",
+          "content"
+        ],
+        "additionalProperties": false
+      },
+      "ResumesResponseInput": {
+        "type": "object",
+        "properties": {
+          "resumes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResumeSummaryInput"
+            }
+          }
+        },
+        "required": [
+          "resumes"
+        ],
+        "additionalProperties": false
+      },
+      "CreateResumeRequestInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "templateId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "content": {
+            "$ref": "#/components/schemas/ResumeContentInput"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "templateId",
+          "content"
+        ],
+        "additionalProperties": false
+      },
+      "UpdateResumeRequestInput": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "templateId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "content": {
+            "$ref": "#/components/schemas/ResumeContentInput"
+          }
+        },
         "additionalProperties": false
       },
       "CandidateProfileInput": {
@@ -449,6 +641,64 @@
         ],
         "additionalProperties": false
       },
+      "JobFitBriefInput": {
+        "type": "object",
+        "properties": {
+          "roleSummary": {
+            "type": "string"
+          },
+          "requirements": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "keywords": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "strengths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "gaps": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "risks": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "nextActions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "generatedAt": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "roleSummary",
+          "requirements",
+          "keywords",
+          "strengths",
+          "gaps",
+          "risks",
+          "nextActions",
+          "generatedAt"
+        ],
+        "additionalProperties": false
+      },
       "HealthResponse": {
         "type": "object",
         "properties": {
@@ -546,6 +796,7 @@
         "enum": [
           "pending",
           "crawling",
+          "analyzing",
           "ready",
           "failed"
         ]
@@ -622,6 +873,66 @@
               }
             ],
             "description": "Unix timestamp in milliseconds, or null before crawl success."
+          },
+          "parsedTitle": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "parsedCompany": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "parsedLocation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "parsedDescription": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "fitScore": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "fitBriefJson": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -661,6 +972,137 @@
         "required": [
           "deleted"
         ],
+        "additionalProperties": false
+      },
+      "ResumeContent": {
+        "type": "object",
+        "additionalProperties": {}
+      },
+      "ResumeSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "templateId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "lastModified": {
+            "type": "number",
+            "description": "Unix timestamp in milliseconds."
+          },
+          "isDefault": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "templateId",
+          "lastModified",
+          "isDefault"
+        ],
+        "additionalProperties": false
+      },
+      "ResumeDetails": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "templateId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "lastModified": {
+            "type": "number",
+            "description": "Unix timestamp in milliseconds."
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "content": {
+            "$ref": "#/components/schemas/ResumeContent"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "templateId",
+          "lastModified",
+          "isDefault",
+          "content"
+        ],
+        "additionalProperties": false
+      },
+      "ResumesResponse": {
+        "type": "object",
+        "properties": {
+          "resumes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResumeSummary"
+            }
+          }
+        },
+        "required": [
+          "resumes"
+        ],
+        "additionalProperties": false
+      },
+      "CreateResumeRequest": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "templateId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "content": {
+            "$ref": "#/components/schemas/ResumeContent"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "templateId",
+          "content"
+        ],
+        "additionalProperties": false
+      },
+      "UpdateResumeRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "templateId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "content": {
+            "$ref": "#/components/schemas/ResumeContent"
+          }
+        },
         "additionalProperties": false
       },
       "CandidateProfile": {
@@ -890,6 +1332,64 @@
           "ok"
         ],
         "additionalProperties": false
+      },
+      "JobFitBrief": {
+        "type": "object",
+        "properties": {
+          "roleSummary": {
+            "type": "string"
+          },
+          "requirements": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "keywords": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "strengths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "gaps": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "risks": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "nextActions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "generatedAt": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "roleSummary",
+          "requirements",
+          "keywords",
+          "strengths",
+          "gaps",
+          "risks",
+          "nextActions",
+          "generatedAt"
+        ],
+        "additionalProperties": false
       }
     }
   },
@@ -1059,6 +1559,261 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/CompanionErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/resumes": {
+      "get": {
+        "operationId": "listResumes",
+        "summary": "List saved resumes",
+        "tags": [
+          "Resumes"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResumesResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createResume",
+        "summary": "Create a saved resume",
+        "tags": [
+          "Resumes"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateResumeRequestInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResumeDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/resumes/{id}": {
+      "get": {
+        "operationId": "getResume",
+        "summary": "Get a saved resume",
+        "tags": [
+          "Resumes"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResumeDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateResume",
+        "summary": "Update a saved resume",
+        "tags": [
+          "Resumes"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateResumeRequestInput"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResumeDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteResume",
+        "summary": "Delete a saved resume",
+        "tags": [
+          "Resumes"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteJobResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/resumes/{id}/default": {
+      "put": {
+        "operationId": "setDefaultResume",
+        "summary": "Set the default resume",
+        "tags": [
+          "Resumes"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResumeDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/resumes/default": {
+      "delete": {
+        "operationId": "clearDefaultResume",
+        "summary": "Clear the default resume",
+        "tags": [
+          "Resumes"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OkResponse"
                 }
               }
             }
@@ -1255,6 +2010,14 @@
     {
       "name": "System",
       "description": "Operational companion endpoints."
+    },
+    {
+      "name": "Profile",
+      "description": "Candidate profile and synced default resume endpoints."
+    },
+    {
+      "name": "Resumes",
+      "description": "Saved resume management endpoints."
     },
     {
       "name": "Jobs",
