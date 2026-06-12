@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { rmSync } from "node:fs";
 import { resolve } from "node:path";
 import type { FastifyInstance } from "fastify";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createCrawlQueue } from "./jobs/crawl-queue.js";
 import type { JobRepository } from "./jobs/repository.js";
 import { createJobRepository } from "./jobs/repository.js";
@@ -19,6 +19,10 @@ describe("companion server", () => {
 	const servers: FastifyInstance[] = [];
 	const repositories: JobRepository[] = [];
 	const tempFiles: string[] = [];
+
+	beforeEach(() => {
+		vi.stubEnv("OPENAI_API_KEY", "sk-test-openai");
+	});
 
 	afterEach(async () => {
 		for (const server of servers) {
@@ -58,6 +62,11 @@ describe("companion server", () => {
 				extractedAt: 1200,
 			}),
 			now: () => 1000,
+			aiConfig: {
+				provider: "openai",
+				apiKey: "sk-test-openai",
+				modelName: "gpt-4o-mini",
+			},
 		});
 		beforeCreate?.({ crawlQueue, repository });
 

@@ -1,10 +1,10 @@
 import { mkdirSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { dirname } from "node:path";
 import Fastify from "fastify";
+import type { CreateServerOptions } from "./config.js";
+import { resolveConfig } from "./config.js";
 import { crawlCleanedTextWithPlaywright } from "./extract/playwright.js";
-import type { CrawlQueue } from "./jobs/crawl-queue.js";
 import { createCrawlQueue } from "./jobs/crawl-queue.js";
-import type { JobRepository } from "./jobs/repository.js";
 import { createJobRepository } from "./jobs/repository.js";
 import { registerCors } from "./plugins/cors.js";
 import { registerErrorHandler } from "./plugins/error-handler.js";
@@ -14,106 +14,49 @@ import { createProfileRoutes } from "./routes/profile-routes.js";
 import { createResumeRoutes } from "./routes/resume-routes.js";
 import { createSystemRoutes } from "./routes/system-routes.js";
 
-interface LogStream {
-	write(message: string): void;
-}
-
-interface CreateServerOptions {
-	crawlQueue?: CrawlQueue;
-	databasePath?: string;
-	jobRepository?: JobRepository;
-	logLevel?: string;
-	logScrapedData?: boolean;
-	logStream?: LogStream;
-	recoverJobsOnStartup?: boolean;
-	profilePath?: string;
-	resumePath?: string;
-}
-
-function isScrapedDataLoggingEnabled(value: string | undefined): boolean {
-	return value === "1" || value === "true" || value === "yes";
-}
-
-function createLoggerOptions(options: CreateServerOptions) {
-	const logLevel =
-		options.logLevel ?? process.env.OPEN_RESUME_COMPANION_LOG_LEVEL;
-
-	if (!logLevel || logLevel === "silent") {
-		return false;
-	}
-
-	const loggerOptions = {
-		level: logLevel,
-		redact: ["req.headers.authorization", "req.headers.cookie"],
-	};
-
-	if (options.logStream) {
-		return {
-			...loggerOptions,
-			stream: options.logStream,
-		};
-	}
-
-	return loggerOptions;
-}
-
-function getDefaultDatabasePath(options: CreateServerOptions) {
-	return (
-		options.databasePath ??
-		process.env.OPEN_RESUME_COMPANION_DB_PATH ??
-		resolve(process.cwd(), ".open-resume-companion/jobs.sqlite")
-	);
-}
-
-function getProfilePath(options: CreateServerOptions) {
-	if (options.profilePath) {
-		return options.profilePath;
-	}
-	const dbPath = getDefaultDatabasePath(options);
-	return resolve(dirname(dbPath), "profile.json");
-}
-
-function getResumePath(options: CreateServerOptions) {
-	if (options.resumePath) {
-		return options.resumePath;
-	}
-	const dbPath = getDefaultDatabasePath(options);
-	return resolve(dirname(dbPath), "resume.json");
-}
-
 export function createServer(options: CreateServerOptions = {}) {
-	const logScrapedData =
-		options.logScrapedData ??
-		isScrapedDataLoggingEnabled(
-			process.env.OPEN_RESUME_COMPANION_LOG_SCRAPED_DATA,
-		);
+	const config = resolveConfig(options);
+
 	const server = Fastify({
-		logger: createLoggerOptions(options),
+		logger: config.logStream
+			? {
+					level: config.logLevel,
+					redact: ["req.headers.authorization", "req.headers.cookie"],
+					stream: config.logStream,
+				}
+			: config.logLevel === "silent"
+				? false
+				: {
+						level: config.logLevel,
+						redact: ["req.headers.authorization", "req.headers.cookie"],
+					},
 	});
-	const ownsRepository = !options.jobRepository;
+
+	const ownsRepository = !config.jobRepository;
 	const jobRepository =
-		options.jobRepository ??
+		config.jobRepository ??
 		(() => {
-			const databasePath = getDefaultDatabasePath(options);
-			mkdirSync(dirname(databasePath), { recursive: true });
-			return createJobRepository(databasePath);
+			mkdirSync(dirname(config.databasePath), { recursive: true });
+			return createJobRepository(config.databasePath);
 		})();
+
 	const crawlQueue =
-		options.crawlQueue ??
+		config.crawlQueue ??
 		createCrawlQueue({
 			repository: jobRepository,
 			crawl: (sourceUrl) =>
 				crawlCleanedTextWithPlaywright(sourceUrl, {
 					logger: server.log,
-					logScrapedData,
+					logScrapedData: config.logScrapedData,
 				}),
 			logger: {
 				error(bindings, message) {
 					server.log.error(bindings, message);
 				},
 			},
-			profilePath: getProfilePath(options),
-			resumePath: getResumePath(options),
+			profilePath: config.profilePath,
+			resumePath: config.resumePath,
+			aiConfig: config.ai,
 		});
 
 	server.addHook("onClose", async () => {
@@ -131,14 +74,14 @@ export function createServer(options: CreateServerOptions = {}) {
 		server.register(
 			createProfileRoutes({
 				jobRepository,
-				getProfilePath: () => getProfilePath(options),
+				getProfilePath: () => config.profilePath,
 			}),
 		);
 		server.register(createResumeRoutes({ jobRepository }));
 		server.register(createJobRoutes({ jobRepository, crawlQueue }));
 	});
 
-	if (options.recoverJobsOnStartup) {
+	if (config.recoverJobsOnStartup) {
 		crawlQueue.enqueueRunnableJobs();
 	}
 
