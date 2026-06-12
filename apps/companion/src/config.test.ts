@@ -1,5 +1,4 @@
 import { describe, expect, it, beforeEach, afterEach, vi } from "vitest";
-import { resolve } from "node:path";
 import { resolveConfig } from "./config.js";
 
 describe("resolveConfig", () => {
