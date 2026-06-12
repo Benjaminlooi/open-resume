@@ -1,5 +1,6 @@
 import type { CleanedPageCrawlResult } from "../extract/playwright.js";
 import { crawlCleanedTextWithPlaywright } from "../extract/playwright.js";
+import type { AIConfig } from "../config.js";
 import { analyzeJobPosting } from "./ai-analyzer.js";
 import type { JobRepository } from "./repository.js";
 
@@ -15,6 +16,7 @@ interface CrawlQueueOptions {
 	profilePath?: string;
 	resumePath?: string;
 	analyze?: typeof analyzeJobPosting;
+	aiConfig?: AIConfig;
 }
 
 export function createCrawlQueue(options: CrawlQueueOptions) {
@@ -53,6 +55,7 @@ export function createCrawlQueue(options: CrawlQueueOptions) {
 						? { resumeContent: JSON.stringify(defaultResume.content) }
 						: { resumePath: options.resumePath }),
 					cleanedText,
+					aiConfig: options.aiConfig!,
 				});
 
 				if (options.repository.getJob(id)) {
