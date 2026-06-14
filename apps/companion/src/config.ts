@@ -1,4 +1,4 @@
-import { resolve, dirname } from "node:path";
+import { dirname, resolve } from "node:path";
 import { z } from "zod";
 import type { CrawlQueue } from "./jobs/crawl-queue.js";
 import type { JobRepository } from "./jobs/repository.js";
@@ -17,7 +17,12 @@ interface LogStream {
 	write(message: string): void;
 }
 
-export const AIProviderSchema = z.enum(["openai", "google", "anthropic", "deepseek"]);
+export const AIProviderSchema = z.enum([
+	"openai",
+	"google",
+	"anthropic",
+	"deepseek",
+]);
 export type AIProvider = z.infer<typeof AIProviderSchema>;
 
 export const createServerOptionsSchema = z.object({
@@ -81,11 +86,14 @@ export function resolveConfig(options: CreateServerOptions): ResolvedConfig {
 		parsedEnv.OPEN_RESUME_COMPANION_DB_PATH ??
 		resolve(process.cwd(), ".open-resume-companion/jobs.sqlite");
 
-	const logLevel = parsedOptions.logLevel ?? parsedEnv.OPEN_RESUME_COMPANION_LOG_LEVEL;
+	const logLevel =
+		parsedOptions.logLevel ?? parsedEnv.OPEN_RESUME_COMPANION_LOG_LEVEL;
 
 	const logScrapedData =
 		parsedOptions.logScrapedData ??
-		isScrapedDataLoggingEnabled(parsedEnv.OPEN_RESUME_COMPANION_LOG_SCRAPED_DATA);
+		isScrapedDataLoggingEnabled(
+			parsedEnv.OPEN_RESUME_COMPANION_LOG_SCRAPED_DATA,
+		);
 
 	const provider = parsedEnv.OPEN_RESUME_COMPANION_AI_PROVIDER;
 	let apiKey: string | undefined;
@@ -124,8 +132,11 @@ export function resolveConfig(options: CreateServerOptions): ResolvedConfig {
 		logScrapedData,
 		logStream: parsedOptions.logStream,
 		recoverJobsOnStartup: parsedOptions.recoverJobsOnStartup ?? false,
-		profilePath: parsedOptions.profilePath ?? resolve(dirname(databasePath), "profile.json"),
-		resumePath: parsedOptions.resumePath ?? resolve(dirname(databasePath), "resume.json"),
+		profilePath:
+			parsedOptions.profilePath ??
+			resolve(dirname(databasePath), "profile.json"),
+		resumePath:
+			parsedOptions.resumePath ?? resolve(dirname(databasePath), "resume.json"),
 		ai: {
 			provider,
 			apiKey,

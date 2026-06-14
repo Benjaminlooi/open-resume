@@ -47,6 +47,7 @@ export function createJobRoutes(context: JobRouteContext): FastifyPluginAsync {
 		typedServer.get(
 			"/jobs",
 			{
+				logLevel: "silent",
 				schema: {
 					operationId: "listJobs",
 					tags: ["Jobs"],

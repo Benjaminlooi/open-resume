@@ -48,6 +48,10 @@ function JobsDashboard() {
 		deleteJobApplication,
 	} = useJobApplicationStore();
 
+	const hasPendingJobs = companionJobs.some((job) =>
+		["pending", "crawling", "analyzing"].includes(job.crawlStatus),
+	);
+
 	useEffect(() => {
 		setIsMounted(true);
 	}, []);
@@ -76,13 +80,14 @@ function JobsDashboard() {
 		}
 
 		loadJobs();
-		const interval = setInterval(loadJobs, 2000);
+		const intervalDelay = hasPendingJobs ? 2000 : 10000;
+		const interval = setInterval(loadJobs, intervalDelay);
 
 		return () => {
 			active = false;
 			clearInterval(interval);
 		};
-	}, [isMounted]);
+	}, [isMounted, hasPendingJobs]);
 
 	const handleRetry = async (id: string) => {
 		try {
