@@ -4,6 +4,7 @@ import type { LocalCompanionJob } from "#/lib/local-companion-client";
 interface CompanionJobCardProps {
 	job: LocalCompanionJob;
 	onRetry: (id: string) => void;
+	onRetryAnalyze: (id: string) => void;
 	onDelete: (id: string) => void;
 	onConvert?: (job: LocalCompanionJob) => void;
 }
@@ -23,6 +24,7 @@ function getPreview(text: string) {
 export default function CompanionJobCard({
 	job,
 	onRetry,
+	onRetryAnalyze,
 	onDelete,
 	onConvert,
 }: CompanionJobCardProps) {
@@ -47,7 +49,11 @@ export default function CompanionJobCard({
 				</div>
 				<div className="flex flex-col items-end gap-1.5 shrink-0">
 					<span className="rounded-base border-2 border-border bg-[#F0F9FF] px-2 py-1 font-bold text-xs uppercase">
-						{job.crawlStatus}
+						{job.crawlStatus === "failed"
+							? job.cleanedText
+								? "FAILED (ANALYSIS)"
+								: "FAILED (SCRAPE)"
+							: job.crawlStatus.toUpperCase()}
 					</span>
 					{isReady && job.fitScore !== null && job.fitScore !== undefined && (
 						<span
@@ -71,16 +77,27 @@ export default function CompanionJobCard({
 
 			{job.crawlStatus === "failed" && (
 				<p className="rounded-base border-2 border-border bg-red-100 p-2 text-red-900 text-sm">
-					{job.crawlError ?? "Crawl failed."}
+					{job.cleanedText
+						? `AI Analysis failed: ${job.crawlError ?? "Analysis failed."}`
+						: `Scrape failed: ${job.crawlError ?? "Crawl failed."}`}
 				</p>
 			)}
 
-			{(job.crawlStatus === "pending" ||
-				job.crawlStatus === "crawling" ||
-				job.crawlStatus === "analyzing") && (
+			{job.crawlStatus === "pending" && (
 				<p className="text-muted-foreground text-sm">
-					Crawl is queued locally. This card will update when the companion
-					finishes.
+					Job added to queue. Scrape is pending...
+				</p>
+			)}
+
+			{job.crawlStatus === "crawling" && (
+				<p className="text-muted-foreground text-sm">
+					Scraping job description from URL...
+				</p>
+			)}
+
+			{job.crawlStatus === "analyzing" && (
+				<p className="text-muted-foreground text-sm">
+					Scraping succeeded. Analyzing job description with AI...
 				</p>
 			)}
 
@@ -95,14 +112,26 @@ export default function CompanionJobCard({
 					</button>
 				)}
 				{job.crawlStatus === "failed" && (
-					<button
-						type="button"
-						onClick={() => onRetry(job.id)}
-						className="inline-flex items-center gap-1 rounded-base border-2 border-border bg-white px-3 py-1.5 font-bold text-sm"
-					>
-						<RotateCcw className="size-4" />
-						Retry
-					</button>
+					<>
+						<button
+							type="button"
+							onClick={() => onRetry(job.id)}
+							className="inline-flex items-center gap-1 rounded-base border-2 border-border bg-white px-3 py-1.5 font-bold text-sm"
+						>
+							<RotateCcw className="size-4" />
+							Retry Scrape
+						</button>
+						{job.cleanedText && (
+							<button
+								type="button"
+								onClick={() => onRetryAnalyze(job.id)}
+								className="inline-flex items-center gap-1 rounded-base border-2 border-border bg-white px-3 py-1.5 font-bold text-sm"
+							>
+								<RotateCcw className="size-4" />
+								Retry AI Analysis
+							</button>
+						)}
+					</>
 				)}
 				<button
 					type="button"

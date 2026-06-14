@@ -12,6 +12,7 @@ import {
 	type LocalCompanionJob,
 	listCompanionJobs,
 	retryCompanionJobCrawl,
+	retryCompanionJobAnalyze,
 } from "#/lib/local-companion-client";
 
 export const Route = createFileRoute("/jobs")({
@@ -97,6 +98,18 @@ function JobsDashboard() {
 		} catch (err) {
 			setLoadError(
 				err instanceof Error ? err.message : "Failed to retry crawl",
+			);
+		}
+	};
+
+	const handleRetryAnalyze = async (id: string) => {
+		try {
+			await retryCompanionJobAnalyze(id);
+			const jobs = await listCompanionJobs();
+			setCompanionJobs(jobs);
+		} catch (err) {
+			setLoadError(
+				err instanceof Error ? err.message : "Failed to retry analysis",
 			);
 		}
 	};
@@ -255,6 +268,7 @@ function JobsDashboard() {
 														key={job.id}
 														job={job}
 														onRetry={handleRetry}
+														onRetryAnalyze={handleRetryAnalyze}
 														onDelete={handleDelete}
 													/>
 												))}
@@ -281,6 +295,7 @@ function JobsDashboard() {
 														key={job.id}
 														job={job}
 														onRetry={handleRetry}
+														onRetryAnalyze={handleRetryAnalyze}
 														onDelete={handleDelete}
 														onConvert={handleConvert}
 													/>
@@ -308,6 +323,7 @@ function JobsDashboard() {
 														key={job.id}
 														job={job}
 														onRetry={handleRetry}
+														onRetryAnalyze={handleRetryAnalyze}
 														onDelete={handleDelete}
 													/>
 												))}

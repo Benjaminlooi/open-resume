@@ -31,8 +31,14 @@ describe("CompanionJobCard", () => {
 		document.body.appendChild(container);
 		const root = createRoot(container);
 
+		const defaultProps = {
+			onRetry: vi.fn(),
+			onDelete: vi.fn(),
+			onRetryAnalyze: vi.fn(),
+		};
+
 		await act(async () => {
-			root.render(<CompanionJobCard {...props} />);
+			root.render(<CompanionJobCard {...defaultProps} {...props} />);
 		});
 
 		return { container, root };
@@ -80,24 +86,121 @@ describe("CompanionJobCard", () => {
 		});
 	});
 
-	it("renders failed crawl retry action", async () => {
+	it("renders failed crawl status with empty cleanedText as FAILED (SCRAPE) and shows Retry Scrape", async () => {
 		const { container, root } = await renderCard({
 			job: {
 				...baseJob,
 				crawlStatus: "failed",
 				crawlError: "Blocked by site",
+				cleanedText: "",
 			},
-			onRetry: vi.fn(),
-			onDelete: vi.fn(),
 		});
 
 		const html = container.innerHTML;
-		expect(html).toContain("Blocked by site");
-		expect(html.toLowerCase()).toContain("retry");
+		expect(html).toContain("FAILED (SCRAPE)");
+		expect(html).toContain("Scrape failed: Blocked by site");
+		expect(html).toContain("Retry Scrape");
+		expect(html).not.toContain("Retry AI Analysis");
+
+		// verify RotateCcw is in Retry Scrape button
+		const buttons = Array.from(container.querySelectorAll("button"));
+		const retryScrapeBtn = buttons.find((btn) =>
+			btn.textContent?.includes("Retry Scrape"),
+		);
+		expect(retryScrapeBtn?.querySelector('[data-testid="rotate-ccw"]')).not.toBeNull();
 
 		await act(async () => {
 			root.unmount();
 		});
+	});
+
+	it("renders failed crawl status with non-empty cleanedText as FAILED (ANALYSIS) and shows both buttons", async () => {
+		const { container, root } = await renderCard({
+			job: {
+				...baseJob,
+				crawlStatus: "failed",
+				crawlError: "Model timeout",
+				cleanedText: "Some scraped job text content.",
+			},
+		});
+
+		const html = container.innerHTML;
+		expect(html).toContain("FAILED (ANALYSIS)");
+		expect(html).toContain("AI Analysis failed: Model timeout");
+		expect(html).toContain("Retry Scrape");
+		expect(html).toContain("Retry AI Analysis");
+
+		await act(async () => {
+			root.unmount();
+		});
+	});
+
+	it("calls onRetry when Retry Scrape is clicked, and onRetryAnalyze when Retry AI Analysis is clicked", async () => {
+		const onRetry = vi.fn();
+		const onRetryAnalyze = vi.fn();
+		const { container, root } = await renderCard({
+			job: {
+				...baseJob,
+				crawlStatus: "failed",
+				cleanedText: "Some scraped job text content.",
+			},
+			onRetry,
+			onRetryAnalyze,
+		});
+
+		const buttons = Array.from(container.querySelectorAll("button"));
+		const retryScrapeBtn = buttons.find((btn) =>
+			btn.textContent?.includes("Retry Scrape"),
+		);
+		const retryAnalyzeBtn = buttons.find((btn) =>
+			btn.textContent?.includes("Retry AI Analysis"),
+		);
+
+		expect(retryScrapeBtn).not.toBeUndefined();
+		expect(retryAnalyzeBtn).not.toBeUndefined();
+
+		await act(async () => {
+			retryScrapeBtn?.click();
+		});
+		expect(onRetry).toHaveBeenCalledWith("job-1");
+
+		await act(async () => {
+			retryAnalyzeBtn?.click();
+		});
+		expect(onRetryAnalyze).toHaveBeenCalledWith("job-1");
+
+		await act(async () => {
+			root.unmount();
+		});
+	});
+
+	it("renders status in uppercase for pending, crawling, and analyzing states", async () => {
+		const statuses = ["pending", "crawling", "analyzing"] as const;
+		for (const status of statuses) {
+			const { container, root } = await renderCard({
+				job: {
+					...baseJob,
+					crawlStatus: status,
+				},
+			});
+
+			const badge = container.querySelector(".uppercase");
+			expect(badge?.textContent?.trim()).toBe(status.toUpperCase());
+
+			// Also verify the progress message text matches the spec:
+			const html = container.innerHTML;
+			if (status === "pending") {
+				expect(html).toContain("Job added to queue. Scrape is pending...");
+			} else if (status === "crawling") {
+				expect(html).toContain("Scraping job description from URL...");
+			} else if (status === "analyzing") {
+				expect(html).toContain("Scraping succeeded. Analyzing job description with AI...");
+			}
+
+			await act(async () => {
+				root.unmount();
+			});
+		}
 	});
 
 	it("renders parsed company, title, and score badge for ready jobs", async () => {
