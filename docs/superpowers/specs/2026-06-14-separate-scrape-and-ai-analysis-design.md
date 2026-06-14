@@ -62,6 +62,11 @@ This document details the design to separate the job scraping/crawling phase fro
   - If `job.crawlStatus === "failed"`:
     - If `job.cleanedText` is non-empty, render the badge as: `FAILED (ANALYSIS)`
     - If `job.cleanedText` is empty, render the badge as: `FAILED (SCRAPE)`
+  - Otherwise, render `job.crawlStatus` in uppercase.
+- Description / In-Progress message rendering:
+  - If `job.crawlStatus === "pending"`: "Job added to queue. Scrape is pending..."
+  - If `job.crawlStatus === "crawling"`: "Scraping job description from URL..."
+  - If `job.crawlStatus === "analyzing"`: "Scraping succeeded. Analyzing job description with AI..."
 - Error Message rendering:
   - If `job.crawlStatus === "failed"`:
     - If `job.cleanedText` is non-empty, render error text as: `AI Analysis failed: {job.crawlError}`
