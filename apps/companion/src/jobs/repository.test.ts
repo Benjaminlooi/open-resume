@@ -287,11 +287,70 @@ describe("job repository", () => {
 			updatedAt: 1100,
 		});
 
-		repository.markAnalyzing("job-1", 1150);
+		repository.markAnalyzing("job-1", "", 1150);
 		expect(repository.getJob("job-1")).toMatchObject({
 			crawlStatus: "analyzing",
 			updatedAt: 1150,
 		});
+	});
+
+	it("saves cleanedText in markAnalyzing", () => {
+		const repository = createTestRepository();
+		repository.createJob({
+			id: "job-1",
+			sourceUrl: "https://example.com",
+			now: 1000,
+		});
+		repository.markAnalyzing("job-1", "Sample cleaned text", 1100);
+		expect(repository.getJob("job-1")).toMatchObject({
+			crawlStatus: "analyzing",
+			cleanedText: "Sample cleaned text",
+			updatedAt: 1100,
+		});
+	});
+
+	it("clears cleanedText to empty string on resetForRetry", () => {
+		const repository = createTestRepository();
+		repository.createJob({
+			id: "job-1",
+			sourceUrl: "https://example.com",
+			now: 1000,
+		});
+		repository.markAnalyzing("job-1", "Sample cleaned text", 1100);
+		repository.resetForRetry("job-1", 1200);
+		expect(repository.getJob("job-1")).toMatchObject({
+			crawlStatus: "pending",
+			cleanedText: "",
+		});
+	});
+
+	it("resets status to analyzing and keeps cleanedText on resetForAnalysisRetry", () => {
+		const repository = createTestRepository();
+		repository.createJob({
+			id: "job-1",
+			sourceUrl: "https://example.com",
+			now: 1000,
+		});
+		repository.markAnalyzing("job-1", "Sample cleaned text", 1100);
+		repository.markFailed("job-1", { error: "AI Failed", now: 1200 });
+		repository.resetForAnalysisRetry("job-1", 1300);
+		expect(repository.getJob("job-1")).toMatchObject({
+			crawlStatus: "analyzing",
+			crawlError: null,
+			cleanedText: "Sample cleaned text",
+		});
+	});
+
+	it("includes analyzing jobs in listRunnableJobs", () => {
+		const repository = createTestRepository();
+		repository.createJob({
+			id: "job-1",
+			sourceUrl: "https://example.com",
+			now: 1000,
+		});
+		repository.markAnalyzing("job-1", "Sample", 1100);
+		const runnable = repository.listRunnableJobs();
+		expect(runnable.map((j) => j.id)).toContain("job-1");
 	});
 
 	it("saves parsed details, fit score, and fit brief json on markReady", () => {

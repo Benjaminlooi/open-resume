@@ -213,7 +213,7 @@ export function createJobRepository(path: string) {
 			return database
 				.prepare(`
 					select * from jobs
-					where crawl_status in ('pending', 'crawling')
+					where crawl_status in ('pending', 'crawling', 'analyzing')
 					order by created_at asc
 				`)
 				.all()
@@ -231,14 +231,14 @@ export function createJobRepository(path: string) {
 			return getJob(id);
 		},
 
-		markAnalyzing(id: string, now: number) {
+		markAnalyzing(id: string, cleanedText: string, now: number) {
 			database
 				.prepare(`
 					update jobs
-					set crawl_status = 'analyzing', crawl_error = null, updated_at = ?
+					set crawl_status = 'analyzing', crawl_error = null, cleaned_text = ?, updated_at = ?
 					where id = ?
 				`)
-				.run(now, id);
+				.run(cleanedText, now, id);
 			return getJob(id);
 		},
 
@@ -301,7 +301,18 @@ export function createJobRepository(path: string) {
 			database
 				.prepare(`
 					update jobs
-					set crawl_status = 'pending', crawl_error = null, updated_at = ?
+					set crawl_status = 'pending', crawl_error = null, cleaned_text = '', updated_at = ?
+					where id = ?
+				`)
+				.run(now, id);
+			return getJob(id);
+		},
+
+		resetForAnalysisRetry(id: string, now: number) {
+			database
+				.prepare(`
+					update jobs
+					set crawl_status = 'analyzing', crawl_error = null, updated_at = ?
 					where id = ?
 				`)
 				.run(now, id);

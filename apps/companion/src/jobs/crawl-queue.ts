@@ -1,6 +1,6 @@
+import type { AIConfig } from "../config.js";
 import type { CleanedPageCrawlResult } from "../extract/playwright.js";
 import { crawlCleanedTextWithPlaywright } from "../extract/playwright.js";
-import type { AIConfig } from "../config.js";
 import { analyzeJobPosting } from "./ai-analyzer.js";
 import type { JobRepository } from "./repository.js";
 
@@ -41,7 +41,7 @@ export function createCrawlQueue(options: CrawlQueueOptions) {
 			}
 
 			if (options.repository.getJob(id)) {
-				options.repository.markAnalyzing(id, now());
+				options.repository.markAnalyzing(id, cleanedText, now());
 				const defaultResume = options.repository.getDefaultResume();
 				if (!defaultResume && !options.resumePath) {
 					throw new Error(
