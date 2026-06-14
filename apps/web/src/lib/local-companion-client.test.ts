@@ -9,6 +9,7 @@ import {
 	getResume,
 	listCompanionJobs,
 	listResumes,
+	retryCompanionJobAnalyze,
 	retryCompanionJobCrawl,
 	setDefaultResume,
 	syncResume,
@@ -154,6 +155,13 @@ describe("local companion client", () => {
 		await expect(retryCompanionJobCrawl("job-1")).resolves.toMatchObject({
 			id: "job-1",
 		});
+		await expect(retryCompanionJobAnalyze("job-1")).resolves.toMatchObject({
+			id: "job-1",
+		});
+		expect(fetch).toHaveBeenCalledWith(
+			"http://127.0.0.1:47321/jobs/job-1/retry-analyze",
+			expect.objectContaining({ method: "POST" }),
+		);
 		await expect(deleteCompanionJob("job-1")).resolves.toEqual({
 			deleted: true,
 		});

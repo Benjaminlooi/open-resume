@@ -120,6 +120,19 @@ export async function retryCompanionJobCrawl(
 	);
 }
 
+export async function retryCompanionJobAnalyze(
+	id: string,
+): Promise<LocalCompanionJob> {
+	const response = await companionFetch(`/jobs/${id}/retry-analyze`, {
+		method: "POST",
+	});
+	return parseCompanionResponse(
+		response,
+		companionJobSchema,
+		"Local companion could not retry this analysis.",
+	);
+}
+
 export async function deleteCompanionJob(
 	id: string,
 ): Promise<{ deleted: boolean }> {
