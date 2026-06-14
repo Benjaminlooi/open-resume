@@ -613,7 +613,11 @@ describe("crawl queue", () => {
 	it("bypasses crawl and executes AI analysis when cleanedText is already populated", async () => {
 		const repository = createTestRepository();
 		createDefaultResume(repository);
-		repository.createJob({ id: "job-1", sourceUrl: "https://example.com", now: 1000 });
+		repository.createJob({
+			id: "job-1",
+			sourceUrl: "https://example.com",
+			now: 1000,
+		});
 		// Pre-fill cleanedText
 		repository.markAnalyzing("job-1", "Pre-scraped job text", 1100);
 
@@ -663,8 +667,12 @@ describe("crawl queue", () => {
 	it("preserves crawl timestamp if already present when bypassing crawl", async () => {
 		const repository = createTestRepository();
 		createDefaultResume(repository);
-		repository.createJob({ id: "job-1", sourceUrl: "https://example.com", now: 1000 });
-		
+		repository.createJob({
+			id: "job-1",
+			sourceUrl: "https://example.com",
+			now: 1000,
+		});
+
 		const queue1 = createCrawlQueue({
 			repository,
 			crawl: async () => ({
@@ -675,7 +683,7 @@ describe("crawl queue", () => {
 			now: () => 1050,
 		});
 		await queue1.runJob("job-1");
-		
+
 		expect(repository.getJob("job-1")?.crawledAt).toBe(1050);
 
 		repository.markAnalyzing("job-1", "First scraped text", 1100);
@@ -720,13 +728,17 @@ describe("crawl queue", () => {
 	it("enqueues and processes analyzing jobs in enqueueRunnableJobs", async () => {
 		const repository = createTestRepository();
 		createDefaultResume(repository);
-		
+
 		repository.createJob({
 			id: "analyzing-job",
 			sourceUrl: "https://example.com/analyzing",
 			now: 1000,
 		});
-		repository.markAnalyzing("analyzing-job", "Pre-scraped text for analyzing", 1100);
+		repository.markAnalyzing(
+			"analyzing-job",
+			"Pre-scraped text for analyzing",
+			1100,
+		);
 
 		const crawlSpy = vi.fn();
 		const customAnalyze = vi.fn().mockResolvedValue({
@@ -757,11 +769,10 @@ describe("crawl queue", () => {
 		});
 
 		queue.enqueueRunnableJobs();
-		
+
 		await vi.waitFor(() => expect(customAnalyze).toHaveBeenCalledTimes(1));
 
 		expect(crawlSpy).not.toHaveBeenCalled();
 		expect(repository.getJob("analyzing-job")?.crawlStatus).toBe("ready");
 	});
 });
-

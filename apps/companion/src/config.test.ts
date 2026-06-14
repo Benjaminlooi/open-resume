@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeEach, afterEach, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { resolveConfig } from "./config.js";
 
 describe("resolveConfig", () => {
@@ -42,7 +42,9 @@ describe("resolveConfig", () => {
 	it("throws an error if the selected provider key is missing", () => {
 		vi.unstubAllEnvs(); // Remove OPENAI_API_KEY as well
 		vi.stubEnv("OPEN_RESUME_COMPANION_AI_PROVIDER", "google");
-		expect(() => resolveConfig({})).toThrow(/AI Provider "google" is selected, but its required API key/);
+		expect(() => resolveConfig({})).toThrow(
+			/AI Provider "google" is selected, but its required API key/,
+		);
 	});
 
 	it("correctly resolves other providers when their key is present", () => {
