@@ -58,7 +58,15 @@ This document details the design to separate the job scraping/crawling phase fro
 
 ### Job Card Component (`apps/web/src/components/jobs/CompanionJobCard.tsx`)
 - Props: Add `onRetryAnalyze: (id: string) => void`.
-- Render logic for `job.crawlStatus === "failed"`:
+- Status Badge rendering:
+  - If `job.crawlStatus === "failed"`:
+    - If `job.cleanedText` is non-empty, render the badge as: `FAILED (ANALYSIS)`
+    - If `job.cleanedText` is empty, render the badge as: `FAILED (SCRAPE)`
+- Error Message rendering:
+  - If `job.crawlStatus === "failed"`:
+    - If `job.cleanedText` is non-empty, render error text as: `AI Analysis failed: {job.crawlError}`
+    - If `job.cleanedText` is empty, render error text as: `Scrape failed: {job.crawlError}`
+- Render logic for action buttons:
   - Keep **Retry Scrape** button (calls `onRetry`).
   - If `job.cleanedText` is non-empty, render a second button: **Retry AI Analysis** (calls `onRetryAnalyze`).
 
