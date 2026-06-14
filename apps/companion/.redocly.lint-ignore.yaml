@@ -71,3 +71,4 @@ openapi.json:
     - '#/paths/~1jobs~1{id}/get'
     - '#/paths/~1jobs~1{id}/delete'
     - '#/paths/~1jobs~1{id}~1retry-crawl/post'
+    - '#/paths/~1jobs~1{id}~1retry-analyze/post'

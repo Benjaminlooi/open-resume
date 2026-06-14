@@ -263,6 +263,45 @@ describe("companion server", () => {
 		expect(deleteResponse.json()).toEqual({ deleted: false });
 	});
 
+	it("retries job analysis and returns 404 for missing jobs", async () => {
+		const { crawlQueue, repository, server } = createTestServer();
+		vi.spyOn(crawlQueue, "enqueue");
+
+		// 1. If the job doesn't exist, it returns 404.
+		const missingResponse = await server.inject({
+			method: "POST",
+			url: "/jobs/missing-job/retry-analyze",
+		});
+		expect(missingResponse.statusCode).toBe(404);
+		expect(missingResponse.json()).toEqual({ error: "Job not found" });
+		expect(crawlQueue.enqueue).not.toHaveBeenCalled();
+
+		// 2. If the job exists, it resets the job status to analyzing, retains the cleaned_text and enqueues the job.
+		const created = repository.createJob({
+			id: "job-analyze-1",
+			sourceUrl: "https://example.com/job",
+			now: 1000,
+		});
+		repository.markAnalyzing(created.id, "Cleaned job text", 1100);
+		repository.markReady(created.id, {
+			cleanedText: "Cleaned job text",
+			parsedTitle: "Software Engineer",
+			now: 1200,
+		});
+
+		const retryResponse = await server.inject({
+			method: "POST",
+			url: `/jobs/${created.id}/retry-analyze`,
+		});
+		expect(retryResponse.statusCode).toBe(200);
+		expect(retryResponse.json()).toMatchObject({
+			id: created.id,
+			crawlStatus: "analyzing",
+			cleanedText: "Cleaned job text",
+		});
+		expect(crawlQueue.enqueue).toHaveBeenCalledWith(created.id);
+	});
+
 	it("serves resume CRUD routes from SQLite", async () => {
 		const { server } = createTestServer();
 

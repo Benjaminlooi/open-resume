@@ -114,6 +114,34 @@ export function createJobRoutes(context: JobRouteContext): FastifyPluginAsync {
 			},
 		);
 
+		typedServer.post(
+			"/jobs/:id/retry-analyze",
+			{
+				schema: {
+					operationId: "retryJobAnalysis",
+					tags: ["Jobs"],
+					summary: "Retry analysis for a companion job",
+					params: routeJobIdParamsSchema,
+					response: {
+						200: companionJobSchema,
+						404: companionErrorResponseSchema,
+					},
+				},
+			},
+			async (request, reply) => {
+				const job = context.jobRepository.resetForAnalysisRetry(
+					request.params.id,
+					Date.now(),
+				);
+				if (!job) {
+					return reply.status(404).send({ error: "Job not found" });
+				}
+
+				context.crawlQueue.enqueue(job.id);
+				return reply.send(job);
+			},
+		);
+
 		typedServer.delete(
 			"/jobs/:id",
 			{
