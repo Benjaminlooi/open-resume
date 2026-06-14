@@ -33,11 +33,18 @@ export function createCrawlQueue(options: CrawlQueueOptions) {
 		activeJobs.add(id);
 
 		try {
-			options.repository.markCrawling(id, now());
-			const result = await crawl(job.sourceUrl);
-			const cleanedText = result.cleanedText.trim();
-			if (!cleanedText) {
-				throw new Error("Crawl completed but no useful text was found.");
+			let cleanedText: string;
+			let result: CleanedPageCrawlResult | undefined;
+
+			if (job.cleanedText && job.cleanedText.trim()) {
+				cleanedText = job.cleanedText.trim();
+			} else {
+				options.repository.markCrawling(id, now());
+				result = await crawl(job.sourceUrl);
+				cleanedText = result.cleanedText.trim();
+				if (!cleanedText) {
+					throw new Error("Crawl completed but no useful text was found.");
+				}
 			}
 
 			if (options.repository.getJob(id)) {
@@ -58,7 +65,8 @@ export function createCrawlQueue(options: CrawlQueueOptions) {
 					aiConfig: options.aiConfig!,
 				});
 
-				if (options.repository.getJob(id)) {
+				const currentJob = options.repository.getJob(id);
+				if (currentJob) {
 					options.repository.markReady(id, {
 						cleanedText,
 						parsedTitle: aiResult.title,
@@ -67,7 +75,7 @@ export function createCrawlQueue(options: CrawlQueueOptions) {
 						parsedDescription: aiResult.description,
 						fitScore: aiResult.fitScore,
 						fitBriefJson: JSON.stringify(aiResult.fitBrief),
-						now: result.extractedAt || now(),
+						now: currentJob.crawledAt || result?.extractedAt || now(),
 					});
 				}
 			}

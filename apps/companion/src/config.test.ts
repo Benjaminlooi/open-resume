@@ -51,6 +51,6 @@ describe("resolveConfig", () => {
 		const config = resolveConfig({});
 		expect(config.ai.provider).toBe("google");
 		expect(config.ai.apiKey).toBe("gemini-test-key");
-		expect(config.ai.modelName).toBe("gemini-1.5-flash");
+		expect(config.ai.modelName).toBe("gemini-3.5-flash");
 	});
 });

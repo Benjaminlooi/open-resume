@@ -609,4 +609,159 @@ describe("crawl queue", () => {
 			crawlError: "AI Key Mismatch",
 		});
 	});
+
+	it("bypasses crawl and executes AI analysis when cleanedText is already populated", async () => {
+		const repository = createTestRepository();
+		createDefaultResume(repository);
+		repository.createJob({ id: "job-1", sourceUrl: "https://example.com", now: 1000 });
+		// Pre-fill cleanedText
+		repository.markAnalyzing("job-1", "Pre-scraped job text", 1100);
+
+		const crawlSpy = vi.fn();
+		const customAnalyze = vi.fn().mockResolvedValue({
+			title: "Pre-scraped AI Engineer",
+			company: "Pre OpenAI",
+			location: "SF",
+			description: "Details",
+			fitScore: 99,
+			fitBrief: {
+				roleSummary: "Good fit",
+				requirements: [],
+				keywords: [],
+				strengths: [],
+				gaps: [],
+				risks: [],
+				nextActions: [],
+				generatedAt: 1200,
+			},
+		});
+
+		const queue = createCrawlQueue({
+			repository,
+			crawl: crawlSpy,
+			analyze: customAnalyze,
+			profilePath: "/path/to/profile.json",
+			resumePath: "/path/to/resume.json",
+			now: () => 1200,
+		});
+
+		await queue.runJob("job-1");
+
+		expect(crawlSpy).not.toHaveBeenCalled();
+		expect(customAnalyze).toHaveBeenCalledWith({
+			profilePath: "/path/to/profile.json",
+			resumeContent: JSON.stringify({ personalInfo: { fullName: "Jane Doe" } }),
+			cleanedText: "Pre-scraped job text",
+		});
+		expect(repository.getJob("job-1")).toMatchObject({
+			crawlStatus: "ready",
+			cleanedText: "Pre-scraped job text",
+			parsedTitle: "Pre-scraped AI Engineer",
+		});
+	});
+
+	it("preserves crawl timestamp if already present when bypassing crawl", async () => {
+		const repository = createTestRepository();
+		createDefaultResume(repository);
+		repository.createJob({ id: "job-1", sourceUrl: "https://example.com", now: 1000 });
+		
+		const queue1 = createCrawlQueue({
+			repository,
+			crawl: async () => ({
+				sourceUrl: "https://example.com",
+				cleanedText: "First scraped text",
+				extractedAt: 1050,
+			}),
+			now: () => 1050,
+		});
+		await queue1.runJob("job-1");
+		
+		expect(repository.getJob("job-1")?.crawledAt).toBe(1050);
+
+		repository.markAnalyzing("job-1", "First scraped text", 1100);
+
+		const crawlSpy = vi.fn();
+		const customAnalyze = vi.fn().mockResolvedValue({
+			title: "Pre-scraped AI Engineer",
+			company: "Pre OpenAI",
+			location: "SF",
+			description: "Details",
+			fitScore: 99,
+			fitBrief: {
+				roleSummary: "Good fit",
+				requirements: [],
+				keywords: [],
+				strengths: [],
+				gaps: [],
+				risks: [],
+				nextActions: [],
+				generatedAt: 1200,
+			},
+		});
+
+		const queue2 = createCrawlQueue({
+			repository,
+			crawl: crawlSpy,
+			analyze: customAnalyze,
+			profilePath: "/path/to/profile.json",
+			resumePath: "/path/to/resume.json",
+			now: () => 1200,
+		});
+
+		await queue2.runJob("job-1");
+
+		expect(crawlSpy).not.toHaveBeenCalled();
+		expect(repository.getJob("job-1")).toMatchObject({
+			crawlStatus: "ready",
+			crawledAt: 1050,
+		});
+	});
+
+	it("enqueues and processes analyzing jobs in enqueueRunnableJobs", async () => {
+		const repository = createTestRepository();
+		createDefaultResume(repository);
+		
+		repository.createJob({
+			id: "analyzing-job",
+			sourceUrl: "https://example.com/analyzing",
+			now: 1000,
+		});
+		repository.markAnalyzing("analyzing-job", "Pre-scraped text for analyzing", 1100);
+
+		const crawlSpy = vi.fn();
+		const customAnalyze = vi.fn().mockResolvedValue({
+			title: "AI Engineer",
+			company: "OpenAI",
+			location: "SF",
+			description: "Details",
+			fitScore: 99,
+			fitBrief: {
+				roleSummary: "Good fit",
+				requirements: [],
+				keywords: [],
+				strengths: [],
+				gaps: [],
+				risks: [],
+				nextActions: [],
+				generatedAt: 1200,
+			},
+		});
+
+		const queue = createCrawlQueue({
+			repository,
+			crawl: crawlSpy,
+			analyze: customAnalyze,
+			profilePath: "/path/to/profile.json",
+			resumePath: "/path/to/resume.json",
+			now: () => 1200,
+		});
+
+		queue.enqueueRunnableJobs();
+		
+		await vi.waitFor(() => expect(customAnalyze).toHaveBeenCalledTimes(1));
+
+		expect(crawlSpy).not.toHaveBeenCalled();
+		expect(repository.getJob("analyzing-job")?.crawlStatus).toBe("ready");
+	});
 });
+
