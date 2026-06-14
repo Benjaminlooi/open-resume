@@ -11,8 +11,8 @@ import {
 	deleteCompanionJob,
 	type LocalCompanionJob,
 	listCompanionJobs,
-	retryCompanionJobCrawl,
 	retryCompanionJobAnalyze,
+	retryCompanionJobCrawl,
 } from "#/lib/local-companion-client";
 
 export const Route = createFileRoute("/jobs")({

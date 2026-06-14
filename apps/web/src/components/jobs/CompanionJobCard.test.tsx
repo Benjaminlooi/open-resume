@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { act } from "react";
+import { act, type ComponentProps } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import CompanionJobCard from "./CompanionJobCard";
@@ -26,12 +26,15 @@ const baseJob = {
 };
 
 describe("CompanionJobCard", () => {
-	async function renderCard(props: any) {
+	async function renderCard(
+		props: Partial<ComponentProps<typeof CompanionJobCard>>,
+	) {
 		const container = document.createElement("div");
 		document.body.appendChild(container);
 		const root = createRoot(container);
 
 		const defaultProps = {
+			job: baseJob,
 			onRetry: vi.fn(),
 			onDelete: vi.fn(),
 			onRetryAnalyze: vi.fn(),
@@ -107,7 +110,9 @@ describe("CompanionJobCard", () => {
 		const retryScrapeBtn = buttons.find((btn) =>
 			btn.textContent?.includes("Retry Scrape"),
 		);
-		expect(retryScrapeBtn?.querySelector('[data-testid="rotate-ccw"]')).not.toBeNull();
+		expect(
+			retryScrapeBtn?.querySelector('[data-testid="rotate-ccw"]'),
+		).not.toBeNull();
 
 		await act(async () => {
 			root.unmount();
@@ -194,7 +199,9 @@ describe("CompanionJobCard", () => {
 			} else if (status === "crawling") {
 				expect(html).toContain("Scraping job description from URL...");
 			} else if (status === "analyzing") {
-				expect(html).toContain("Scraping succeeded. Analyzing job description with AI...");
+				expect(html).toContain(
+					"Scraping succeeded. Analyzing job description with AI...",
+				);
 			}
 
 			await act(async () => {
