@@ -66,7 +66,7 @@ const EnvSchema = z.object({
 	OPENAI_API_KEY: z.string().optional(),
 	OPENAI_MODEL: z.string().default("gpt-4o-mini"),
 	GEMINI_API_KEY: z.string().optional(),
-	GEMINI_MODEL: z.string().default("gemini-1.5-flash"),
+	GEMINI_MODEL: z.string().default("gemini-3.5-flash"),
 	ANTHROPIC_API_KEY: z.string().optional(),
 	ANTHROPIC_MODEL: z.string().default("claude-3-5-haiku-latest"),
 	DEEPSEEK_API_KEY: z.string().optional(),
