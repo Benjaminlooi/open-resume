@@ -1,13 +1,16 @@
-import { chromium } from "playwright";
+import { chromium, type Page } from "playwright";
 import { extractReadableText } from "./html.js";
 
 interface ExtractionLogger {
 	debug(bindings: Record<string, unknown>, message: string): void;
+	error(bindings: Record<string, unknown>, message: string): void;
 }
 
 interface ExtractionLogOptions {
 	logger?: ExtractionLogger;
 	logScrapedData?: boolean;
+	headless?: boolean;
+	screenshotPath?: string;
 }
 
 export interface CleanedPageCrawlResult {
@@ -42,10 +45,11 @@ export async function crawlCleanedTextWithPlaywright(
 	sourceUrl: string,
 	options: ExtractionLogOptions = {},
 ): Promise<CleanedPageCrawlResult> {
-	const browser = await chromium.launch({ headless: true });
+	const browser = await chromium.launch({ headless: options.headless ?? true });
+	let page: Page | null = null;
 
 	try {
-		const page = await browser.newPage();
+		page = await browser.newPage();
 		await page.goto(sourceUrl, {
 			waitUntil: "domcontentloaded",
 			timeout: 30000,
@@ -53,6 +57,19 @@ export async function crawlCleanedTextWithPlaywright(
 		await page
 			.waitForLoadState("networkidle", { timeout: 10000 })
 			.catch(() => {});
+
+		// Take screenshot on successful load before reading frames
+		if (options.screenshotPath) {
+			try {
+				await page.screenshot({ path: options.screenshotPath, fullPage: true });
+			} catch (err) {
+				options.logger?.error(
+					{ error: err instanceof Error ? err.message : String(err) },
+					"failed to save screenshot on success",
+				);
+			}
+		}
+
 		let html = await page.content();
 
 		for (const frame of page.frames()) {
@@ -72,6 +89,16 @@ export async function crawlCleanedTextWithPlaywright(
 			logger: options.logger,
 			logScrapedData: options.logScrapedData,
 		});
+	} catch (error) {
+		// Capture screenshot of the error state (e.g. CAPTCHA page) if page is initialized
+		if (page && options.screenshotPath) {
+			try {
+				await page.screenshot({ path: options.screenshotPath, fullPage: true });
+			} catch {
+				// Ignore secondary screenshot errors on fail
+			}
+		}
+		throw error;
 	} finally {
 		await browser.close();
 	}

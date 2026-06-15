@@ -1,3 +1,5 @@
+import { existsSync, unlinkSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
 	crawlCleanedTextWithPlaywright,
@@ -73,5 +75,24 @@ describe("crawlCleanedTextWithPlaywright", () => {
 		expect(result.cleanedText).toContain("Main Job Title");
 		expect(result.cleanedText).toContain("Inside Iframe");
 		expect(result.cleanedText).toContain("Awesome design role.");
+	}, 20000);
+
+	it("captures full-page screenshots", async () => {
+		const htmlContent = "<html><body><h1>Screenshot Page</h1></body></html>";
+		const dataUrl = `data:text/html;charset=utf-8,${encodeURIComponent(htmlContent)}`;
+		const screenshotPath = join(__dirname, "test-screenshot.png");
+
+		if (existsSync(screenshotPath)) {
+			unlinkSync(screenshotPath);
+		}
+
+		try {
+			await crawlCleanedTextWithPlaywright(dataUrl, { screenshotPath });
+			expect(existsSync(screenshotPath)).toBe(true);
+		} finally {
+			if (existsSync(screenshotPath)) {
+				unlinkSync(screenshotPath);
+			}
+		}
 	}, 20000);
 });
