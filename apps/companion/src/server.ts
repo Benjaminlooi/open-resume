@@ -16,6 +16,7 @@ import { createSystemRoutes } from "./routes/system-routes.js";
 
 export function createServer(options: CreateServerOptions = {}) {
 	const config = resolveConfig(options);
+	mkdirSync(config.screenshotsPath, { recursive: true });
 
 	const server = Fastify({
 		logger: config.logStream
@@ -48,6 +49,7 @@ export function createServer(options: CreateServerOptions = {}) {
 				crawlCleanedTextWithPlaywright(sourceUrl, {
 					logger: server.log,
 					logScrapedData: config.logScrapedData,
+					headless: config.headless,
 				}),
 			logger: {
 				error(bindings, message) {

@@ -18,10 +18,14 @@ describe("resolveConfig", () => {
 		expect(config.databasePath).toContain(".open-resume-companion/jobs.sqlite");
 		expect(config.profilePath).toContain(".open-resume-companion/profile.json");
 		expect(config.resumePath).toContain(".open-resume-companion/resume.json");
+		expect(config.screenshotsPath).toContain(
+			".open-resume-companion/screenshots",
+		);
 		expect(config.logLevel).toBe("info");
 		expect(config.ai.provider).toBe("openai");
 		expect(config.ai.apiKey).toBe("sk-test-openai");
 		expect(config.ai.modelName).toBe("gpt-4o-mini");
+		expect(config.headless).toBe(true);
 	});
 
 	it("prefers custom options paths over defaults", () => {
@@ -54,5 +58,20 @@ describe("resolveConfig", () => {
 		expect(config.ai.provider).toBe("google");
 		expect(config.ai.apiKey).toBe("gemini-test-key");
 		expect(config.ai.modelName).toBe("gemini-3.5-flash");
+	});
+
+	it("resolves headless option correctly from options", () => {
+		const config = resolveConfig({ headless: false });
+		expect(config.headless).toBe(false);
+	});
+
+	it("resolves headless option correctly from environment variable", () => {
+		vi.stubEnv("OPEN_RESUME_COMPANION_HEADLESS", "false");
+		const config1 = resolveConfig({});
+		expect(config1.headless).toBe(false);
+
+		vi.stubEnv("OPEN_RESUME_COMPANION_HEADLESS", "0");
+		const config2 = resolveConfig({});
+		expect(config2.headless).toBe(false);
 	});
 });
