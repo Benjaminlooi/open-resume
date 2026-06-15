@@ -47,6 +47,7 @@ export async function crawlCleanedTextWithPlaywright(
 ): Promise<CleanedPageCrawlResult> {
 	const browser = await chromium.launch({ headless: options.headless ?? true });
 	let page: Page | null = null;
+	let screenshotTaken = false;
 
 	try {
 		page = await browser.newPage();
@@ -62,6 +63,7 @@ export async function crawlCleanedTextWithPlaywright(
 		if (options.screenshotPath) {
 			try {
 				await page.screenshot({ path: options.screenshotPath, fullPage: true });
+				screenshotTaken = true;
 			} catch (err) {
 				options.logger?.error(
 					{ error: err instanceof Error ? err.message : String(err) },
@@ -91,7 +93,7 @@ export async function crawlCleanedTextWithPlaywright(
 		});
 	} catch (error) {
 		// Capture screenshot of the error state (e.g. CAPTCHA page) if page is initialized
-		if (page && options.screenshotPath) {
+		if (page && options.screenshotPath && !screenshotTaken) {
 			try {
 				await page.screenshot({ path: options.screenshotPath, fullPage: true });
 			} catch {

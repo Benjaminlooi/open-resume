@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { existsSync, unlinkSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -80,7 +81,11 @@ describe("crawlCleanedTextWithPlaywright", () => {
 	it("captures full-page screenshots", async () => {
 		const htmlContent = "<html><body><h1>Screenshot Page</h1></body></html>";
 		const dataUrl = `data:text/html;charset=utf-8,${encodeURIComponent(htmlContent)}`;
-		const screenshotPath = join(__dirname, "test-screenshot.png");
+		const screenshotPath = join(
+			process.cwd(),
+			".open-resume-companion",
+			`test-screenshot-${randomUUID()}.png`,
+		);
 
 		if (existsSync(screenshotPath)) {
 			unlinkSync(screenshotPath);
