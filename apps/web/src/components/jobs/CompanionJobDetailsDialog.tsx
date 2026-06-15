@@ -12,6 +12,7 @@ import {
 	AlertTriangle,
 	ArrowRight,
 	ExternalLink,
+	Camera,
 } from "lucide-react";
 import type { LocalCompanionJob } from "#/lib/local-companion-client";
 
@@ -42,10 +43,12 @@ export default function CompanionJobDetailsDialog({
 	onRetry,
 	onRetryAnalyze,
 }: CompanionJobDetailsDialogProps) {
-	const [activeTab, setActiveTab] = useState<"ai" | "scraped">("ai");
+	const [activeTab, setActiveTab] = useState<"ai" | "scraped" | "screenshot">("ai");
+	const [screenshotError, setScreenshotError] = useState(false);
 
 	// Reset default tab when job changes
 	useEffect(() => {
+		setScreenshotError(false);
 		if (job.crawlStatus === "ready") {
 			setActiveTab("ai");
 		} else {
@@ -159,6 +162,22 @@ export default function CompanionJobDetailsDialog({
 						}`}
 					>
 						📄 Raw Scraped Text
+					</button>
+					<button
+						type="button"
+						id="details-tab-screenshot"
+						aria-controls="details-panel-screenshot"
+						onClick={() => setActiveTab("screenshot")}
+						role="tab"
+						aria-selected={activeTab === "screenshot"}
+						className={`px-4 py-2 font-bold text-sm border-b-4 -mb-[2px] transition-colors ${
+							activeTab === "screenshot"
+								? "border-main text-main-foreground"
+								: "border-transparent text-muted-foreground hover:text-foreground"
+						}`}
+					>
+						<Camera className="hidden" />
+						📸 Screenshot
 					</button>
 				</div>
 
@@ -367,6 +386,33 @@ export default function CompanionJobDetailsDialog({
 									<AlertTriangle className="size-8 text-amber-500 mb-3" />
 									<p className="font-bold text-muted-foreground">
 										No crawled job description text available.
+									</p>
+								</div>
+							)}
+						</div>
+					)}
+
+					{activeTab === "screenshot" && (
+						<div
+							id="details-panel-screenshot"
+							aria-labelledby="details-tab-screenshot"
+							role="tabpanel"
+							className="h-full flex flex-col"
+						>
+							{!screenshotError ? (
+								<div className="flex-1 min-h-[400px] overflow-y-auto rounded-base border-2 border-border p-2 bg-gray-50 flex justify-center shadow-light">
+									<img
+										src={`http://127.0.0.1:47321/jobs/${job.id}/screenshot`}
+										alt="Crawl Screenshot"
+										onError={() => setScreenshotError(true)}
+										className="max-w-full h-auto object-contain border border-border rounded-base"
+									/>
+								</div>
+							) : (
+								<div className="flex flex-col items-center justify-center py-12 text-center">
+									<AlertTriangle className="size-8 text-amber-500 mb-3" />
+									<p className="font-bold text-muted-foreground">
+										No screenshot available for this job crawl.
 									</p>
 								</div>
 							)}
