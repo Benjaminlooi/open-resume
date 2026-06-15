@@ -1,6 +1,9 @@
 import { randomUUID } from "node:crypto";
+import { existsSync, createReadStream, unlinkSync } from "node:fs";
+import { join } from "node:path";
 import type { FastifyPluginAsync } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
+import { z } from "zod";
 import {
 	companionErrorResponseSchema,
 	companionJobSchema,
@@ -86,6 +89,36 @@ export function createJobRoutes(context: JobRouteContext): FastifyPluginAsync {
 			},
 		);
 
+		typedServer.get(
+			"/jobs/:id/screenshot",
+			{
+				schema: {
+					operationId: "getJobScreenshot",
+					tags: ["Jobs"],
+					summary: "Get a job crawl screenshot",
+					params: routeJobIdParamsSchema,
+					response: {
+						200: z.any().describe("The captured screenshot PNG image."),
+						404: companionErrorResponseSchema,
+					},
+				},
+			},
+			async (request, reply) => {
+				const job = context.jobRepository.getJob(request.params.id);
+				if (!job) {
+					return reply.status(404).send({ error: "Job not found" });
+				}
+
+				const screenshotPath = join(context.screenshotsPath, `${request.params.id}.png`);
+				if (!existsSync(screenshotPath)) {
+					return reply.status(404).send({ error: "Screenshot not found" });
+				}
+
+				const stream = createReadStream(screenshotPath);
+				return reply.type("image/png").send(stream);
+			},
+		);
+
 		typedServer.post(
 			"/jobs/:id/retry-crawl",
 			{
@@ -155,9 +188,21 @@ export function createJobRoutes(context: JobRouteContext): FastifyPluginAsync {
 					},
 				},
 			},
-			async (request) => ({
-				deleted: context.jobRepository.deleteJob(request.params.id),
-			}),
+			async (request) => {
+				const id = request.params.id;
+				const deleted = context.jobRepository.deleteJob(id);
+				if (deleted) {
+					const screenshotPath = join(context.screenshotsPath, `${id}.png`);
+					if (existsSync(screenshotPath)) {
+						try {
+							unlinkSync(screenshotPath);
+						} catch {
+							// Ignore deletion errors
+						}
+					}
+				}
+				return { deleted };
+			},
 		);
 	};
 }

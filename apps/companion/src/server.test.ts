@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { rmSync } from "node:fs";
+import { existsSync, rmSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import type { FastifyInstance } from "fastify";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -266,6 +266,67 @@ describe("companion server", () => {
 		});
 		expect(deleteResponse.statusCode).toBe(200);
 		expect(deleteResponse.json()).toEqual({ deleted: false });
+	});
+
+	it("GET /jobs/:id/screenshot returns 404 if screenshot does not exist", async () => {
+		const { server, repository } = createTestServer();
+		
+		// Case 1: Job does not exist
+		const response1 = await server.inject({
+			method: "GET",
+			url: "/jobs/non-existent-id/screenshot",
+		});
+		expect(response1.statusCode).toBe(404);
+		expect(response1.json()).toEqual({ error: "Job not found" });
+
+		// Case 2: Job exists but screenshot file does not
+		repository.createJob({
+			id: "job-without-screenshot",
+			sourceUrl: "https://example.com/job",
+			now: 1000,
+		});
+		const response2 = await server.inject({
+			method: "GET",
+			url: "/jobs/job-without-screenshot/screenshot",
+		});
+		expect(response2.statusCode).toBe(404);
+		expect(response2.json()).toEqual({ error: "Screenshot not found" });
+	});
+
+	it("GET /jobs/:id/screenshot returns 200 and image/png stream if screenshot exists, and DELETE /jobs/:id deletes the screenshot file", async () => {
+		const { server, repository } = createTestServer();
+		const jobId = "job-with-screenshot";
+		repository.createJob({
+			id: jobId,
+			sourceUrl: "https://example.com/job",
+			now: 1000,
+		});
+
+		// Find the testDbDir from tempFiles (the first directory in tempFiles)
+		const testDbDir = tempFiles[0];
+		const screenshotsDir = resolve(testDbDir, "screenshots");
+		const screenshotPath = resolve(screenshotsDir, `${jobId}.png`);
+		writeFileSync(screenshotPath, "fake-png-data");
+
+		// 1. Fetch screenshot
+		const response = await server.inject({
+			method: "GET",
+			url: `/jobs/${jobId}/screenshot`,
+		});
+		expect(response.statusCode).toBe(200);
+		expect(response.headers["content-type"]).toBe("image/png");
+		expect(response.body).toBe("fake-png-data");
+
+		// 2. Delete job and verify screenshot is deleted
+		const deleteResponse = await server.inject({
+			method: "DELETE",
+			url: `/jobs/${jobId}`,
+		});
+		expect(deleteResponse.statusCode).toBe(200);
+		expect(deleteResponse.json()).toEqual({ deleted: true });
+
+		// Verify file does not exist anymore
+		expect(existsSync(screenshotPath)).toBe(false);
 	});
 
 	it("retries job analysis and returns 404 for missing jobs", async () => {

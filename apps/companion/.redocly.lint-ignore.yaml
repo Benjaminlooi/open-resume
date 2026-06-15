@@ -15,6 +15,7 @@ openapi.json:
     - '#/paths/~1resumes~1default/delete/responses'
     - '#/paths/~1jobs/get/responses'
     - '#/paths/~1jobs~1{id}/delete/responses'
+    - '#/paths/~1jobs~1{id}~1screenshot/get/responses'
   struct:
     - '#/components/schemas/CompanionJob/properties/parsedTitle/anyOf/1/type'
     - '#/components/schemas/CompanionJob/properties/parsedCompany/anyOf/1/type'
@@ -70,5 +71,6 @@ openapi.json:
     - '#/paths/~1jobs/post'
     - '#/paths/~1jobs~1{id}/get'
     - '#/paths/~1jobs~1{id}/delete'
+    - '#/paths/~1jobs~1{id}~1screenshot/get'
     - '#/paths/~1jobs~1{id}~1retry-crawl/post'
     - '#/paths/~1jobs~1{id}~1retry-analyze/post'

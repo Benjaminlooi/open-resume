@@ -1987,6 +1987,48 @@
         }
       }
     },
+    "/jobs/{id}/screenshot": {
+      "get": {
+        "operationId": "getJobScreenshot",
+        "summary": "Get a job crawl screenshot",
+        "tags": [
+          "Jobs"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The captured screenshot PNG image.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "The captured screenshot PNG image."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/jobs/{id}/retry-crawl": {
       "post": {
         "operationId": "retryJobCrawl",

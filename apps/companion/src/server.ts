@@ -83,7 +83,13 @@ export function createServer(options: CreateServerOptions = {}) {
 			}),
 		);
 		server.register(createResumeRoutes({ jobRepository }));
-		server.register(createJobRoutes({ jobRepository, crawlQueue }));
+		server.register(
+			createJobRoutes({
+				jobRepository,
+				crawlQueue,
+				screenshotsPath: config.screenshotsPath,
+			}),
+		);
 	});
 
 	if (config.recoverJobsOnStartup) {

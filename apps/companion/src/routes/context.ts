@@ -13,4 +13,5 @@ export interface ResumeRouteContext {
 export interface JobRouteContext {
 	jobRepository: JobRepository;
 	crawlQueue: CrawlQueue;
+	screenshotsPath: string;
 }
