@@ -20,7 +20,8 @@ interface CrawlQueueOptions {
 }
 
 export function createCrawlQueue(options: CrawlQueueOptions) {
-	const crawl = options.crawl ?? crawlCleanedTextWithPlaywright;
+	const crawl =
+		options.crawl ?? ((sourceUrl) => crawlCleanedTextWithPlaywright(sourceUrl));
 	const analyze = options.analyze ?? analyzeJobPosting;
 	const now = options.now ?? Date.now;
 	const activeJobs = new Set<string>();
