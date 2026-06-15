@@ -12,7 +12,38 @@ import CompanionJobCard from "./CompanionJobCard";
 vi.mock("lucide-react", () => ({
 	RotateCcw: () => <span data-testid="rotate-ccw">RotateCcw</span>,
 	Trash2: () => <span data-testid="trash-2">Trash2</span>,
+	Eye: () => <span data-testid="eye">Eye</span>,
+	Loader2: () => <span data-testid="loader-2">Loader2</span>,
+	Sparkles: () => <span data-testid="sparkles">Sparkles</span>,
+	CheckCircle2: () => <span data-testid="check-circle-2">CheckCircle2</span>,
+	AlertTriangle: () => <span data-testid="alert-triangle">AlertTriangle</span>,
+	ArrowRight: () => <span data-testid="arrow-right">ArrowRight</span>,
+	ExternalLink: () => <span data-testid="external-link">ExternalLink</span>,
 }));
+
+vi.mock("#/components/ui/dialog", () => {
+	return {
+		Dialog: ({ children, open }: any) => {
+			if (!open) return null;
+			return <div data-testid="mock-dialog">{children}</div>;
+		},
+		DialogContent: ({ children, className }: any) => (
+			<div data-testid="mock-dialog-content" className={className}>
+				{children}
+			</div>
+		),
+		DialogHeader: ({ children, className }: any) => (
+			<div data-testid="mock-dialog-header" className={className}>
+				{children}
+			</div>
+		),
+		DialogTitle: ({ children, className }: any) => (
+			<h2 data-testid="mock-dialog-title" className={className}>
+				{children}
+			</h2>
+		),
+	};
+});
 
 const baseJob = {
 	id: "job-1",
@@ -259,6 +290,34 @@ describe("CompanionJobCard", () => {
 		});
 
 		expect(onConvert).toHaveBeenCalledTimes(1);
+
+		await act(async () => {
+			root.unmount();
+		});
+	});
+
+	it("renders View Details button and opens details dialog on click", async () => {
+		const { container, root } = await renderCard({
+			job: {
+				...baseJob,
+				crawlStatus: "ready",
+				cleanedText: "This is some job description.",
+			},
+			onRetry: vi.fn(),
+			onDelete: vi.fn(),
+		});
+
+		const viewDetailsBtn = Array.from(container.querySelectorAll("button")).find(
+			(btn) => btn.textContent?.includes("View Details"),
+		);
+		expect(viewDetailsBtn).not.toBeUndefined();
+
+		await act(async () => {
+			viewDetailsBtn?.click();
+		});
+
+		// Radix Dialog content is rendered in a portal at document.body level
+		expect(document.body.innerHTML).toContain("This is some job description.");
 
 		await act(async () => {
 			root.unmount();

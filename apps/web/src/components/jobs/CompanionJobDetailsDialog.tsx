@@ -41,7 +41,7 @@ export default function CompanionJobDetailsDialog({
 		} else {
 			setActiveTab("scraped");
 		}
-	}, [job.id, job.crawlStatus]);
+	}, [job.id, job.crawlStatus, isOpen]);
 
 	const hostname = (() => {
 		try {
@@ -74,10 +74,11 @@ export default function CompanionJobDetailsDialog({
 							<DialogTitle className="text-2xl font-heading break-all">
 								{title}
 							</DialogTitle>
-							{company && (
+							{(company || job.parsedLocation) && (
 								<p className="font-bold text-sm text-gray-700 break-all">
 									{company}
-									{job.parsedLocation && ` • ${job.parsedLocation}`}
+									{company && job.parsedLocation && " • "}
+									{job.parsedLocation}
 								</p>
 							)}
 							<a
@@ -118,10 +119,12 @@ export default function CompanionJobDetailsDialog({
 				</DialogHeader>
 
 				{/* Tabs Header */}
-				<div className="flex border-b-2 border-border shrink-0">
+				<div className="flex border-b-2 border-border shrink-0" role="tablist">
 					<button
 						type="button"
 						onClick={() => setActiveTab("ai")}
+						role="tab"
+						aria-selected={activeTab === "ai"}
 						className={`px-4 py-2 font-bold text-sm border-b-4 -mb-[2px] transition-colors ${
 							activeTab === "ai"
 								? "border-main text-main-foreground"
@@ -133,6 +136,8 @@ export default function CompanionJobDetailsDialog({
 					<button
 						type="button"
 						onClick={() => setActiveTab("scraped")}
+						role="tab"
+						aria-selected={activeTab === "scraped"}
 						className={`px-4 py-2 font-bold text-sm border-b-4 -mb-[2px] transition-colors ${
 							activeTab === "scraped"
 								? "border-main text-main-foreground"
@@ -146,7 +151,7 @@ export default function CompanionJobDetailsDialog({
 				{/* Tab Content */}
 				<div className="flex-1 overflow-y-auto py-4 pr-1 min-h-0">
 					{activeTab === "ai" && (
-						<div className="flex flex-col gap-6">
+						<div className="flex flex-col gap-6" role="tabpanel">
 							{job.crawlStatus === "analyzing" && (
 								<div className="flex flex-col items-center justify-center py-12 text-center">
 									<Loader2 className="size-8 animate-spin text-main mb-3" />
@@ -328,7 +333,7 @@ export default function CompanionJobDetailsDialog({
 					)}
 
 					{activeTab === "scraped" && (
-						<div className="h-full flex flex-col">
+						<div className="h-full flex flex-col" role="tabpanel">
 							{job.cleanedText ? (
 								<pre className="flex-1 min-h-[300px] overflow-y-auto whitespace-pre-wrap rounded-base border-2 border-border p-4 bg-gray-50 font-sans text-sm leading-relaxed">
 									{job.cleanedText}
@@ -393,7 +398,7 @@ export default function CompanionJobDetailsDialog({
 									onConvert(job);
 									onClose();
 								}}
-								className="inline-flex items-center gap-1 rounded-base border-2 border-border bg-main px-4 py-2 font-bold text-sm text-main-foreground shadow-shadow hover:translate-x-boxShadowX hover:translate-y-boxShadowY hover:shadow-none transition-all cursor-pointer bg-main"
+								className="inline-flex items-center gap-1 rounded-base border-2 border-border bg-main px-4 py-2 font-bold text-sm text-main-foreground shadow-shadow hover:translate-x-boxShadowX hover:translate-y-boxShadowY hover:shadow-none transition-all cursor-pointer"
 							>
 								Convert to Application
 							</button>
