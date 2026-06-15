@@ -1,5 +1,5 @@
 import { mkdirSync } from "node:fs";
-import { dirname } from "node:path";
+import { dirname, join } from "node:path";
 import Fastify from "fastify";
 import type { CreateServerOptions } from "./config.js";
 import { resolveConfig } from "./config.js";
@@ -45,12 +45,15 @@ export function createServer(options: CreateServerOptions = {}) {
 		config.crawlQueue ??
 		createCrawlQueue({
 			repository: jobRepository,
-			crawl: (sourceUrl) =>
-				crawlCleanedTextWithPlaywright(sourceUrl, {
+			crawl: (sourceUrl, jobId) => {
+				const screenshotPath = join(config.screenshotsPath, `${jobId}.png`);
+				return crawlCleanedTextWithPlaywright(sourceUrl, {
 					logger: server.log,
 					logScrapedData: config.logScrapedData,
 					headless: config.headless,
-				}),
+					screenshotPath,
+				});
+			},
 			logger: {
 				error(bindings, message) {
 					server.log.error(bindings, message);

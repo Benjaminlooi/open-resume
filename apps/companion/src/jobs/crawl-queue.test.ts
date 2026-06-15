@@ -332,7 +332,7 @@ describe("crawl queue", () => {
 			error: "Nope",
 			now: 1600,
 		});
-		const crawl = vi.fn(async (sourceUrl: string) => ({
+		const crawl = vi.fn(async (sourceUrl: string, _jobId: string) => ({
 			sourceUrl,
 			cleanedText: `Text for ${sourceUrl}`,
 			extractedAt: 1700,
@@ -346,10 +346,10 @@ describe("crawl queue", () => {
 		queue.enqueueRunnableJobs();
 		await vi.waitFor(() => expect(crawl).toHaveBeenCalledTimes(2));
 
-		expect(crawl).toHaveBeenCalledWith("https://example.com/pending");
-		expect(crawl).toHaveBeenCalledWith("https://example.com/crawling");
-		expect(crawl).not.toHaveBeenCalledWith("https://example.com/ready");
-		expect(crawl).not.toHaveBeenCalledWith("https://example.com/failed");
+		expect(crawl).toHaveBeenCalledWith("https://example.com/pending", "pending-job");
+		expect(crawl).toHaveBeenCalledWith("https://example.com/crawling", "crawling-job");
+		expect(crawl).not.toHaveBeenCalledWith("https://example.com/ready", expect.any(String));
+		expect(crawl).not.toHaveBeenCalledWith("https://example.com/failed", expect.any(String));
 	});
 
 	it("swallows unexpected enqueue rejections", async () => {

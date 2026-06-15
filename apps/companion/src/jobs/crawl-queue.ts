@@ -10,7 +10,7 @@ interface CrawlQueueLogger {
 
 interface CrawlQueueOptions {
 	repository: JobRepository;
-	crawl?: (sourceUrl: string) => Promise<CleanedPageCrawlResult>;
+	crawl?: (sourceUrl: string, jobId: string) => Promise<CleanedPageCrawlResult>;
 	logger?: CrawlQueueLogger;
 	now?: () => number;
 	profilePath?: string;
@@ -40,7 +40,7 @@ export function createCrawlQueue(options: CrawlQueueOptions) {
 				cleanedText = job.cleanedText.trim();
 			} else {
 				options.repository.markCrawling(id, now());
-				result = await crawl(job.sourceUrl);
+				result = await crawl(job.sourceUrl, id);
 				cleanedText = result.cleanedText.trim();
 				if (!cleanedText) {
 					throw new Error("Crawl completed but no useful text was found.");
