@@ -45,6 +45,25 @@ vi.mock("#/components/ui/dialog", () => {
 	};
 });
 
+const convertJobToApplicationMock = vi.fn();
+const retryJobCrawlMock = vi.fn();
+const retryJobAnalyzeMock = vi.fn();
+const deleteJobMock = vi.fn();
+
+vi.mock("#/features/jobs/companion-job-store", () => ({
+	useCompanionJobStore: () => ({
+		convertJobToApplication: convertJobToApplicationMock,
+		retryJobCrawl: retryJobCrawlMock,
+		retryJobAnalyze: retryJobAnalyzeMock,
+		deleteJob: deleteJobMock,
+	}),
+}));
+
+const mockNavigate = vi.fn();
+vi.mock("@tanstack/react-router", () => ({
+	useNavigate: () => mockNavigate,
+}));
+
 const baseJob = {
 	id: "job-1",
 	sourceUrl: "https://example.com/jobs/1",
@@ -66,9 +85,6 @@ describe("CompanionJobCard", () => {
 
 		const defaultProps = {
 			job: baseJob,
-			onRetry: vi.fn(),
-			onDelete: vi.fn(),
-			onRetryAnalyze: vi.fn(),
 		};
 
 		await act(async () => {
@@ -80,13 +96,12 @@ describe("CompanionJobCard", () => {
 
 	afterEach(() => {
 		document.body.innerHTML = "";
+		vi.clearAllMocks();
 	});
 
 	it("renders pending jobs without company or title", async () => {
 		const { container, root } = await renderCard({
 			job: baseJob,
-			onRetry: vi.fn(),
-			onDelete: vi.fn(),
 		});
 
 		const html = container.innerHTML;
@@ -106,8 +121,6 @@ describe("CompanionJobCard", () => {
 				cleanedText: "This is a useful job description for an AI engineer.",
 				crawledAt: 1791571300000,
 			},
-			onRetry: vi.fn(),
-			onDelete: vi.fn(),
 		});
 
 		const html = container.innerHTML;
@@ -171,17 +184,13 @@ describe("CompanionJobCard", () => {
 		});
 	});
 
-	it("calls onRetry when Retry Scrape is clicked, and onRetryAnalyze when Retry AI Analysis is clicked", async () => {
-		const onRetry = vi.fn();
-		const onRetryAnalyze = vi.fn();
+	it("calls retryJobCrawl and retryJobAnalyze store actions when retry buttons are clicked", async () => {
 		const { container, root } = await renderCard({
 			job: {
 				...baseJob,
 				crawlStatus: "failed",
 				cleanedText: "Some scraped job text content.",
 			},
-			onRetry,
-			onRetryAnalyze,
 		});
 
 		const buttons = Array.from(container.querySelectorAll("button"));
@@ -198,12 +207,12 @@ describe("CompanionJobCard", () => {
 		await act(async () => {
 			retryScrapeBtn?.click();
 		});
-		expect(onRetry).toHaveBeenCalledWith("job-1");
+		expect(retryJobCrawlMock).toHaveBeenCalledWith("job-1");
 
 		await act(async () => {
 			retryAnalyzeBtn?.click();
 		});
-		expect(onRetryAnalyze).toHaveBeenCalledWith("job-1");
+		expect(retryJobAnalyzeMock).toHaveBeenCalledWith("job-1");
 
 		await act(async () => {
 			root.unmount();
@@ -250,8 +259,6 @@ describe("CompanionJobCard", () => {
 				parsedCompany: "SuperTech Inc",
 				fitScore: 85,
 			},
-			onRetry: vi.fn(),
-			onDelete: vi.fn(),
 		});
 
 		const html = container.innerHTML;
@@ -265,8 +272,8 @@ describe("CompanionJobCard", () => {
 		});
 	});
 
-	it("calls onConvert when Convert to Application is clicked", async () => {
-		const onConvert = vi.fn();
+	it("calls convertJobToApplication and navigates when Convert to Application is clicked", async () => {
+		convertJobToApplicationMock.mockResolvedValue("app-123");
 		const { container, root } = await renderCard({
 			job: {
 				...baseJob,
@@ -275,9 +282,6 @@ describe("CompanionJobCard", () => {
 				parsedCompany: "SuperTech Inc",
 				fitScore: 85,
 			},
-			onRetry: vi.fn(),
-			onDelete: vi.fn(),
-			onConvert,
 		});
 
 		const convertBtn = Array.from(container.querySelectorAll("button")).find(
@@ -289,7 +293,14 @@ describe("CompanionJobCard", () => {
 			convertBtn?.click();
 		});
 
-		expect(onConvert).toHaveBeenCalledTimes(1);
+		expect(convertJobToApplicationMock).toHaveBeenCalledWith({
+			...baseJob,
+			crawlStatus: "ready",
+			parsedTitle: "AI Specialist",
+			parsedCompany: "SuperTech Inc",
+			fitScore: 85,
+		});
+		expect(mockNavigate).toHaveBeenCalledWith({ to: "/jobs/$id", params: { id: "app-123" } });
 
 		await act(async () => {
 			root.unmount();
@@ -303,8 +314,6 @@ describe("CompanionJobCard", () => {
 				crawlStatus: "ready",
 				cleanedText: "This is some job description.",
 			},
-			onRetry: vi.fn(),
-			onDelete: vi.fn(),
 		});
 
 		const viewDetailsBtn = Array.from(

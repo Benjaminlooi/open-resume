@@ -2,13 +2,11 @@ import { Eye, RotateCcw, Trash2 } from "lucide-react";
 import { useState } from "react";
 import type { LocalCompanionJob } from "#/lib/local-companion-client";
 import CompanionJobDetailsDialog from "./CompanionJobDetailsDialog";
+import { useCompanionJobStore } from "#/features/jobs/companion-job-store";
+import { useNavigate } from "@tanstack/react-router";
 
 interface CompanionJobCardProps {
 	job: LocalCompanionJob;
-	onRetry: (id: string) => void;
-	onRetryAnalyze: (id: string) => void;
-	onDelete: (id: string) => void;
-	onConvert?: (job: LocalCompanionJob) => void;
 }
 
 function getHostname(sourceUrl: string) {
@@ -25,11 +23,9 @@ function getPreview(text: string) {
 
 export default function CompanionJobCard({
 	job,
-	onRetry,
-	onRetryAnalyze,
-	onDelete,
-	onConvert,
 }: CompanionJobCardProps) {
+	const { convertJobToApplication, retryJobCrawl, retryJobAnalyze, deleteJob } = useCompanionJobStore();
+	const navigate = useNavigate();
 	const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 	const hostname = getHostname(job.sourceUrl);
 	const isReady = job.crawlStatus === "ready";
@@ -118,10 +114,13 @@ export default function CompanionJobCard({
 							View Details
 						</button>
 					)}
-					{isReady && onConvert && (
+					{isReady && (
 						<button
 							type="button"
-							onClick={() => onConvert(job)}
+							onClick={async () => {
+								const appId = await convertJobToApplication(job);
+								navigate({ to: "/jobs/$id", params: { id: appId } });
+							}}
 							className="inline-flex items-center gap-1 rounded-base border-2 border-border bg-main px-3 py-1.5 font-bold text-sm text-main-foreground shadow-shadow hover:translate-x-boxShadowX hover:translate-y-boxShadowY hover:shadow-none transition-all cursor-pointer bg-main"
 						>
 							Convert to Application
@@ -131,7 +130,7 @@ export default function CompanionJobCard({
 						<>
 							<button
 								type="button"
-								onClick={() => onRetry(job.id)}
+								onClick={() => retryJobCrawl(job.id)}
 								className="inline-flex items-center gap-1 rounded-base border-2 border-border bg-white px-3 py-1.5 font-bold text-sm shadow-light hover:translate-x-boxShadowX hover:translate-y-boxShadowY hover:shadow-none transition-all cursor-pointer"
 							>
 								<RotateCcw className="size-4" />
@@ -140,7 +139,7 @@ export default function CompanionJobCard({
 							{job.cleanedText && (
 								<button
 									type="button"
-									onClick={() => onRetryAnalyze(job.id)}
+									onClick={() => retryJobAnalyze(job.id)}
 									className="inline-flex items-center gap-1 rounded-base border-2 border-border bg-white px-3 py-1.5 font-bold text-sm shadow-light hover:translate-x-boxShadowX hover:translate-y-boxShadowY hover:shadow-none transition-all cursor-pointer"
 								>
 									<RotateCcw className="size-4" />
@@ -151,7 +150,7 @@ export default function CompanionJobCard({
 					)}
 					<button
 						type="button"
-						onClick={() => onDelete(job.id)}
+						onClick={() => deleteJob(job.id)}
 						className="inline-flex items-center gap-1 rounded-base border-2 border-border bg-white px-3 py-1.5 font-bold text-sm shadow-light hover:translate-x-boxShadowX hover:translate-y-boxShadowY hover:shadow-none transition-all cursor-pointer"
 						aria-label="Delete job"
 					>
@@ -165,9 +164,6 @@ export default function CompanionJobCard({
 					job={job}
 					isOpen={isDetailsOpen}
 					onClose={() => setIsDetailsOpen(false)}
-					onConvert={onConvert}
-					onRetry={onRetry}
-					onRetryAnalyze={onRetryAnalyze}
 				/>
 			)}
 		</>
