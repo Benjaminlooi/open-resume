@@ -42,6 +42,23 @@ vi.mock("lucide-react", () => ({
 	ExternalLink: () => <span data-testid="external-link">ExternalLink</span>,
 }));
 
+const convertJobToApplicationMock = vi.fn();
+const retryJobCrawlMock = vi.fn();
+const retryJobAnalyzeMock = vi.fn();
+
+vi.mock("#/features/jobs/companion-job-store", () => ({
+	useCompanionJobStore: () => ({
+		convertJobToApplication: convertJobToApplicationMock,
+		retryJobCrawl: retryJobCrawlMock,
+		retryJobAnalyze: retryJobAnalyzeMock,
+	}),
+}));
+
+const mockNavigate = vi.fn();
+vi.mock("@tanstack/react-router", () => ({
+	useNavigate: () => mockNavigate,
+}));
+
 const mockJob = {
 	id: "job-1",
 	sourceUrl: "https://example.com/job",
@@ -90,6 +107,7 @@ describe("CompanionJobDetailsDialog", () => {
 
 	afterEach(() => {
 		document.body.innerHTML = "";
+		vi.clearAllMocks();
 	});
 
 	it("renders details correctly when open", async () => {
@@ -127,9 +145,9 @@ describe("CompanionJobDetailsDialog", () => {
 		});
 	});
 
-	it("calls onConvert when Convert to Application button is clicked", async () => {
-		const onConvert = vi.fn();
-		const { container, root } = await renderDialog({ onConvert });
+	it("calls convertJobToApplication and navigates when Convert to Application button is clicked", async () => {
+		convertJobToApplicationMock.mockResolvedValue("app-123");
+		const { container, root } = await renderDialog({});
 
 		const convertBtn = Array.from(container.querySelectorAll("button")).find(
 			(btn) => btn.textContent?.includes("Convert to Application"),
@@ -140,7 +158,8 @@ describe("CompanionJobDetailsDialog", () => {
 			convertBtn?.click();
 		});
 
-		expect(onConvert).toHaveBeenCalledWith(mockJob);
+		expect(convertJobToApplicationMock).toHaveBeenCalledWith(mockJob);
+		expect(mockNavigate).toHaveBeenCalledWith({ to: "/jobs/$id", params: { id: "app-123" } });
 
 		await act(async () => {
 			root.unmount();
@@ -148,8 +167,6 @@ describe("CompanionJobDetailsDialog", () => {
 	});
 
 	it("renders failed status and handles retry callbacks", async () => {
-		const onRetry = vi.fn();
-		const onRetryAnalyze = vi.fn();
 		const onClose = vi.fn();
 
 		const failedJob = {
@@ -161,8 +178,6 @@ describe("CompanionJobDetailsDialog", () => {
 
 		const { container, root } = await renderDialog({
 			job: failedJob,
-			onRetry,
-			onRetryAnalyze,
 			onClose,
 		});
 
@@ -184,13 +199,13 @@ describe("CompanionJobDetailsDialog", () => {
 		await act(async () => {
 			retryScrapeBtn?.click();
 		});
-		expect(onRetry).toHaveBeenCalledWith("job-1");
+		expect(retryJobCrawlMock).toHaveBeenCalledWith("job-1");
 		expect(onClose).toHaveBeenCalled();
 
 		await act(async () => {
 			retryAnalyzeBtn?.click();
 		});
-		expect(onRetryAnalyze).toHaveBeenCalledWith("job-1");
+		expect(retryJobAnalyzeMock).toHaveBeenCalledWith("job-1");
 
 		await act(async () => {
 			root.unmount();

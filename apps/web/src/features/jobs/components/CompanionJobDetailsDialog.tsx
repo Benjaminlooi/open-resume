@@ -15,14 +15,13 @@ import {
 } from "#/components/ui/dialog";
 import type { LocalCompanionJob } from "#/lib/local-companion-client";
 import { companionBaseUrl } from "#/lib/local-companion-client";
+import { useCompanionJobStore } from "#/features/jobs/companion-job-store";
+import { useNavigate } from "@tanstack/react-router";
 
 interface CompanionJobDetailsDialogProps {
 	job: LocalCompanionJob;
 	isOpen: boolean;
 	onClose: () => void;
-	onConvert?: (job: LocalCompanionJob) => void;
-	onRetry?: (id: string) => void;
-	onRetryAnalyze?: (id: string) => void;
 }
 
 interface FitBrief {
@@ -39,10 +38,9 @@ export default function CompanionJobDetailsDialog({
 	job,
 	isOpen,
 	onClose,
-	onConvert,
-	onRetry,
-	onRetryAnalyze,
 }: CompanionJobDetailsDialogProps) {
+	const { convertJobToApplication, retryJobCrawl, retryJobAnalyze } = useCompanionJobStore();
+	const navigate = useNavigate();
 	const [activeTab, setActiveTab] = useState<"ai" | "scraped" | "screenshot">(
 		"ai",
 	);
@@ -429,23 +427,21 @@ export default function CompanionJobDetailsDialog({
 					<div>
 						{job.crawlStatus === "failed" && (
 							<div className="flex gap-2">
-								{onRetry && (
+								<button
+									type="button"
+									onClick={() => {
+										retryJobCrawl(job.id);
+										onClose();
+									}}
+									className="inline-flex items-center gap-1 rounded-base border-2 border-border bg-white px-3 py-1.5 font-bold text-sm hover:translate-x-boxShadowX hover:translate-y-boxShadowY hover:shadow-none transition-all cursor-pointer shadow-light"
+								>
+									Retry Scrape
+								</button>
+								{job.cleanedText && (
 									<button
 										type="button"
 										onClick={() => {
-											onRetry(job.id);
-											onClose();
-										}}
-										className="inline-flex items-center gap-1 rounded-base border-2 border-border bg-white px-3 py-1.5 font-bold text-sm hover:translate-x-boxShadowX hover:translate-y-boxShadowY hover:shadow-none transition-all cursor-pointer shadow-light"
-									>
-										Retry Scrape
-									</button>
-								)}
-								{job.cleanedText && onRetryAnalyze && (
-									<button
-										type="button"
-										onClick={() => {
-											onRetryAnalyze(job.id);
+											retryJobAnalyze(job.id);
 											onClose();
 										}}
 										className="inline-flex items-center gap-1 rounded-base border-2 border-border bg-white px-3 py-1.5 font-bold text-sm hover:translate-x-boxShadowX hover:translate-y-boxShadowY hover:shadow-none transition-all cursor-pointer shadow-light"
@@ -465,12 +461,13 @@ export default function CompanionJobDetailsDialog({
 						>
 							Close
 						</button>
-						{isReady && onConvert && (
+						{isReady && (
 							<button
 								type="button"
-								onClick={() => {
-									onConvert(job);
+								onClick={async () => {
+									const appId = await convertJobToApplication(job);
 									onClose();
+									navigate({ to: "/jobs/$id", params: { id: appId } });
 								}}
 								className="inline-flex items-center gap-1 rounded-base border-2 border-border bg-main px-4 py-2 font-bold text-sm text-main-foreground shadow-shadow hover:translate-x-boxShadowX hover:translate-y-boxShadowY hover:shadow-none transition-all cursor-pointer"
 							>
