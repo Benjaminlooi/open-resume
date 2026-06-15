@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { existsSync, createReadStream, unlinkSync } from "node:fs";
+import { createReadStream, promises as fsPromises } from "node:fs";
 import { join } from "node:path";
 import type { FastifyPluginAsync } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
@@ -99,6 +99,7 @@ export function createJobRoutes(context: JobRouteContext): FastifyPluginAsync {
 					params: routeJobIdParamsSchema,
 					response: {
 						200: z.any().describe("The captured screenshot PNG image."),
+						400: companionErrorResponseSchema,
 						404: companionErrorResponseSchema,
 					},
 				},
@@ -110,7 +111,13 @@ export function createJobRoutes(context: JobRouteContext): FastifyPluginAsync {
 				}
 
 				const screenshotPath = join(context.screenshotsPath, `${request.params.id}.png`);
-				if (!existsSync(screenshotPath)) {
+				if (!screenshotPath.startsWith(context.screenshotsPath)) {
+					return reply.status(400).send({ error: "Invalid ID path" });
+				}
+
+				try {
+					await fsPromises.access(screenshotPath);
+				} catch {
 					return reply.status(404).send({ error: "Screenshot not found" });
 				}
 
@@ -193,11 +200,11 @@ export function createJobRoutes(context: JobRouteContext): FastifyPluginAsync {
 				const deleted = context.jobRepository.deleteJob(id);
 				if (deleted) {
 					const screenshotPath = join(context.screenshotsPath, `${id}.png`);
-					if (existsSync(screenshotPath)) {
+					if (screenshotPath.startsWith(context.screenshotsPath)) {
 						try {
-							unlinkSync(screenshotPath);
+							await fsPromises.unlink(screenshotPath);
 						} catch {
-							// Ignore deletion errors
+							// Ignore missing files or permission errors during delete
 						}
 					}
 				}

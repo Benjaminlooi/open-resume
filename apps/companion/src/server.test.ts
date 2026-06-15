@@ -94,7 +94,7 @@ describe("companion server", () => {
 		});
 		servers.push(server);
 		repositories.push(repository);
-		return { crawlQueue, repository, server };
+		return { crawlQueue, repository, server, testDbDir };
 	}
 
 	it("responds to health checks", async () => {
@@ -294,7 +294,7 @@ describe("companion server", () => {
 	});
 
 	it("GET /jobs/:id/screenshot returns 200 and image/png stream if screenshot exists, and DELETE /jobs/:id deletes the screenshot file", async () => {
-		const { server, repository } = createTestServer();
+		const { server, repository, testDbDir } = createTestServer();
 		const jobId = "job-with-screenshot";
 		repository.createJob({
 			id: jobId,
@@ -302,8 +302,6 @@ describe("companion server", () => {
 			now: 1000,
 		});
 
-		// Find the testDbDir from tempFiles (the first directory in tempFiles)
-		const testDbDir = tempFiles[0];
 		const screenshotsDir = resolve(testDbDir, "screenshots");
 		const screenshotPath = resolve(screenshotsDir, `${jobId}.png`);
 		writeFileSync(screenshotPath, "fake-png-data");
