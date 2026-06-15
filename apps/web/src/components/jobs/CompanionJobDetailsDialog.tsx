@@ -49,6 +49,7 @@ export default function CompanionJobDetailsDialog({
 	const [screenshotError, setScreenshotError] = useState(false);
 
 	// Reset default tab when job changes
+	// biome-ignore lint/correctness/useExhaustiveDependencies: reset tab on job change or dialog open
 	useEffect(() => {
 		setScreenshotError(false);
 		if (job.crawlStatus === "ready") {
@@ -56,7 +57,6 @@ export default function CompanionJobDetailsDialog({
 		} else {
 			setActiveTab("scraped");
 		}
-		// biome-ignore lint/correctness/useExhaustiveDependencies: reset tab on job change or dialog open
 	}, [job.id, job.crawlStatus, isOpen]);
 
 	const hostname = (() => {

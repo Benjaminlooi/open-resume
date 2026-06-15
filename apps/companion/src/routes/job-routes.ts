@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { createReadStream, promises as fsPromises } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import type { FastifyPluginAsync } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
 import { z } from "zod";
@@ -114,7 +114,7 @@ export function createJobRoutes(context: JobRouteContext): FastifyPluginAsync {
 					context.screenshotsPath,
 					`${request.params.id}.png`,
 				);
-				if (!screenshotPath.startsWith(context.screenshotsPath)) {
+				if (dirname(screenshotPath) !== context.screenshotsPath) {
 					return reply.status(400).send({ error: "Invalid ID path" });
 				}
 
@@ -203,7 +203,7 @@ export function createJobRoutes(context: JobRouteContext): FastifyPluginAsync {
 				const deleted = context.jobRepository.deleteJob(id);
 				if (deleted) {
 					const screenshotPath = join(context.screenshotsPath, `${id}.png`);
-					if (screenshotPath.startsWith(context.screenshotsPath)) {
+					if (dirname(screenshotPath) === context.screenshotsPath) {
 						try {
 							await fsPromises.unlink(screenshotPath);
 						} catch {
