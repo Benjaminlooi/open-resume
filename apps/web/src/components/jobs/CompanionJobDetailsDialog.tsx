@@ -24,6 +24,16 @@ interface CompanionJobDetailsDialogProps {
 	onRetryAnalyze?: (id: string) => void;
 }
 
+interface FitBrief {
+	roleSummary: string;
+	requirements?: string[];
+	keywords?: string[];
+	strengths?: string[];
+	gaps?: string[];
+	risks?: string[];
+	nextActions?: string[];
+}
+
 export default function CompanionJobDetailsDialog({
 	job,
 	isOpen,
@@ -56,10 +66,10 @@ export default function CompanionJobDetailsDialog({
 	const isReady = job.crawlStatus === "ready";
 
 	// Parse fitBriefJson if it exists
-	let fitBrief: any = null;
+	let fitBrief: FitBrief | null = null;
 	if (job.fitBriefJson) {
 		try {
-			fitBrief = JSON.parse(job.fitBriefJson);
+			fitBrief = JSON.parse(job.fitBriefJson) as FitBrief;
 		} catch (e) {
 			console.error("Failed to parse fitBriefJson", e);
 		}
@@ -122,6 +132,8 @@ export default function CompanionJobDetailsDialog({
 				<div className="flex border-b-2 border-border shrink-0" role="tablist">
 					<button
 						type="button"
+						id="details-tab-ai"
+						aria-controls="details-panel-ai"
 						onClick={() => setActiveTab("ai")}
 						role="tab"
 						aria-selected={activeTab === "ai"}
@@ -135,6 +147,8 @@ export default function CompanionJobDetailsDialog({
 					</button>
 					<button
 						type="button"
+						id="details-tab-scraped"
+						aria-controls="details-panel-scraped"
 						onClick={() => setActiveTab("scraped")}
 						role="tab"
 						aria-selected={activeTab === "scraped"}
@@ -151,7 +165,12 @@ export default function CompanionJobDetailsDialog({
 				{/* Tab Content */}
 				<div className="flex-1 overflow-y-auto py-4 pr-1 min-h-0">
 					{activeTab === "ai" && (
-						<div className="flex flex-col gap-6" role="tabpanel">
+						<div
+							id="details-panel-ai"
+							aria-labelledby="details-tab-ai"
+							role="tabpanel"
+							className="flex flex-col gap-6"
+						>
 							{job.crawlStatus === "analyzing" && (
 								<div className="flex flex-col items-center justify-center py-12 text-center">
 									<Loader2 className="size-8 animate-spin text-main mb-3" />
@@ -262,7 +281,7 @@ export default function CompanionJobDetailsDialog({
 												Gaps & Risks
 											</h3>
 											<div className="flex flex-col gap-3">
-												{fitBrief.gaps?.length > 0 && (
+												{fitBrief.gaps && fitBrief.gaps.length > 0 && (
 													<div>
 														<h4 className="text-[10px] font-bold uppercase text-[#9F1239] mb-0.5">
 															Gaps
@@ -282,7 +301,7 @@ export default function CompanionJobDetailsDialog({
 														</ul>
 													</div>
 												)}
-												{fitBrief.risks?.length > 0 && (
+												{fitBrief.risks && fitBrief.risks.length > 0 && (
 													<div>
 														<h4 className="text-[10px] font-bold uppercase text-[#9F1239] mb-0.5">
 															Risks & Concerns
@@ -333,7 +352,12 @@ export default function CompanionJobDetailsDialog({
 					)}
 
 					{activeTab === "scraped" && (
-						<div className="h-full flex flex-col" role="tabpanel">
+						<div
+							id="details-panel-scraped"
+							aria-labelledby="details-tab-scraped"
+							role="tabpanel"
+							className="h-full flex flex-col"
+						>
 							{job.cleanedText ? (
 								<pre className="flex-1 min-h-[300px] overflow-y-auto whitespace-pre-wrap rounded-base border-2 border-border p-4 bg-gray-50 font-sans text-sm leading-relaxed">
 									{job.cleanedText}

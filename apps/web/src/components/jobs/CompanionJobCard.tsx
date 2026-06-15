@@ -112,7 +112,7 @@ export default function CompanionJobCard({
 						<button
 							type="button"
 							onClick={() => setIsDetailsOpen(true)}
-							className="inline-flex items-center gap-1 rounded-base border-2 border-border bg-white px-3 py-1.5 font-bold text-sm shadow-light hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none cursor-pointer"
+							className="inline-flex items-center gap-1 rounded-base border-2 border-border bg-white px-3 py-1.5 font-bold text-sm shadow-light hover:translate-x-boxShadowX hover:translate-y-boxShadowY hover:shadow-none transition-all cursor-pointer"
 						>
 							<Eye className="size-4" />
 							View Details
@@ -132,7 +132,7 @@ export default function CompanionJobCard({
 							<button
 								type="button"
 								onClick={() => onRetry(job.id)}
-								className="inline-flex items-center gap-1 rounded-base border-2 border-border bg-white px-3 py-1.5 font-bold text-sm shadow-light"
+								className="inline-flex items-center gap-1 rounded-base border-2 border-border bg-white px-3 py-1.5 font-bold text-sm shadow-light hover:translate-x-boxShadowX hover:translate-y-boxShadowY hover:shadow-none transition-all cursor-pointer"
 							>
 								<RotateCcw className="size-4" />
 								Retry Scrape
@@ -141,7 +141,7 @@ export default function CompanionJobCard({
 								<button
 									type="button"
 									onClick={() => onRetryAnalyze(job.id)}
-									className="inline-flex items-center gap-1 rounded-base border-2 border-border bg-white px-3 py-1.5 font-bold text-sm shadow-light"
+									className="inline-flex items-center gap-1 rounded-base border-2 border-border bg-white px-3 py-1.5 font-bold text-sm shadow-light hover:translate-x-boxShadowX hover:translate-y-boxShadowY hover:shadow-none transition-all cursor-pointer"
 								>
 									<RotateCcw className="size-4" />
 									Retry AI Analysis
@@ -152,7 +152,7 @@ export default function CompanionJobCard({
 					<button
 						type="button"
 						onClick={() => onDelete(job.id)}
-						className="inline-flex items-center gap-1 rounded-base border-2 border-border bg-white px-3 py-1.5 font-bold text-sm shadow-light"
+						className="inline-flex items-center gap-1 rounded-base border-2 border-border bg-white px-3 py-1.5 font-bold text-sm shadow-light hover:translate-x-boxShadowX hover:translate-y-boxShadowY hover:shadow-none transition-all cursor-pointer"
 						aria-label="Delete job"
 					>
 						<Trash2 className="size-4" />
