@@ -56,6 +56,7 @@ export default function CompanionJobDetailsDialog({
 		} else {
 			setActiveTab("scraped");
 		}
+		// biome-ignore lint/correctness/useExhaustiveDependencies: reset tab on job change or dialog open
 	}, [job.id, job.crawlStatus, isOpen]);
 
 	const hostname = (() => {

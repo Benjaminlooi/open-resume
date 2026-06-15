@@ -196,4 +196,27 @@ describe("CompanionJobDetailsDialog", () => {
 			root.unmount();
 		});
 	});
+
+	it("renders and switches to Screenshot tab when clicked", async () => {
+		const { container, root } = await renderDialog({});
+
+		const screenshotTabBtn = Array.from(
+			container.querySelectorAll("button"),
+		).find((btn) => btn.textContent?.includes("Screenshot"));
+		expect(screenshotTabBtn).not.toBeUndefined();
+
+		await act(async () => {
+			screenshotTabBtn?.click();
+		});
+
+		const img = container.querySelector("img");
+		expect(img).not.toBeNull();
+		expect(img?.getAttribute("src")).toContain(
+			`/jobs/${mockJob.id}/screenshot`,
+		);
+
+		await act(async () => {
+			root.unmount();
+		});
+	});
 });
