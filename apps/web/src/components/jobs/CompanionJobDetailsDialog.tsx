@@ -71,7 +71,9 @@ export default function CompanionJobDetailsDialog({
 				<DialogHeader className="border-b-2 border-border pb-4 shrink-0">
 					<div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
 						<div className="space-y-1">
-							<DialogTitle className="text-2xl font-heading break-all">{title}</DialogTitle>
+							<DialogTitle className="text-2xl font-heading break-all">
+								{title}
+							</DialogTitle>
 							{company && (
 								<p className="font-bold text-sm text-gray-700 break-all">
 									{company}
@@ -96,19 +98,21 @@ export default function CompanionJobDetailsDialog({
 										: "FAILED (SCRAPE)"
 									: job.crawlStatus.toUpperCase()}
 							</span>
-							{isReady && job.fitScore !== null && job.fitScore !== undefined && (
-								<span
-									className={`rounded-base border-2 border-border px-2 py-1 font-bold text-xs uppercase ${
-										job.fitScore >= 80
-											? "bg-[#BBF7D0]"
-											: job.fitScore >= 60
-												? "bg-[#FEF08A]"
-												: "bg-[#FECACA]"
-									}`}
-								>
-									{job.fitScore}% Match
-								</span>
-							)}
+							{isReady &&
+								job.fitScore !== null &&
+								job.fitScore !== undefined && (
+									<span
+										className={`rounded-base border-2 border-border px-2 py-1 font-bold text-xs uppercase ${
+											job.fitScore >= 80
+												? "bg-[#BBF7D0]"
+												: job.fitScore >= 60
+													? "bg-[#FEF08A]"
+													: "bg-[#FECACA]"
+										}`}
+									>
+										{job.fitScore}% Match
+									</span>
+								)}
 						</div>
 					</div>
 				</DialogHeader>
@@ -146,7 +150,9 @@ export default function CompanionJobDetailsDialog({
 							{job.crawlStatus === "analyzing" && (
 								<div className="flex flex-col items-center justify-center py-12 text-center">
 									<Loader2 className="size-8 animate-spin text-main mb-3" />
-									<p className="font-bold text-muted-foreground">AI is currently analyzing this job description...</p>
+									<p className="font-bold text-muted-foreground">
+										AI is currently analyzing this job description...
+									</p>
 								</div>
 							)}
 
@@ -156,21 +162,28 @@ export default function CompanionJobDetailsDialog({
 									<span>
 										AI Analysis failed: {job.crawlError ?? "Analysis failed."}
 										<br />
-										You can review the raw scraped text in the other tab or click Retry AI Analysis below.
+										You can review the raw scraped text in the other tab or
+										click Retry AI Analysis below.
 									</span>
 								</div>
 							)}
 
 							{isReady && !fitBrief && (
-								<p className="text-muted-foreground py-6 text-center">No fit analysis data available.</p>
+								<p className="text-muted-foreground py-6 text-center">
+									No fit analysis data available.
+								</p>
 							)}
 
 							{isReady && fitBrief && (
 								<div className="flex flex-col gap-6">
 									{/* Role Summary */}
 									<div className="border-2 border-border rounded-base p-4 bg-white shadow-light">
-										<h3 className="text-md font-heading mb-1.5">Role Summary</h3>
-										<p className="text-sm leading-relaxed">{fitBrief.roleSummary}</p>
+										<h3 className="text-md font-heading mb-1.5">
+											Role Summary
+										</h3>
+										<p className="text-sm leading-relaxed">
+											{fitBrief.roleSummary}
+										</p>
 									</div>
 
 									<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -181,12 +194,17 @@ export default function CompanionJobDetailsDialog({
 												Key Requirements
 											</h3>
 											<ul className="flex flex-col gap-1.5 list-none pl-0">
-												{fitBrief.requirements?.map((req: string, i: number) => (
-													<li key={i} className="flex gap-2 text-xs leading-relaxed">
-														<ArrowRight className="size-3.5 text-[#0EA5E9] shrink-0 mt-0.5" />
-														<span>{req}</span>
-													</li>
-												))}
+												{fitBrief.requirements?.map(
+													(req: string, i: number) => (
+														<li
+															key={i}
+															className="flex gap-2 text-xs leading-relaxed"
+														>
+															<ArrowRight className="size-3.5 text-[#0EA5E9] shrink-0 mt-0.5" />
+															<span>{req}</span>
+														</li>
+													),
+												)}
 											</ul>
 										</div>
 
@@ -219,8 +237,13 @@ export default function CompanionJobDetailsDialog({
 											</h3>
 											<ul className="flex flex-col gap-1.5 list-none pl-0 text-[#14532D]">
 												{fitBrief.strengths?.map((str: string, i: number) => (
-													<li key={i} className="flex gap-1.5 text-xs leading-relaxed">
-														<span className="text-[#16A34A] font-bold shrink-0">•</span>
+													<li
+														key={i}
+														className="flex gap-1.5 text-xs leading-relaxed"
+													>
+														<span className="text-[#16A34A] font-bold shrink-0">
+															•
+														</span>
 														<span>{str}</span>
 													</li>
 												))}
@@ -241,8 +264,13 @@ export default function CompanionJobDetailsDialog({
 														</h4>
 														<ul className="flex flex-col gap-1 list-none pl-0 text-[#881337]">
 															{fitBrief.gaps.map((gap: string, i: number) => (
-																<li key={i} className="flex gap-1.5 text-xs leading-relaxed">
-																	<span className="text-[#E11D48] font-bold shrink-0">•</span>
+																<li
+																	key={i}
+																	className="flex gap-1.5 text-xs leading-relaxed"
+																>
+																	<span className="text-[#E11D48] font-bold shrink-0">
+																		•
+																	</span>
 																	<span>{gap}</span>
 																</li>
 															))}
@@ -256,8 +284,13 @@ export default function CompanionJobDetailsDialog({
 														</h4>
 														<ul className="flex flex-col gap-1 list-none pl-0 text-[#881337]">
 															{fitBrief.risks.map((risk: string, i: number) => (
-																<li key={i} className="flex gap-1.5 text-xs leading-relaxed">
-																	<span className="text-[#E11D48] font-bold shrink-0">•</span>
+																<li
+																	key={i}
+																	className="flex gap-1.5 text-xs leading-relaxed"
+																>
+																	<span className="text-[#E11D48] font-bold shrink-0">
+																		•
+																	</span>
 																	<span>{risk}</span>
 																</li>
 															))}
@@ -274,12 +307,19 @@ export default function CompanionJobDetailsDialog({
 											💡 Recommended Next Actions
 										</h3>
 										<ul className="flex flex-col gap-1.5 list-none pl-0 text-[#78350F]">
-											{fitBrief.nextActions?.map((action: string, i: number) => (
-												<li key={i} className="flex gap-1.5 text-xs leading-relaxed">
-													<span className="text-[#D97706] font-bold shrink-0">{i + 1}.</span>
-													<span>{action}</span>
-												</li>
-											))}
+											{fitBrief.nextActions?.map(
+												(action: string, i: number) => (
+													<li
+														key={i}
+														className="flex gap-1.5 text-xs leading-relaxed"
+													>
+														<span className="text-[#D97706] font-bold shrink-0">
+															{i + 1}.
+														</span>
+														<span>{action}</span>
+													</li>
+												),
+											)}
 										</ul>
 									</div>
 								</div>
@@ -296,7 +336,9 @@ export default function CompanionJobDetailsDialog({
 							) : (
 								<div className="flex flex-col items-center justify-center py-12 text-center">
 									<AlertTriangle className="size-8 text-amber-500 mb-3" />
-									<p className="font-bold text-muted-foreground">No crawled job description text available.</p>
+									<p className="font-bold text-muted-foreground">
+										No crawled job description text available.
+									</p>
 								</div>
 							)}
 						</div>

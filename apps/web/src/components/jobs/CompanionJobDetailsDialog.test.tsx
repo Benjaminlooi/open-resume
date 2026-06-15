@@ -13,11 +13,7 @@ vi.mock("#/components/ui/dialog", () => {
 	return {
 		Dialog: ({ children, open }: any) => {
 			if (!open) return null;
-			return (
-				<div data-testid="mock-dialog">
-					{children}
-				</div>
-			);
+			return <div data-testid="mock-dialog">{children}</div>;
 		},
 		DialogContent: ({ children, className }: any) => (
 			<div data-testid="mock-dialog-content" className={className}>
@@ -175,12 +171,12 @@ describe("CompanionJobDetailsDialog", () => {
 		expect(html).toContain("Retry Scrape");
 		expect(html).toContain("Retry AI Analysis");
 
-		const retryScrapeBtn = Array.from(container.querySelectorAll("button")).find(
-			(btn) => btn.textContent?.includes("Retry Scrape"),
-		);
-		const retryAnalyzeBtn = Array.from(container.querySelectorAll("button")).find(
-			(btn) => btn.textContent?.includes("Retry AI Analysis"),
-		);
+		const retryScrapeBtn = Array.from(
+			container.querySelectorAll("button"),
+		).find((btn) => btn.textContent?.includes("Retry Scrape"));
+		const retryAnalyzeBtn = Array.from(
+			container.querySelectorAll("button"),
+		).find((btn) => btn.textContent?.includes("Retry AI Analysis"));
 
 		expect(retryScrapeBtn).not.toBeUndefined();
 		expect(retryAnalyzeBtn).not.toBeUndefined();
