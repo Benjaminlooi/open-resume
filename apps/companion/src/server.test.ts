@@ -33,7 +33,7 @@ describe("companion server", () => {
 		}
 		for (const file of tempFiles) {
 			try {
-				rmSync(file, { force: true });
+				rmSync(file, { force: true, recursive: true });
 			} catch (_) {}
 		}
 		tempFiles.length = 0;
@@ -70,6 +70,10 @@ describe("companion server", () => {
 		});
 		beforeCreate?.({ crawlQueue, repository });
 
+		const testDbDir = resolve(
+			process.cwd(),
+			`.open-resume-companion/test-db-${randomUUID()}`,
+		);
 		const profilePath = resolve(
 			process.cwd(),
 			`.open-resume-companion/profile-${randomUUID()}.json`,
@@ -78,9 +82,10 @@ describe("companion server", () => {
 			process.cwd(),
 			`.open-resume-companion/resume-${randomUUID()}.json`,
 		);
-		tempFiles.push(profilePath, resumePath);
+		tempFiles.push(testDbDir, profilePath, resumePath);
 
 		const server = createServer({
+			databasePath: resolve(testDbDir, "jobs.sqlite"),
 			profilePath,
 			resumePath,
 			...options,
