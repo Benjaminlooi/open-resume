@@ -1,15 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Resume } from "#/lib/resume-schema";
 import type { EditorState } from "#/lib/resume-store";
-import DemoTemplate from "../editor/DemoTemplate";
-import ModernTemplate from "../editor/ModernTemplate";
+import DemoTemplate from "#/components/editor/DemoTemplate";
+import ModernTemplate from "#/components/editor/ModernTemplate";
 import {
 	Select,
 	SelectContent,
 	SelectItem,
 	SelectTrigger,
 	SelectValue,
-} from "../ui/select";
+} from "#/components/ui/select";
 
 interface TailoredResumePreviewProps {
 	tailoredResume: Resume;

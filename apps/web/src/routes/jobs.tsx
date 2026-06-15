@@ -2,11 +2,11 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import DashboardHeader from "#/components/dashboard/DashboardHeader";
-import CompanionJobCard from "#/components/jobs/CompanionJobCard";
-import JobApplicationCard from "#/components/jobs/JobApplicationCard";
-import NewJobApplicationModal from "#/components/jobs/NewJobApplicationModal";
-import PipelineIntegrityPanel from "#/components/jobs/PipelineIntegrityPanel";
-import { useJobApplicationStore } from "#/lib/job-application-store";
+import CompanionJobCard from "#/features/jobs/components/CompanionJobCard";
+import JobApplicationCard from "#/features/jobs/components/JobApplicationCard";
+import NewJobApplicationModal from "#/features/jobs/components/NewJobApplicationModal";
+import PipelineIntegrityPanel from "#/features/jobs/components/PipelineIntegrityPanel";
+import { useJobApplicationStore } from "#/features/jobs/job-application-store";
 import {
 	deleteCompanionJob,
 	type LocalCompanionJob,

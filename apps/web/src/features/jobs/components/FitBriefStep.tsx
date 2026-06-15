@@ -6,8 +6,8 @@ import {
 	Sparkles,
 } from "lucide-react";
 import { useState } from "react";
-import { generateJobFitBrief } from "#/lib/job-ai";
-import { useJobApplicationStore } from "#/lib/job-application-store";
+import { generateJobFitBrief } from "#/features/jobs/job-ai";
+import { useJobApplicationStore } from "#/features/jobs/job-application-store";
 import { useResumeIndexStore } from "#/lib/resume-index-store";
 import { getResumeData } from "#/lib/resume-store";
 import { useSettingsStore } from "#/lib/settings-store";

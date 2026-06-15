@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import type { JobApplicationStatus } from "#/lib/job-application-schema";
-import { useJobApplicationStore } from "#/lib/job-application-store";
+import type { JobApplicationStatus } from "#/features/jobs/job-application-schema";
+import { useJobApplicationStore } from "#/features/jobs/job-application-store";
 
 interface ApplicationTrackerStepProps {
 	applicationId: string;

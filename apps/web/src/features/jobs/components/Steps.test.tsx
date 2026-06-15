@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { JobApplication } from "#/lib/job-application-schema";
+import type { JobApplication } from "#/features/jobs/job-application-schema";
 import ApplicationTrackerStep from "./ApplicationTrackerStep";
 import CoverLetterStep from "./CoverLetterStep";
 import FitBriefStep from "./FitBriefStep";
@@ -31,7 +31,7 @@ const mockApplication: JobApplication = {
 
 let currentApp = { ...mockApplication };
 
-vi.mock("#/lib/job-application-store", () => ({
+vi.mock("#/features/jobs/job-application-store", () => ({
 	useJobApplicationStore: (selector?: (state: any) => any) => {
 		const state = {
 			jobApplications: [currentApp],
@@ -105,7 +105,7 @@ vi.mock("#/lib/resume-store", () => ({
 		}),
 }));
 
-vi.mock("#/lib/job-ai", () => ({
+vi.mock("#/features/jobs/job-ai", () => ({
 	generateJobFitBrief: vi.fn(),
 	generateResumeTailoring: vi.fn(),
 	generateCoverLetter: vi.fn(),

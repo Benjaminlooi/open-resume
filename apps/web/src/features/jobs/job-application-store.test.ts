@@ -10,14 +10,14 @@ import {
 
 const mockStorage: Record<string, string> = {};
 
-vi.mock("./local-companion-client", () => {
+vi.mock("#/lib/local-companion-client", () => {
 	return {
 		getResume: vi.fn(async (id: string) => {
 			const contentStr = mockStorage[`resume-${id}`];
 			if (!contentStr) {
 				throw new Error(`Resume not found in mock storage: ${id}`);
 			}
-			const { useResumeIndexStore } = await import("./resume-index-store");
+			const { useResumeIndexStore } = await import("#/lib/resume-index-store");
 			const state = useResumeIndexStore.getState();
 			const entry = state.resumes.find((r: any) => r.id === id);
 			return {
@@ -75,10 +75,10 @@ describe("jobApplicationStore", () => {
 		(globalThis as any).localStorage = storageMock;
 
 		// Dynamically import AFTER global mocks are set up, so ESM hoisting doesn't bypass them
-		const indexStoreModule = await import("./resume-index-store");
+		const indexStoreModule = await import("#/lib/resume-index-store");
 		useResumeIndexStore = indexStoreModule.useResumeIndexStore;
 
-		await import("./resume-store");
+		await import("#/lib/resume-store");
 
 		const jobStoreModule = await import("./job-application-store");
 		useJobApplicationStore = jobStoreModule.useJobApplicationStore;

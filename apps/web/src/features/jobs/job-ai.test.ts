@@ -14,7 +14,7 @@ import {
 	parseResumeEditProposals,
 } from "./job-ai";
 import type { JobApplication, JobFitBrief } from "./job-application-schema";
-import type { Resume } from "./resume-schema";
+import type { Resume } from "#/lib/resume-schema";
 
 vi.mock("ai", () => ({
 	generateText: vi.fn(),

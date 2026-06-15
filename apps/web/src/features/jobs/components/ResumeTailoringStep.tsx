@@ -8,15 +8,15 @@ import {
 	X,
 } from "lucide-react";
 import { useState } from "react";
-import { generateResumeTailoring } from "#/lib/job-ai";
+import { generateResumeTailoring } from "#/features/jobs/job-ai";
 import {
 	downloadFile,
 	exportApplicationPacketToJson,
 	exportCoverLetterToMarkdown,
 	exportTailoredResumeToMarkdown,
-} from "#/lib/job-application-export";
-import type { ResumeEditTarget } from "#/lib/job-application-schema";
-import { useJobApplicationStore } from "#/lib/job-application-store";
+} from "#/features/jobs/job-application-export";
+import type { ResumeEditTarget } from "#/features/jobs/job-application-schema";
+import { useJobApplicationStore } from "#/features/jobs/job-application-store";
 import { useResumeIndexStore } from "#/lib/resume-index-store";
 import type { Resume } from "#/lib/resume-schema";
 import { useSettingsStore } from "#/lib/settings-store";

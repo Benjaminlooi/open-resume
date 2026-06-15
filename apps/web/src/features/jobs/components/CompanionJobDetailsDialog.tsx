@@ -83,7 +83,7 @@ export default function CompanionJobDetailsDialog({
 
 	return (
 		<Dialog open={isOpen} onOpenChange={onClose}>
-			<DialogContent className="max-w-3xl max-h-[85vh] flex flex-col p-6 overflow-hidden">
+			<DialogContent className="max-w-6xl max-h-[85vh] flex flex-col p-6 overflow-hidden">
 				<DialogHeader className="border-b-2 border-border pb-4 shrink-0">
 					<div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
 						<div className="space-y-1">

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type {
 	CoverLetterDraft,
 	JobApplication,
-} from "#/lib/job-application-schema";
+} from "#/features/jobs/job-application-schema";
 import type { Resume } from "#/lib/resume-schema";
 import {
 	exportApplicationPacketToJson,

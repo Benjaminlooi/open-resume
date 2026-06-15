@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { resumeSchema } from "./resume-schema";
+import { resumeSchema } from "#/lib/resume-schema";
 
 export const jobApplicationStatusSchema = z.enum([
 	"saved",

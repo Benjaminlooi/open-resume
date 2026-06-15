@@ -1,5 +1,5 @@
 import { type FormEvent, useEffect, useState } from "react";
-import { useJobApplicationStore } from "#/lib/job-application-store";
+import { useJobApplicationStore } from "#/features/jobs/job-application-store";
 
 interface JobDetailsStepProps {
 	applicationId: string;

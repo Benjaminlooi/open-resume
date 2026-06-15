@@ -1,7 +1,7 @@
 import type {
 	CoverLetterDraft,
 	JobApplication,
-} from "#/lib/job-application-schema";
+} from "#/features/jobs/job-application-schema";
 import { exportResumeToMarkdown } from "#/lib/resume-markdown";
 import type { Resume } from "#/lib/resume-schema";
 

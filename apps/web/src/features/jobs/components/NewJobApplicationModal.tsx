@@ -1,6 +1,6 @@
 import { useNavigate } from "@tanstack/react-router";
 import { type FormEvent, useState } from "react";
-import { useJobApplicationStore } from "#/lib/job-application-store";
+import { useJobApplicationStore } from "#/features/jobs/job-application-store";
 import { createCompanionJob } from "#/lib/local-companion-client";
 
 interface NewJobApplicationModalProps {

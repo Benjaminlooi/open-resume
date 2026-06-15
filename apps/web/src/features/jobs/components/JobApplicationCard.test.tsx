@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
-import type { JobApplication } from "#/lib/job-application-schema";
+import type { JobApplication } from "#/features/jobs/job-application-schema";
 import JobApplicationCard from "./JobApplicationCard";
 
 vi.mock("@tanstack/react-router", () => ({

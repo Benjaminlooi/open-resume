@@ -11,8 +11,8 @@ import {
 	type ResumeEditProposal,
 	resumeEditProposalSchema,
 } from "./job-application-schema";
-import type { Resume } from "./resume-schema";
-import type { AIProvider } from "./settings-store";
+import type { Resume } from "#/lib/resume-schema";
+import type { AIProvider } from "#/lib/settings-store";
 
 export interface ProviderConfig {
 	provider: AIProvider;

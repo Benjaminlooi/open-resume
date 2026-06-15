@@ -6,13 +6,13 @@ import {
 	ChevronRight,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import ApplicationTrackerStep from "#/components/jobs/ApplicationTrackerStep";
-import CoverLetterStep from "#/components/jobs/CoverLetterStep";
-import FitBriefStep from "#/components/jobs/FitBriefStep";
-import JobDetailsStep from "#/components/jobs/JobDetailsStep";
-import ResumeTailoringStep from "#/components/jobs/ResumeTailoringStep";
-import type { JobApplicationStatus } from "#/lib/job-application-schema";
-import { useJobApplicationStore } from "#/lib/job-application-store";
+import ApplicationTrackerStep from "#/features/jobs/components/ApplicationTrackerStep";
+import CoverLetterStep from "#/features/jobs/components/CoverLetterStep";
+import FitBriefStep from "#/features/jobs/components/FitBriefStep";
+import JobDetailsStep from "#/features/jobs/components/JobDetailsStep";
+import ResumeTailoringStep from "#/features/jobs/components/ResumeTailoringStep";
+import type { JobApplicationStatus } from "#/features/jobs/job-application-schema";
+import { useJobApplicationStore } from "#/features/jobs/job-application-store";
 
 export const Route = createFileRoute("/jobs/$id")({
 	component: JobWorkspace,
