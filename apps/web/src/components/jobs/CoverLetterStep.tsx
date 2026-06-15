@@ -1,17 +1,17 @@
-import { useState, useEffect } from "react";
 import {
+	AlertTriangle,
+	Check,
+	Clipboard,
+	FileText,
 	Loader2,
 	Sparkles,
-	FileText,
-	AlertTriangle,
-	Clipboard,
-	Check,
 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { generateCoverLetter } from "#/lib/job-ai";
 import { useJobApplicationStore } from "#/lib/job-application-store";
 import { useResumeIndexStore } from "#/lib/resume-index-store";
-import { useSettingsStore } from "#/lib/settings-store";
 import { getResumeData } from "#/lib/resume-store";
-import { generateCoverLetter } from "#/lib/job-ai";
+import { useSettingsStore } from "#/lib/settings-store";
 
 interface CoverLetterStepProps {
 	applicationId: string;

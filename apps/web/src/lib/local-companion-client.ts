@@ -54,7 +54,7 @@ export type {
 	UpdateResumeRequest,
 };
 
-const companionBaseUrl = "http://127.0.0.1:47321";
+export const companionBaseUrl = "http://127.0.0.1:47321";
 
 async function companionFetch(
 	path: string,

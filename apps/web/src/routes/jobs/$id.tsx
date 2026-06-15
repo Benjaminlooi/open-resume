@@ -1,18 +1,18 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
 import {
+	AlertCircle,
 	ArrowLeft,
 	ChevronLeft,
 	ChevronRight,
-	AlertCircle,
 } from "lucide-react";
-import { useJobApplicationStore } from "#/lib/job-application-store";
-import JobDetailsStep from "#/components/jobs/JobDetailsStep";
-import FitBriefStep from "#/components/jobs/FitBriefStep";
-import ResumeTailoringStep from "#/components/jobs/ResumeTailoringStep";
-import CoverLetterStep from "#/components/jobs/CoverLetterStep";
+import { useEffect, useState } from "react";
 import ApplicationTrackerStep from "#/components/jobs/ApplicationTrackerStep";
+import CoverLetterStep from "#/components/jobs/CoverLetterStep";
+import FitBriefStep from "#/components/jobs/FitBriefStep";
+import JobDetailsStep from "#/components/jobs/JobDetailsStep";
+import ResumeTailoringStep from "#/components/jobs/ResumeTailoringStep";
 import type { JobApplicationStatus } from "#/lib/job-application-schema";
+import { useJobApplicationStore } from "#/lib/job-application-store";
 
 export const Route = createFileRoute("/jobs/$id")({
 	component: JobWorkspace,

@@ -1,20 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
 import {
-	Save,
-	RefreshCw,
-	Trash2,
-	Plus,
-	Check,
 	AlertCircle,
-	User,
-	Briefcase,
-	FileText,
 	Award,
+	Briefcase,
+	Check,
 	DollarSign,
-	Link as LinkIcon,
+	FileText,
 	Globe,
+	Link as LinkIcon,
+	Plus,
+	RefreshCw,
+	Save,
+	Trash2,
+	User,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 import DashboardHeader from "#/components/dashboard/DashboardHeader";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
@@ -22,10 +22,10 @@ import { Label } from "#/components/ui/label";
 import { Textarea } from "#/components/ui/textarea";
 import {
 	type CandidateProfile,
-	type TargetRoleArchetype,
 	getProfile,
-	updateProfile,
 	syncResume,
+	type TargetRoleArchetype,
+	updateProfile,
 } from "#/lib/local-companion-client";
 import { useResumeIndexStore } from "#/lib/resume-index-store";
 import { getResumeData } from "#/lib/resume-store";

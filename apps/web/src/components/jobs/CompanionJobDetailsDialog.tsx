@@ -1,20 +1,20 @@
-import { useState, useEffect } from "react";
+import {
+	AlertTriangle,
+	ArrowRight,
+	CheckCircle2,
+	ExternalLink,
+	Loader2,
+	Sparkles,
+} from "lucide-react";
+import { useEffect, useState } from "react";
 import {
 	Dialog,
 	DialogContent,
 	DialogHeader,
 	DialogTitle,
 } from "#/components/ui/dialog";
-import {
-	Loader2,
-	Sparkles,
-	CheckCircle2,
-	AlertTriangle,
-	ArrowRight,
-	ExternalLink,
-	Camera,
-} from "lucide-react";
 import type { LocalCompanionJob } from "#/lib/local-companion-client";
+import { companionBaseUrl } from "#/lib/local-companion-client";
 
 interface CompanionJobDetailsDialogProps {
 	job: LocalCompanionJob;
@@ -43,7 +43,9 @@ export default function CompanionJobDetailsDialog({
 	onRetry,
 	onRetryAnalyze,
 }: CompanionJobDetailsDialogProps) {
-	const [activeTab, setActiveTab] = useState<"ai" | "scraped" | "screenshot">("ai");
+	const [activeTab, setActiveTab] = useState<"ai" | "scraped" | "screenshot">(
+		"ai",
+	);
 	const [screenshotError, setScreenshotError] = useState(false);
 
 	// Reset default tab when job changes
@@ -163,22 +165,23 @@ export default function CompanionJobDetailsDialog({
 					>
 						📄 Raw Scraped Text
 					</button>
-					<button
-						type="button"
-						id="details-tab-screenshot"
-						aria-controls="details-panel-screenshot"
-						onClick={() => setActiveTab("screenshot")}
-						role="tab"
-						aria-selected={activeTab === "screenshot"}
-						className={`px-4 py-2 font-bold text-sm border-b-4 -mb-[2px] transition-colors ${
-							activeTab === "screenshot"
-								? "border-main text-main-foreground"
-								: "border-transparent text-muted-foreground hover:text-foreground"
-						}`}
-					>
-						<Camera className="hidden" />
-						📸 Screenshot
-					</button>
+					{job.crawlStatus !== "pending" && job.crawlStatus !== "crawling" && (
+						<button
+							type="button"
+							id="details-tab-screenshot"
+							aria-controls="details-panel-screenshot"
+							onClick={() => setActiveTab("screenshot")}
+							role="tab"
+							aria-selected={activeTab === "screenshot"}
+							className={`px-4 py-2 font-bold text-sm border-b-4 -mb-[2px] transition-colors ${
+								activeTab === "screenshot"
+									? "border-main text-main-foreground"
+									: "border-transparent text-muted-foreground hover:text-foreground"
+							}`}
+						>
+							📸 Screenshot
+						</button>
+					)}
 				</div>
 
 				{/* Tab Content */}
@@ -402,7 +405,7 @@ export default function CompanionJobDetailsDialog({
 							{!screenshotError ? (
 								<div className="flex-1 min-h-[400px] overflow-y-auto rounded-base border-2 border-border p-2 bg-gray-50 flex justify-center shadow-light">
 									<img
-										src={`http://127.0.0.1:47321/jobs/${job.id}/screenshot`}
+										src={`${companionBaseUrl}/jobs/${job.id}/screenshot`}
 										alt="Crawl Screenshot"
 										onError={() => setScreenshotError(true)}
 										className="max-w-full h-auto object-contain border border-border rounded-base"

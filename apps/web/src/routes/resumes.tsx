@@ -1,9 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { FileUp } from "lucide-react";
 import { type ChangeEvent, useEffect, useRef, useState } from "react";
+import DashboardHeader from "#/components/dashboard/DashboardHeader";
 import ResumeCard from "#/components/dashboard/ResumeCard";
 import NewResumeModal from "#/components/editor/NewResumeModal";
-import DashboardHeader from "#/components/dashboard/DashboardHeader";
 import { useResumeIndexStore } from "#/lib/resume-index-store";
 import { parseResumeMarkdown } from "#/lib/resume-markdown";
 

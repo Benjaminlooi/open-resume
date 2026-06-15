@@ -1,7 +1,7 @@
-import { useJobApplicationStore } from "#/lib/job-application-store";
-import { useResumeIndexStore } from "#/lib/resume-index-store";
 import { AlertTriangle, ShieldCheck } from "lucide-react";
 import { useState } from "react";
+import { useJobApplicationStore } from "#/lib/job-application-store";
+import { useResumeIndexStore } from "#/lib/resume-index-store";
 
 export default function PipelineIntegrityPanel() {
 	const {

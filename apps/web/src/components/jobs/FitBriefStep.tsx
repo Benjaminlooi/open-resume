@@ -1,16 +1,16 @@
-import { useState } from "react";
 import {
-	Loader2,
-	Sparkles,
-	CheckCircle2,
 	AlertTriangle,
 	ArrowRight,
+	CheckCircle2,
+	Loader2,
+	Sparkles,
 } from "lucide-react";
+import { useState } from "react";
+import { generateJobFitBrief } from "#/lib/job-ai";
 import { useJobApplicationStore } from "#/lib/job-application-store";
 import { useResumeIndexStore } from "#/lib/resume-index-store";
-import { useSettingsStore } from "#/lib/settings-store";
 import { getResumeData } from "#/lib/resume-store";
-import { generateJobFitBrief } from "#/lib/job-ai";
+import { useSettingsStore } from "#/lib/settings-store";
 
 interface FitBriefStepProps {
 	applicationId: string;

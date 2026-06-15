@@ -6,10 +6,10 @@ import {
 	createResume,
 	deleteResume,
 	listResumes,
-	setDefaultResume,
 	type ResumeContent,
+	setDefaultResume,
 } from "./local-companion-client";
-import { resumeSchema, type Resume } from "./resume-schema";
+import { type Resume, resumeSchema } from "./resume-schema";
 
 export interface ResumeIndexEntry {
 	id: string;

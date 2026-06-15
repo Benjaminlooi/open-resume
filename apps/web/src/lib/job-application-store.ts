@@ -8,8 +8,8 @@ import type {
 	ResumeEditProposal,
 } from "./job-application-schema";
 import { useResumeIndexStore } from "./resume-index-store";
+import { type Resume, resumeSchema } from "./resume-schema";
 import { getResumeData } from "./resume-store";
-import { resumeSchema, type Resume } from "./resume-schema";
 
 export interface JobApplicationState {
 	jobApplications: JobApplication[];

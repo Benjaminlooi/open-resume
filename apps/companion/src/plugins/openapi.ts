@@ -41,7 +41,8 @@ export const registerOpenApi = fp(async (server) => {
 		transform: (input: any) => {
 			const result = jsonSchemaTransform(input);
 			if (
-				(input.url === "/jobs/:id/screenshot" || input.url === "/jobs/{id}/screenshot") &&
+				(input.url === "/jobs/:id/screenshot" ||
+					input.url === "/jobs/{id}/screenshot") &&
 				result.schema?.response
 			) {
 				(result.schema.response as any)["200"] = {

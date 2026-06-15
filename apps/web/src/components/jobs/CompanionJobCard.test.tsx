@@ -19,7 +19,6 @@ vi.mock("lucide-react", () => ({
 	AlertTriangle: () => <span data-testid="alert-triangle">AlertTriangle</span>,
 	ArrowRight: () => <span data-testid="arrow-right">ArrowRight</span>,
 	ExternalLink: () => <span data-testid="external-link">ExternalLink</span>,
-	Camera: () => <span data-testid="camera">Camera</span>,
 }));
 
 vi.mock("#/components/ui/dialog", () => {
@@ -308,9 +307,9 @@ describe("CompanionJobCard", () => {
 			onDelete: vi.fn(),
 		});
 
-		const viewDetailsBtn = Array.from(container.querySelectorAll("button")).find(
-			(btn) => btn.textContent?.includes("View Details"),
-		);
+		const viewDetailsBtn = Array.from(
+			container.querySelectorAll("button"),
+		).find((btn) => btn.textContent?.includes("View Details"));
 		expect(viewDetailsBtn).not.toBeUndefined();
 
 		await act(async () => {

@@ -270,7 +270,7 @@ describe("companion server", () => {
 
 	it("GET /jobs/:id/screenshot returns 404 if screenshot does not exist", async () => {
 		const { server, repository } = createTestServer();
-		
+
 		// Case 1: Job does not exist
 		const response1 = await server.inject({
 			method: "GET",

@@ -110,7 +110,10 @@ export function createJobRoutes(context: JobRouteContext): FastifyPluginAsync {
 					return reply.status(404).send({ error: "Job not found" });
 				}
 
-				const screenshotPath = join(context.screenshotsPath, `${request.params.id}.png`);
+				const screenshotPath = join(
+					context.screenshotsPath,
+					`${request.params.id}.png`,
+				);
 				if (!screenshotPath.startsWith(context.screenshotsPath)) {
 					return reply.status(400).send({ error: "Invalid ID path" });
 				}

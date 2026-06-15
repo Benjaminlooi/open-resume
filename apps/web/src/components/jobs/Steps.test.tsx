@@ -1,11 +1,11 @@
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it, vi, beforeEach } from "vitest";
-import JobDetailsStep from "./JobDetailsStep";
-import FitBriefStep from "./FitBriefStep";
-import ResumeTailoringStep from "./ResumeTailoringStep";
-import CoverLetterStep from "./CoverLetterStep";
-import ApplicationTrackerStep from "./ApplicationTrackerStep";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { JobApplication } from "#/lib/job-application-schema";
+import ApplicationTrackerStep from "./ApplicationTrackerStep";
+import CoverLetterStep from "./CoverLetterStep";
+import FitBriefStep from "./FitBriefStep";
+import JobDetailsStep from "./JobDetailsStep";
+import ResumeTailoringStep from "./ResumeTailoringStep";
 
 // Setup mocks
 const mockApplication: JobApplication = {

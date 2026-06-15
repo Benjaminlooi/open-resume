@@ -40,7 +40,6 @@ vi.mock("lucide-react", () => ({
 	AlertTriangle: () => <span data-testid="alert-triangle">AlertTriangle</span>,
 	ArrowRight: () => <span data-testid="arrow-right">ArrowRight</span>,
 	ExternalLink: () => <span data-testid="external-link">ExternalLink</span>,
-	Camera: () => <span data-testid="camera">Camera</span>,
 }));
 
 const mockJob = {

@@ -346,10 +346,22 @@ describe("crawl queue", () => {
 		queue.enqueueRunnableJobs();
 		await vi.waitFor(() => expect(crawl).toHaveBeenCalledTimes(2));
 
-		expect(crawl).toHaveBeenCalledWith("https://example.com/pending", "pending-job");
-		expect(crawl).toHaveBeenCalledWith("https://example.com/crawling", "crawling-job");
-		expect(crawl).not.toHaveBeenCalledWith("https://example.com/ready", expect.any(String));
-		expect(crawl).not.toHaveBeenCalledWith("https://example.com/failed", expect.any(String));
+		expect(crawl).toHaveBeenCalledWith(
+			"https://example.com/pending",
+			"pending-job",
+		);
+		expect(crawl).toHaveBeenCalledWith(
+			"https://example.com/crawling",
+			"crawling-job",
+		);
+		expect(crawl).not.toHaveBeenCalledWith(
+			"https://example.com/ready",
+			expect.any(String),
+		);
+		expect(crawl).not.toHaveBeenCalledWith(
+			"https://example.com/failed",
+			expect.any(String),
+		);
 	});
 
 	it("swallows unexpected enqueue rejections", async () => {

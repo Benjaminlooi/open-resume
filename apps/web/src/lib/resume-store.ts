@@ -3,10 +3,9 @@ import { devtools } from "zustand/middleware";
 import { blankResumeState, dummyResumeData } from "./dummy-resume";
 import {
 	getResume,
-	updateResume,
 	type ResumeContent,
+	updateResume,
 } from "./local-companion-client";
-import { resumeSchema } from "./resume-schema";
 import type {
 	Certification,
 	ContactLink,
@@ -18,6 +17,7 @@ import type {
 	Resume,
 	SkillGroup,
 } from "./resume-schema";
+import { resumeSchema } from "./resume-schema";
 
 // We extend the Resume type locally for UI state
 export type EditorState = Resume & {

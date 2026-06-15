@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useResumeStore } from "#/lib/resume-store";
 import DemoTemplate from "./DemoTemplate";
 import ModernTemplate from "./ModernTemplate";

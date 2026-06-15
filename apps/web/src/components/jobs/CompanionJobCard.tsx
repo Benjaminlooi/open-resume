@@ -1,4 +1,4 @@
-import { RotateCcw, Trash2, Eye } from "lucide-react";
+import { Eye, RotateCcw, Trash2 } from "lucide-react";
 import { useState } from "react";
 import type { LocalCompanionJob } from "#/lib/local-companion-client";
 import CompanionJobDetailsDialog from "./CompanionJobDetailsDialog";
