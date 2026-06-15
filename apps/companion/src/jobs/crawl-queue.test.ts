@@ -116,6 +116,7 @@ describe("crawl queue", () => {
 			now: 1000,
 		});
 		const logger = {
+			debug: vi.fn(),
 			error: vi.fn(),
 		};
 		const queue = createCrawlQueue({
@@ -375,6 +376,7 @@ describe("crawl queue", () => {
 			throw new Error("Failed state unavailable");
 		});
 		const logger = {
+			debug: vi.fn(),
 			error: vi.fn(),
 		};
 		const queue = createCrawlQueue({

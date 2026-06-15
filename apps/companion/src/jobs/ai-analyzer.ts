@@ -45,12 +45,17 @@ const aiAnalysisOutputSchema = z.object({
 	fitBrief: fitBriefOutputSchema,
 });
 
+export interface AIAnalyzerLogger {
+	debug(bindings: Record<string, unknown>, message: string): void;
+}
+
 export async function analyzeJobPosting(input: {
 	profilePath: string;
 	resumePath?: string;
 	resumeContent?: string;
 	cleanedText: string;
 	aiConfig: AIConfig;
+	logger?: AIAnalyzerLogger;
 }): Promise<AIAnalysisResult> {
 	if (!existsSync(input.profilePath)) {
 		throw new Error(
@@ -136,12 +141,24 @@ Ensure the returned output has:
 - fitBrief: A brief containing roleSummary, requirements, keywords, strengths, gaps, risks, nextActions.
 `;
 
+	const userPrompt = `Analyze this job posting cleaned text:\n\n${input.cleanedText}`;
+
+	input.logger?.debug(
+		{
+			systemPrompt,
+			userPrompt,
+		},
+		"AI Analysis prompt",
+	);
+
 	const { object } = await generateObject({
 		model: modelInstance,
 		schema: aiAnalysisOutputSchema,
 		system: systemPrompt,
-		prompt: `Analyze this job posting cleaned text:\n\n${input.cleanedText}`,
+		prompt: userPrompt,
 	});
+
+	input.logger?.debug({ result: object }, "AI Analysis response");
 
 	return {
 		...object,

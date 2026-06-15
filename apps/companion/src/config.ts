@@ -26,15 +26,48 @@ export const AIProviderSchema = z.enum([
 export type AIProvider = z.infer<typeof AIProviderSchema>;
 
 export const createServerOptionsSchema = z.object({
+	/**
+	 * Optional override for the crawl queue.
+	 * Primarily used in tests to inject a mocked queue.
+	 */
 	crawlQueue: z.custom<CrawlQueue>().optional(),
+	/**
+	 * Path to the SQLite database file.
+	 */
 	databasePath: z.string().optional(),
+	/**
+	 * Optional override for the job repository.
+	 * Primarily used in tests to inject an in-memory repository.
+	 */
 	jobRepository: z.custom<JobRepository>().optional(),
+	/**
+	 * Log level for the server.
+	 */
 	logLevel: LogLevelSchema.optional(),
+	/**
+	 * Whether to log the full scraped text from job postings.
+	 */
 	logScrapedData: z.boolean().optional(),
+	/**
+	 * Optional override for the log stream.
+	 * Primarily used in tests to capture logs.
+	 */
 	logStream: z.custom<LogStream>().optional(),
+	/**
+	 * Whether to resume any unfinished jobs from the database on startup.
+	 */
 	recoverJobsOnStartup: z.boolean().optional(),
+	/**
+	 * Path to the candidate profile JSON file.
+	 */
 	profilePath: z.string().optional(),
+	/**
+	 * Path to the resume JSON file.
+	 */
 	resumePath: z.string().optional(),
+	/**
+	 * Whether to run the browser in headless mode.
+	 */
 	headless: z.boolean().optional(),
 });
 

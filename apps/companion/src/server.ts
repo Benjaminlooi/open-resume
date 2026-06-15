@@ -33,6 +33,14 @@ export function createServer(options: CreateServerOptions = {}) {
 					},
 	});
 
+	/**
+	 * Dependency Injection & Self-Assembly
+	 * 
+	 * If dependencies like jobRepository or crawlQueue are provided in the options,
+	 * we use them (useful for tests). Otherwise, we "self-assemble" by creating
+	 * default instances based on the resolved configuration.
+	 */
+
 	const ownsRepository = !config.jobRepository;
 	const jobRepository =
 		config.jobRepository ??
@@ -54,11 +62,7 @@ export function createServer(options: CreateServerOptions = {}) {
 					screenshotPath,
 				});
 			},
-			logger: {
-				error(bindings, message) {
-					server.log.error(bindings, message);
-				},
-			},
+			logger: server.log,
 			profilePath: config.profilePath,
 			resumePath: config.resumePath,
 			aiConfig: config.ai,

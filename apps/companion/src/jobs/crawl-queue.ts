@@ -5,6 +5,7 @@ import { analyzeJobPosting } from "./ai-analyzer.js";
 import type { JobRepository } from "./repository.js";
 
 interface CrawlQueueLogger {
+	debug(bindings: Record<string, unknown>, message: string): void;
 	error(bindings: Record<string, unknown>, message: string): void;
 }
 
@@ -64,6 +65,7 @@ export function createCrawlQueue(options: CrawlQueueOptions) {
 						: { resumePath: options.resumePath }),
 					cleanedText,
 					aiConfig: options.aiConfig!,
+					logger: options.logger,
 				});
 
 				const currentJob = options.repository.getJob(id);
