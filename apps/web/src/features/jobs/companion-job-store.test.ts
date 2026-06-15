@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useCompanionJobStore } from "./companion-job-store";
 import {
 	deleteCompanionJob,
@@ -31,7 +31,7 @@ describe("useCompanionJobStore", () => {
 	});
 
 	it("should fetch jobs and update store", async () => {
-		const mockJobs = [{ id: "1", sourceUrl: "https://example.com", crawlStatus: "ready" as const }];
+		const mockJobs = [{ id: "1", sourceUrl: "https://example.com", crawlStatus: "ready" as const }] as any;
 		listCompanionJobsMock.mockResolvedValue(mockJobs);
 
 		await useCompanionJobStore.getState().fetchJobs();
@@ -41,7 +41,7 @@ describe("useCompanionJobStore", () => {
 	});
 
 	it("should retry crawl and refresh jobs", async () => {
-		retryCompanionJobCrawlMock.mockResolvedValue({ id: "1", sourceUrl: "https://example.com", crawlStatus: "crawling" as const });
+		retryCompanionJobCrawlMock.mockResolvedValue({ id: "1", sourceUrl: "https://example.com", crawlStatus: "crawling" as const } as any);
 		listCompanionJobsMock.mockResolvedValue([]);
 
 		await useCompanionJobStore.getState().retryJobCrawl("1");
@@ -51,7 +51,7 @@ describe("useCompanionJobStore", () => {
 	});
 
 	it("should retry analyze and refresh jobs", async () => {
-		retryCompanionJobAnalyzeMock.mockResolvedValue({ id: "1", sourceUrl: "https://example.com", crawlStatus: "analyzing" as const });
+		retryCompanionJobAnalyzeMock.mockResolvedValue({ id: "1", sourceUrl: "https://example.com", crawlStatus: "analyzing" as const } as any);
 		listCompanionJobsMock.mockResolvedValue([]);
 
 		await useCompanionJobStore.getState().retryJobAnalyze("1");
@@ -80,7 +80,7 @@ describe("useCompanionJobStore", () => {
 			parsedLocation: "NY",
 			cleanedText: "Description here",
 			fitBriefJson: JSON.stringify({ roleSummary: "Great role" }),
-		};
+		} as any;
 
 		deleteCompanionJobMock.mockResolvedValue({ deleted: true });
 		listCompanionJobsMock.mockResolvedValue([]);

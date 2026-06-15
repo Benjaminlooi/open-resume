@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import DashboardHeader from "#/components/dashboard/DashboardHeader";
@@ -7,30 +7,14 @@ import JobApplicationCard from "#/features/jobs/components/JobApplicationCard";
 import NewJobApplicationModal from "#/features/jobs/components/NewJobApplicationModal";
 import PipelineIntegrityPanel from "#/features/jobs/components/PipelineIntegrityPanel";
 import { useJobApplicationStore } from "#/features/jobs/job-application-store";
-import {
-	deleteCompanionJob,
-	type LocalCompanionJob,
-	listCompanionJobs,
-	retryCompanionJobAnalyze,
-	retryCompanionJobCrawl,
-} from "#/lib/local-companion-client";
+import { useCompanionJobStore } from "#/features/jobs/companion-job-store";
 
 export const Route = createFileRoute("/jobs")({
 	component: JobsDashboard,
 });
 
-function getHostname(sourceUrl: string) {
-	try {
-		return new URL(sourceUrl).hostname;
-	} catch {
-		return sourceUrl;
-	}
-}
-
 function JobsDashboard() {
-	const navigate = useNavigate();
-	const [companionJobs, setCompanionJobs] = useState<LocalCompanionJob[]>([]);
-	const [loadError, setLoadError] = useState("");
+	const { companionJobs, fetchJobs, error: loadError } = useCompanionJobStore();
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [isMounted, setIsMounted] = useState(false);
 
@@ -44,8 +28,6 @@ function JobsDashboard() {
 	// Active job applications store
 	const {
 		jobApplications,
-		createJobApplication,
-		saveFitBrief,
 		deleteJobApplication,
 	} = useJobApplicationStore();
 
@@ -60,106 +42,14 @@ function JobsDashboard() {
 	useEffect(() => {
 		if (!isMounted) return;
 
-		let active = true;
-
-		async function loadJobs() {
-			try {
-				const jobs = await listCompanionJobs();
-				if (active) {
-					setCompanionJobs(jobs);
-					setLoadError("");
-				}
-			} catch (err) {
-				if (active) {
-					setLoadError(
-						err instanceof Error
-							? err.message
-							: "Failed to load jobs from companion",
-					);
-				}
-			}
-		}
-
-		loadJobs();
+		fetchJobs();
 		const intervalDelay = hasPendingJobs ? 2000 : 10000;
-		const interval = setInterval(loadJobs, intervalDelay);
+		const interval = setInterval(fetchJobs, intervalDelay);
 
 		return () => {
-			active = false;
 			clearInterval(interval);
 		};
-	}, [isMounted, hasPendingJobs]);
-
-	const handleRetry = async (id: string) => {
-		try {
-			await retryCompanionJobCrawl(id);
-			const jobs = await listCompanionJobs();
-			setCompanionJobs(jobs);
-		} catch (err) {
-			setLoadError(
-				err instanceof Error ? err.message : "Failed to retry crawl",
-			);
-		}
-	};
-
-	const handleRetryAnalyze = async (id: string) => {
-		try {
-			await retryCompanionJobAnalyze(id);
-			const jobs = await listCompanionJobs();
-			setCompanionJobs(jobs);
-		} catch (err) {
-			setLoadError(
-				err instanceof Error ? err.message : "Failed to retry analysis",
-			);
-		}
-	};
-
-	const handleDelete = async (id: string) => {
-		try {
-			await deleteCompanionJob(id);
-			const jobs = await listCompanionJobs();
-			setCompanionJobs(jobs);
-		} catch (err) {
-			setLoadError(err instanceof Error ? err.message : "Failed to delete job");
-		}
-	};
-
-	const handleConvert = async (job: LocalCompanionJob) => {
-		const hostname = getHostname(job.sourceUrl);
-		const company = job.parsedCompany || hostname;
-		const title = job.parsedTitle || "Untitled Job";
-		const location = job.parsedLocation || "";
-		const sourceUrl = job.sourceUrl;
-		const description = job.parsedDescription || job.cleanedText;
-
-		const appId = createJobApplication(
-			company,
-			title,
-			location,
-			sourceUrl,
-			description,
-		);
-
-		if (job.fitBriefJson) {
-			try {
-				const fitBrief = JSON.parse(job.fitBriefJson);
-				saveFitBrief(appId, fitBrief);
-			} catch (e) {
-				console.error("Failed to parse fitBriefJson", e);
-			}
-		}
-
-		try {
-			await deleteCompanionJob(job.id);
-			// Refresh list of companion jobs
-			const jobs = await listCompanionJobs();
-			setCompanionJobs(jobs);
-		} catch (err) {
-			console.error("Failed to delete companion job during conversion", err);
-		}
-
-		navigate({ to: "/jobs/$id", params: { id: appId } });
-	};
+	}, [isMounted, hasPendingJobs, fetchJobs]);
 
 	const pendingJobs = companionJobs.filter((job) =>
 		["pending", "crawling", "analyzing"].includes(job.crawlStatus),
@@ -267,9 +157,6 @@ function JobsDashboard() {
 													<CompanionJobCard
 														key={job.id}
 														job={job}
-														onRetry={handleRetry}
-														onRetryAnalyze={handleRetryAnalyze}
-														onDelete={handleDelete}
 													/>
 												))}
 											</div>
@@ -294,10 +181,6 @@ function JobsDashboard() {
 													<CompanionJobCard
 														key={job.id}
 														job={job}
-														onRetry={handleRetry}
-														onRetryAnalyze={handleRetryAnalyze}
-														onDelete={handleDelete}
-														onConvert={handleConvert}
 													/>
 												))}
 											</div>
@@ -322,9 +205,6 @@ function JobsDashboard() {
 													<CompanionJobCard
 														key={job.id}
 														job={job}
-														onRetry={handleRetry}
-														onRetryAnalyze={handleRetryAnalyze}
-														onDelete={handleDelete}
 													/>
 												))}
 											</div>
@@ -398,14 +278,7 @@ function JobsDashboard() {
 					<NewJobApplicationModal
 						onClose={() => setIsModalOpen(false)}
 						onCreated={async () => {
-							try {
-								const jobs = await listCompanionJobs();
-								setCompanionJobs(jobs);
-							} catch (err) {
-								setLoadError(
-									err instanceof Error ? err.message : "Failed to load jobs",
-								);
-							}
+							await fetchJobs();
 						}}
 					/>
 				)}
