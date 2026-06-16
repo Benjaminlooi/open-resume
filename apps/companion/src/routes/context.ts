@@ -15,3 +15,7 @@ export interface JobRouteContext {
 	crawlQueue: CrawlQueue;
 	screenshotsPath: string;
 }
+
+export interface JobApplicationRouteContext {
+	jobRepository: JobRepository;
+}

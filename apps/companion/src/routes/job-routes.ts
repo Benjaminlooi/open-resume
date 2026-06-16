@@ -10,6 +10,7 @@ import {
 	companionJobsResponseSchema,
 	createJobRequestSchema,
 	deleteJobResponseSchema,
+	jobApplicationSchema,
 	jobIdParamsSchema,
 } from "../schema.js";
 import type { JobRouteContext } from "./context.js";
@@ -182,6 +183,45 @@ export function createJobRoutes(context: JobRouteContext): FastifyPluginAsync {
 
 				context.crawlQueue.enqueue(job.id);
 				return reply.send(job);
+			},
+		);
+
+		typedServer.post(
+			"/jobs/:id/convert",
+			{
+				schema: {
+					operationId: "convertJobToApplication",
+					tags: ["Jobs"],
+					summary: "Convert a companion job to a job application",
+					params: routeJobIdParamsSchema,
+					response: {
+						200: jobApplicationSchema,
+						404: companionErrorResponseSchema,
+					},
+				},
+			},
+			async (request, reply) => {
+				const id = request.params.id;
+				const job = context.jobRepository.getJob(id);
+				if (!job) {
+					return reply.status(404).send({ error: "Job not found" });
+				}
+
+				const jobApplication = context.jobRepository.convertJobToApplication(
+					id,
+					Date.now(),
+				);
+
+				const screenshotPath = join(context.screenshotsPath, `${id}.png`);
+				if (dirname(screenshotPath) === context.screenshotsPath) {
+					try {
+						await fsPromises.unlink(screenshotPath);
+					} catch {
+						// Ignore missing files or permission errors during delete
+					}
+				}
+
+				return reply.send(jobApplication);
 			},
 		);
 

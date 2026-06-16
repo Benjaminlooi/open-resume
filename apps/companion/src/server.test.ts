@@ -654,4 +654,190 @@ describe("companion server", () => {
 
 		expect([200, 301, 302]).toContain(response.statusCode);
 	});
+
+	it("manages job applications CRUD operations", async () => {
+		const { server } = createTestServer();
+
+		// 1. GET /job-applications initially empty
+		const getRes1 = await server.inject({
+			method: "GET",
+			url: "/job-applications",
+		});
+		expect(getRes1.statusCode).toBe(200);
+		expect(getRes1.json()).toEqual({ jobApplications: [] });
+
+		// 2. POST /job-applications creates one
+		const postRes = await server.inject({
+			method: "POST",
+			url: "/job-applications",
+			payload: {
+				id: "app-123",
+				company: "Acme Corp",
+				title: "Frontend Engineer",
+				location: "Remote",
+				sourceUrl: "https://example.com/job-123",
+				description: "Design beautiful web apps.",
+			},
+		});
+		expect(postRes.statusCode).toBe(201);
+		expect(postRes.json()).toMatchObject({
+			id: "app-123",
+			company: "Acme Corp",
+			title: "Frontend Engineer",
+			location: "Remote",
+			sourceUrl: "https://example.com/job-123",
+			description: "Design beautiful web apps.",
+			status: "saved",
+			notes: "",
+			followUpAt: null,
+		});
+
+		// 3. GET /job-applications returns the created one
+		const getRes2 = await server.inject({
+			method: "GET",
+			url: "/job-applications",
+		});
+		expect(getRes2.statusCode).toBe(200);
+		expect(getRes2.json().jobApplications).toHaveLength(1);
+		expect(getRes2.json().jobApplications[0].id).toBe("app-123");
+
+		// 4. GET /job-applications/:id retrieves it
+		const getByIdRes = await server.inject({
+			method: "GET",
+			url: "/job-applications/app-123",
+		});
+		expect(getByIdRes.statusCode).toBe(200);
+		expect(getByIdRes.json().id).toBe("app-123");
+
+		// 4b. GET /job-applications/:id with missing returns 404
+		const getMissingRes = await server.inject({
+			method: "GET",
+			url: "/job-applications/missing-app",
+		});
+		expect(getMissingRes.statusCode).toBe(404);
+
+		// 5. PUT /job-applications/:id updates it
+		const putRes = await server.inject({
+			method: "PUT",
+			url: "/job-applications/app-123",
+			payload: {
+				title: "Senior Frontend Engineer",
+				status: "applied",
+				notes: "Applied via referral.",
+			},
+		});
+		expect(putRes.statusCode).toBe(200);
+		expect(putRes.json()).toMatchObject({
+			id: "app-123",
+			title: "Senior Frontend Engineer",
+			status: "applied",
+			notes: "Applied via referral.",
+		});
+
+		// 5b. PUT /job-applications/:id with missing returns 404
+		const putMissingRes = await server.inject({
+			method: "PUT",
+			url: "/job-applications/missing-app",
+			payload: {
+				title: "No-op",
+			},
+		});
+		expect(putMissingRes.statusCode).toBe(404);
+
+		// 6. DELETE /job-applications/:id deletes it
+		const deleteRes = await server.inject({
+			method: "DELETE",
+			url: "/job-applications/app-123",
+		});
+		expect(deleteRes.statusCode).toBe(200);
+		expect(deleteRes.json()).toEqual({ deleted: true });
+
+		// 6b. GET /job-applications/:id returns 404
+		const getDeletedRes = await server.inject({
+			method: "GET",
+			url: "/job-applications/app-123",
+		});
+		expect(getDeletedRes.statusCode).toBe(404);
+	});
+
+	it("converts a companion job to a job application", async () => {
+		const { server, repository } = createTestServer();
+
+		// Create a job first
+		repository.createJob({
+			id: "job-convert-test",
+			sourceUrl: "https://example.com/convert-test",
+			now: 1000,
+		});
+
+		// Mark it ready with some parsed fields
+		repository.markReady("job-convert-test", {
+			cleanedText: "Job text here",
+			parsedTitle: "Developer",
+			parsedCompany: "Test Inc",
+			parsedLocation: "San Francisco",
+			parsedDescription: "Develop stuff",
+			fitScore: 85,
+			fitBriefJson: JSON.stringify({
+				roleSummary: "Good fit",
+				requirements: ["Experience"],
+				keywords: ["typescript"],
+				strengths: ["Clean code"],
+				gaps: [],
+				risks: [],
+				nextActions: [],
+				generatedAt: 1200,
+			}),
+			now: 1100,
+		});
+
+		// Convert it via POST /jobs/:id/convert
+		const convertRes = await server.inject({
+			method: "POST",
+			url: "/jobs/job-convert-test/convert",
+		});
+
+		expect(convertRes.statusCode).toBe(200);
+		expect(convertRes.json()).toMatchObject({
+			id: "job-convert-test",
+			company: "Test Inc",
+			title: "Developer",
+			location: "San Francisco",
+			sourceUrl: "https://example.com/convert-test",
+			description: "Develop stuff",
+			status: "saved",
+			fitBrief: {
+				roleSummary: "Good fit",
+				requirements: ["Experience"],
+				keywords: ["typescript"],
+				strengths: ["Clean code"],
+				gaps: [],
+				risks: [],
+				nextActions: [],
+				generatedAt: 1200,
+			},
+		});
+
+		// Verify that the job is deleted
+		const getJobRes = await server.inject({
+			method: "GET",
+			url: "/jobs/job-convert-test",
+		});
+		expect(getJobRes.statusCode).toBe(404);
+
+		// Verify that the job application exists
+		const getAppRes = await server.inject({
+			method: "GET",
+			url: "/job-applications/job-convert-test",
+		});
+		expect(getAppRes.statusCode).toBe(200);
+		expect(getAppRes.json().id).toBe("job-convert-test");
+
+		// Test 404 on converting non-existent job
+		const convertMissingRes = await server.inject({
+			method: "POST",
+			url: "/jobs/missing-job/convert",
+		});
+		expect(convertMissingRes.statusCode).toBe(404);
+	});
 });

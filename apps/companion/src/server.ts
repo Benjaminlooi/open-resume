@@ -9,6 +9,7 @@ import { createJobRepository } from "./jobs/repository.js";
 import { registerCors } from "./plugins/cors.js";
 import { registerErrorHandler } from "./plugins/error-handler.js";
 import { registerOpenApi } from "./plugins/openapi.js";
+import { createJobApplicationRoutes } from "./routes/job-application-routes.js";
 import { createJobRoutes } from "./routes/job-routes.js";
 import { createProfileRoutes } from "./routes/profile-routes.js";
 import { createResumeRoutes } from "./routes/resume-routes.js";
@@ -94,6 +95,7 @@ export function createServer(options: CreateServerOptions = {}) {
 				screenshotsPath: config.screenshotsPath,
 			}),
 		);
+		server.register(createJobApplicationRoutes({ jobRepository }));
 	});
 
 	if (config.recoverJobsOnStartup) {
