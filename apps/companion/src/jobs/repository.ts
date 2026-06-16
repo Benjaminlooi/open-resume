@@ -5,6 +5,11 @@ import type {
 	ResumeContent,
 	ResumeDetails,
 	ResumeSummary,
+	JobApplication,
+	JobApplicationStatus,
+	JobFitBrief,
+	ResumeEditProposal,
+	CoverLetterDraft,
 } from "../schema.js";
 
 interface JobRow {
@@ -66,6 +71,58 @@ function mapResumeDetails(row: ResumeRow): ResumeDetails {
 	return {
 		...mapResumeSummary(row),
 		content: JSON.parse(row.content_json) as ResumeContent,
+	};
+}
+
+interface JobApplicationRow {
+	id: string;
+	company: string;
+	title: string;
+	location: string;
+	source_url: string;
+	description: string;
+	status: string;
+	source_resume_id: string | null;
+	source_resume_name: string | null;
+	source_resume_snapshot_json: string | null;
+	tailored_resume_json: string | null;
+	fit_brief_json: string | null;
+	resume_edit_proposals_json: string | null;
+	cover_letter_draft_json: string | null;
+	notes: string;
+	follow_up_at: number | null;
+	created_at: number;
+	updated_at: number;
+}
+
+function mapJobApplication(row: JobApplicationRow): JobApplication {
+	return {
+		id: row.id,
+		company: row.company,
+		title: row.title,
+		location: row.location,
+		sourceUrl: row.source_url,
+		description: row.description,
+		status: row.status as JobApplicationStatus,
+		sourceResumeId: row.source_resume_id,
+		sourceResumeName: row.source_resume_name,
+		sourceResumeSnapshot: row.source_resume_snapshot_json
+			? JSON.parse(row.source_resume_snapshot_json)
+			: null,
+		tailoredResume: row.tailored_resume_json
+			? JSON.parse(row.tailored_resume_json)
+			: null,
+		fitBrief: row.fit_brief_json ? JSON.parse(row.fit_brief_json) : null,
+		resumeEditProposals: row.resume_edit_proposals_json
+			? JSON.parse(row.resume_edit_proposals_json)
+			: [],
+		coverLetterDraft: row.cover_letter_draft_json
+			? JSON.parse(row.cover_letter_draft_json)
+			: null,
+		notes: row.notes,
+		followUpAt: row.follow_up_at,
+		createdAt: row.created_at,
+		updatedAt: row.updated_at,
 	};
 }
 
@@ -171,6 +228,28 @@ export function createJobRepository(path: string) {
 			where is_default = 1;
 		create index if not exists resumes_last_modified_idx
 			on resumes(last_modified desc);
+
+		create table if not exists job_applications (
+			id text primary key,
+			company text not null,
+			title text not null,
+			location text not null,
+			source_url text not null,
+			description text not null,
+			status text not null,
+			source_resume_id text,
+			source_resume_name text,
+			source_resume_snapshot_json text,
+			tailored_resume_json text,
+			fit_brief_json text,
+			resume_edit_proposals_json text,
+			cover_letter_draft_json text,
+			notes text not null default '',
+			follow_up_at integer,
+			created_at integer not null,
+			updated_at integer not null
+		);
+		create index if not exists job_applications_updated_at_idx on job_applications(updated_at desc);
 	`);
 
 	function getJob(id: string) {
@@ -185,6 +264,13 @@ export function createJobRepository(path: string) {
 			.prepare("select * from resumes where id = ?")
 			.get(id) as unknown as ResumeRow | undefined;
 		return row ? mapResumeDetails(row) : null;
+	}
+
+	function getJobApplication(id: string) {
+		const row = database
+			.prepare("select * from job_applications where id = ?")
+			.get(id) as unknown as JobApplicationRow | undefined;
+		return row ? mapJobApplication(row) : null;
 	}
 
 	return {
@@ -434,6 +520,225 @@ export function createJobRepository(path: string) {
 				.prepare("select * from resumes where is_default = 1 limit 1")
 				.get() as unknown as ResumeRow | undefined;
 			return row ? mapResumeDetails(row) : null;
+		},
+
+		listJobApplications() {
+			return database
+				.prepare(
+					"select * from job_applications order by updated_at desc, created_at desc",
+				)
+				.all()
+				.map((row) => mapJobApplication(row as unknown as JobApplicationRow));
+		},
+
+		getJobApplication,
+
+		createJobApplication(input: {
+			id: string;
+			company: string;
+			title: string;
+			location: string;
+			sourceUrl: string;
+			description: string;
+			now: number;
+		}) {
+			database
+				.prepare(`
+					insert into job_applications (
+						id, company, title, location, source_url, description,
+						status, source_resume_id, source_resume_name,
+						source_resume_snapshot_json, tailored_resume_json,
+						fit_brief_json, resume_edit_proposals_json,
+						cover_letter_draft_json, notes, follow_up_at,
+						created_at, updated_at
+					) values (?, ?, ?, ?, ?, ?, 'saved', null, null, null, null, null, '[]', null, '', null, ?, ?)
+				`)
+				.run(
+					input.id,
+					input.company,
+					input.title,
+					input.location,
+					input.sourceUrl,
+					input.description,
+					input.now,
+					input.now,
+				);
+			return getJobApplication(input.id) as JobApplication;
+		},
+
+		updateJobApplication(
+			id: string,
+			input: {
+				company?: string;
+				title?: string;
+				location?: string;
+				sourceUrl?: string;
+				description?: string;
+				status?: JobApplicationStatus;
+				sourceResumeId?: string | null;
+				sourceResumeName?: string | null;
+				sourceResumeSnapshot?: ResumeContent | null;
+				tailoredResume?: ResumeContent | null;
+				fitBrief?: JobFitBrief | null;
+				resumeEditProposals?: ResumeEditProposal[];
+				coverLetterDraft?: CoverLetterDraft | null;
+				notes?: string;
+				followUpAt?: number | null;
+				now: number;
+			},
+		) {
+			const existing = getJobApplication(id);
+			if (!existing) {
+				return null;
+			}
+
+			const company =
+				input.company !== undefined ? input.company : existing.company;
+			const title = input.title !== undefined ? input.title : existing.title;
+			const location =
+				input.location !== undefined ? input.location : existing.location;
+			const sourceUrl =
+				input.sourceUrl !== undefined ? input.sourceUrl : existing.sourceUrl;
+			const description =
+				input.description !== undefined
+					? input.description
+					: existing.description;
+			const status =
+				input.status !== undefined ? input.status : existing.status;
+			const sourceResumeId =
+				input.sourceResumeId !== undefined
+					? input.sourceResumeId
+					: existing.sourceResumeId;
+			const sourceResumeName =
+				input.sourceResumeName !== undefined
+					? input.sourceResumeName
+					: existing.sourceResumeName;
+
+			const sourceResumeSnapshot =
+				input.sourceResumeSnapshot !== undefined
+					? input.sourceResumeSnapshot
+					: existing.sourceResumeSnapshot;
+			const tailoredResume =
+				input.tailoredResume !== undefined
+					? input.tailoredResume
+					: existing.tailoredResume;
+			const fitBrief =
+				input.fitBrief !== undefined ? input.fitBrief : existing.fitBrief;
+			const resumeEditProposals =
+				input.resumeEditProposals !== undefined
+					? input.resumeEditProposals
+					: existing.resumeEditProposals;
+			const coverLetterDraft =
+				input.coverLetterDraft !== undefined
+					? input.coverLetterDraft
+					: existing.coverLetterDraft;
+
+			const notes = input.notes !== undefined ? input.notes : existing.notes;
+			const followUpAt =
+				input.followUpAt !== undefined ? input.followUpAt : existing.followUpAt;
+
+			database
+				.prepare(`
+					update job_applications
+					set company = ?,
+						title = ?,
+						location = ?,
+						source_url = ?,
+						description = ?,
+						status = ?,
+						source_resume_id = ?,
+						source_resume_name = ?,
+						source_resume_snapshot_json = ?,
+						tailored_resume_json = ?,
+						fit_brief_json = ?,
+						resume_edit_proposals_json = ?,
+						cover_letter_draft_json = ?,
+						notes = ?,
+						follow_up_at = ?,
+						updated_at = ?
+					where id = ?
+				`)
+				.run(
+					company,
+					title,
+					location,
+					sourceUrl,
+					description,
+					status,
+					sourceResumeId,
+					sourceResumeName,
+					sourceResumeSnapshot ? JSON.stringify(sourceResumeSnapshot) : null,
+					tailoredResume ? JSON.stringify(tailoredResume) : null,
+					fitBrief ? JSON.stringify(fitBrief) : null,
+					resumeEditProposals ? JSON.stringify(resumeEditProposals) : "[]",
+					coverLetterDraft ? JSON.stringify(coverLetterDraft) : null,
+					notes,
+					followUpAt,
+					input.now,
+					id,
+				);
+
+			return getJobApplication(id);
+		},
+
+		deleteJobApplication(id: string) {
+			const result = database
+				.prepare("delete from job_applications where id = ?")
+				.run(id);
+			return result.changes > 0;
+		},
+
+		convertJobToApplication(jobId: string, now: number) {
+			const job = getJob(jobId);
+			if (!job) {
+				throw new Error(`Job with id ${jobId} not found`);
+			}
+
+			let company = job.parsedCompany;
+			if (!company) {
+				try {
+					company = new URL(job.sourceUrl).hostname;
+				} catch {
+					company = "Unknown Company";
+				}
+			}
+			const title = job.parsedTitle || "Untitled Job";
+			const location = job.parsedLocation || "";
+			const description = job.parsedDescription || job.cleanedText;
+
+			database.exec("BEGIN TRANSACTION;");
+			try {
+				database
+					.prepare(`
+						insert into job_applications (
+							id, company, title, location, source_url, description,
+							status, source_resume_id, source_resume_name,
+							source_resume_snapshot_json, tailored_resume_json,
+							fit_brief_json, resume_edit_proposals_json,
+							cover_letter_draft_json, notes, follow_up_at,
+							created_at, updated_at
+						) values (?, ?, ?, ?, ?, ?, 'saved', null, null, null, null, ?, '[]', null, '', null, ?, ?)
+					`)
+					.run(
+						job.id,
+						company,
+						title,
+						location,
+						job.sourceUrl,
+						description,
+						job.fitBriefJson ?? null,
+						now,
+						now,
+					);
+
+				database.prepare("delete from jobs where id = ?").run(job.id);
+				database.exec("COMMIT;");
+			} catch (error) {
+				database.exec("ROLLBACK;");
+				throw error;
+			}
+
+			return getJobApplication(job.id) as JobApplication;
 		},
 
 		close() {

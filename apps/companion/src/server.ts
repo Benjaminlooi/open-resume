@@ -35,7 +35,7 @@ export function createServer(options: CreateServerOptions = {}) {
 
 	/**
 	 * Dependency Injection & Self-Assembly
-	 * 
+	 *
 	 * If dependencies like jobRepository or crawlQueue are provided in the options,
 	 * we use them (useful for tests). Otherwise, we "self-assemble" by creating
 	 * default instances based on the resolved configuration.
