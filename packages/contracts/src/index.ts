@@ -1,6 +1,10 @@
 import { z } from "zod";
 import { companionErrorResponseSchema, okResponseSchema } from "./common.js";
 import {
+	jobApplicationSchema,
+	jobApplicationsResponseSchema,
+} from "./job-applications.js";
+import {
 	companionJobSchema,
 	companionJobsResponseSchema,
 	crawlStatusSchema,
@@ -26,6 +30,7 @@ import {
 
 // Re-export modules
 export * from "./common.js";
+export * from "./job-applications.js";
 export * from "./jobs.js";
 export * from "./profiles.js";
 export * from "./resumes.js";
@@ -58,4 +63,8 @@ if (registry) {
 	registry.add(resumeSyncRequestSchema, { id: "ResumeSyncRequest" });
 	registry.add(okResponseSchema, { id: "OkResponse" });
 	registry.add(jobFitBriefSchema, { id: "JobFitBrief" });
+	registry.add(jobApplicationSchema, { id: "JobApplication" });
+	registry.add(jobApplicationsResponseSchema, {
+		id: "JobApplicationsResponse",
+	});
 }
