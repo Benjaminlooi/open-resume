@@ -1,18 +1,24 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
 	clearDefaultResume,
+	convertJobToApplication,
 	createCompanionJob,
+	createJobApplication,
 	createResume,
 	deleteCompanionJob,
+	deleteJobApplication,
 	deleteResume,
+	getJobApplication,
 	getProfile,
 	getResume,
 	listCompanionJobs,
+	listJobApplications,
 	listResumes,
 	retryCompanionJobAnalyze,
 	retryCompanionJobCrawl,
 	setDefaultResume,
 	syncResume,
+	updateJobApplication,
 	updateProfile,
 	updateResume,
 } from "./local-companion-client";
@@ -74,6 +80,27 @@ const mockResumeDetails = {
 			fullName: "John Doe",
 		},
 	},
+};
+
+const mockJobApplication = {
+	id: "app-1",
+	company: "Google",
+	title: "Software Engineer",
+	location: "Mountain View, CA",
+	sourceUrl: "https://google.com/jobs/1",
+	description: "Coding job",
+	status: "saved" as const,
+	sourceResumeId: null,
+	sourceResumeName: null,
+	sourceResumeSnapshot: null,
+	tailoredResume: null,
+	fitBrief: null,
+	resumeEditProposals: [],
+	coverLetterDraft: null,
+	notes: "",
+	followUpAt: null,
+	createdAt: 1791571200000,
+	updatedAt: 1791571200000,
 };
 
 describe("local companion client", () => {
@@ -387,6 +414,133 @@ describe("local companion client", () => {
 
 		await expect(listCompanionJobs()).rejects.toThrow(
 			"Local companion is not reachable",
+		);
+	});
+
+	it("lists job applications", async () => {
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(async () => ({
+				ok: true,
+				json: async () => ({ jobApplications: [mockJobApplication] }),
+			})),
+		);
+
+		await expect(listJobApplications()).resolves.toEqual([mockJobApplication]);
+		expect(fetch).toHaveBeenCalledWith(
+			"http://127.0.0.1:47321/job-applications",
+			undefined,
+		);
+	});
+
+	it("gets a job application", async () => {
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(async () => ({
+				ok: true,
+				json: async () => mockJobApplication,
+			})),
+		);
+
+		await expect(getJobApplication("app-1")).resolves.toEqual(
+			mockJobApplication,
+		);
+		expect(fetch).toHaveBeenCalledWith(
+			"http://127.0.0.1:47321/job-applications/app-1",
+			undefined,
+		);
+	});
+
+	it("creates a job application", async () => {
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(async () => ({
+				ok: true,
+				json: async () => mockJobApplication,
+			})),
+		);
+
+		await expect(
+			createJobApplication(
+				"app-1",
+				"Google",
+				"Software Engineer",
+				"Mountain View, CA",
+				"https://google.com/jobs/1",
+				"Coding job",
+			),
+		).resolves.toEqual(mockJobApplication);
+		expect(fetch).toHaveBeenCalledWith(
+			"http://127.0.0.1:47321/job-applications",
+			expect.objectContaining({
+				method: "POST",
+				body: JSON.stringify({
+					id: "app-1",
+					company: "Google",
+					title: "Software Engineer",
+					location: "Mountain View, CA",
+					sourceUrl: "https://google.com/jobs/1",
+					description: "Coding job",
+				}),
+			}),
+		);
+	});
+
+	it("updates a job application", async () => {
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(async () => ({
+				ok: true,
+				json: async () => mockJobApplication,
+			})),
+		);
+
+		const data = { status: "applied" as const };
+		await expect(updateJobApplication("app-1", data)).resolves.toEqual(
+			mockJobApplication,
+		);
+		expect(fetch).toHaveBeenCalledWith(
+			"http://127.0.0.1:47321/job-applications/app-1",
+			expect.objectContaining({
+				method: "PUT",
+				body: JSON.stringify(data),
+			}),
+		);
+	});
+
+	it("deletes a job application", async () => {
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(async () => ({
+				ok: true,
+				json: async () => ({ deleted: true }),
+			})),
+		);
+
+		await expect(deleteJobApplication("app-1")).resolves.toEqual({
+			deleted: true,
+		});
+		expect(fetch).toHaveBeenCalledWith(
+			"http://127.0.0.1:47321/job-applications/app-1",
+			expect.objectContaining({ method: "DELETE" }),
+		);
+	});
+
+	it("converts a companion job to a job application", async () => {
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(async () => ({
+				ok: true,
+				json: async () => mockJobApplication,
+			})),
+		);
+
+		await expect(convertJobToApplication("job-1")).resolves.toEqual(
+			mockJobApplication,
+		);
+		expect(fetch).toHaveBeenCalledWith(
+			"http://127.0.0.1:47321/jobs/job-1/convert",
+			expect.objectContaining({ method: "POST" }),
 		);
 	});
 });

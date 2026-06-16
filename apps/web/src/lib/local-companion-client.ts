@@ -5,6 +5,8 @@ import {
 	createResumeRequestSchema,
 	deleteJobResponseSchema,
 	deleteResumeResponseSchema,
+	jobApplicationSchema,
+	jobApplicationsResponseSchema,
 	okResponseSchema,
 	resumeContentSchema,
 	resumeDetailsSchema,
@@ -26,6 +28,8 @@ export {
 	candidateProfileSchema,
 	resumeSyncRequestSchema,
 	okResponseSchema,
+	jobApplicationSchema,
+	jobApplicationsResponseSchema,
 };
 
 import type {
@@ -39,6 +43,8 @@ import type {
 	ResumeSyncRequest,
 	TargetRoleArchetype,
 	UpdateResumeRequest,
+	JobApplication,
+	JobApplicationsResponse,
 } from "@open-resume/contracts";
 
 export type {
@@ -52,6 +58,8 @@ export type {
 	ResumeDetails,
 	CreateResumeRequest,
 	UpdateResumeRequest,
+	JobApplication,
+	JobApplicationsResponse,
 };
 
 export const companionBaseUrl = "http://127.0.0.1:47321";
@@ -276,5 +284,97 @@ export async function clearDefaultResume(): Promise<OkResponse> {
 		response,
 		okResponseSchema,
 		"Local companion could not clear the default resume.",
+	);
+}
+
+export async function listJobApplications(): Promise<JobApplication[]> {
+	const response = await companionFetch("/job-applications");
+	const parsed = await parseCompanionResponse(
+		response,
+		jobApplicationsResponseSchema,
+		"Local companion could not list job applications.",
+	);
+	return parsed.jobApplications;
+}
+
+export async function getJobApplication(id: string): Promise<JobApplication> {
+	const response = await companionFetch(`/job-applications/${id}`);
+	return parseCompanionResponse(
+		response,
+		jobApplicationSchema,
+		"Local companion could not retrieve this job application.",
+	);
+}
+
+export async function createJobApplication(
+	id: string,
+	company: string,
+	title: string,
+	location: string,
+	sourceUrl: string,
+	description: string,
+): Promise<JobApplication> {
+	const response = await companionFetch("/job-applications", {
+		method: "POST",
+		headers: {
+			"content-type": "application/json",
+		},
+		body: JSON.stringify({
+			id,
+			company,
+			title,
+			location,
+			sourceUrl,
+			description,
+		}),
+	});
+	return parseCompanionResponse(
+		response,
+		jobApplicationSchema,
+		"Local companion could not create this job application.",
+	);
+}
+
+export async function updateJobApplication(
+	id: string,
+	data: any,
+): Promise<JobApplication> {
+	const response = await companionFetch(`/job-applications/${id}`, {
+		method: "PUT",
+		headers: {
+			"content-type": "application/json",
+		},
+		body: JSON.stringify(data),
+	});
+	return parseCompanionResponse(
+		response,
+		jobApplicationSchema,
+		"Local companion could not update this job application.",
+	);
+}
+
+export async function deleteJobApplication(
+	id: string,
+): Promise<{ deleted: boolean }> {
+	const response = await companionFetch(`/job-applications/${id}`, {
+		method: "DELETE",
+	});
+	return parseCompanionResponse(
+		response,
+		deleteJobResponseSchema,
+		"Local companion could not delete this job application.",
+	);
+}
+
+export async function convertJobToApplication(
+	id: string,
+): Promise<JobApplication> {
+	const response = await companionFetch(`/jobs/${id}/convert`, {
+		method: "POST",
+	});
+	return parseCompanionResponse(
+		response,
+		jobApplicationSchema,
+		"Local companion could not convert this job.",
 	);
 }
