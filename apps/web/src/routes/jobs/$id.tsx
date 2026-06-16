@@ -55,13 +55,21 @@ const formatStatus = (status: JobApplicationStatus) => {
 
 function JobWorkspace() {
 	const { id } = Route.useParams();
-	const { jobApplications, validatePipeline } = useJobApplicationStore();
+	const { jobApplications, validatePipeline, loadJobApplications } = useJobApplicationStore();
 	const [activeStep, setActiveStep] = useState(0);
 	const [isMounted, setIsMounted] = useState(false);
 
 	useEffect(() => {
 		setIsMounted(true);
 	}, []);
+
+	useEffect(() => {
+		if (isMounted) {
+			loadJobApplications().catch((err) =>
+				console.error("Failed to load job applications", err),
+			);
+		}
+	}, [isMounted, loadJobApplications]);
 
 	const application = jobApplications.find((app) => app.id === id);
 

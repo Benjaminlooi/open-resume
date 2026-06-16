@@ -6,6 +6,7 @@ import {
 	listCompanionJobs,
 	retryCompanionJobAnalyze,
 	retryCompanionJobCrawl,
+	convertJobToApplication as convertJobToApplicationApi,
 } from "#/lib/local-companion-client";
 import { useJobApplicationStore } from "./job-application-store";
 
@@ -19,14 +20,6 @@ interface CompanionJobState {
 	retryJobAnalyze: (id: string) => Promise<void>;
 	deleteJob: (id: string) => Promise<void>;
 	convertJobToApplication: (job: LocalCompanionJob) => Promise<string>;
-}
-
-function getHostname(sourceUrl: string) {
-	try {
-		return new URL(sourceUrl).hostname;
-	} catch {
-		return sourceUrl;
-	}
 }
 
 export const useCompanionJobStore = create<CompanionJobState>()(
@@ -77,40 +70,10 @@ export const useCompanionJobStore = create<CompanionJobState>()(
 			},
 
 			convertJobToApplication: async (job) => {
-				const hostname = getHostname(job.sourceUrl);
-				const company = job.parsedCompany || hostname;
-				const title = job.parsedTitle || "Untitled Job";
-				const location = job.parsedLocation || "";
-				const sourceUrl = job.sourceUrl;
-				const description = job.parsedDescription || job.cleanedText;
-
-				const { createJobApplication, saveFitBrief } = useJobApplicationStore.getState();
-
-				const appId = createJobApplication(
-					company,
-					title,
-					location,
-					sourceUrl,
-					description,
-				);
-
-				if (job.fitBriefJson) {
-					try {
-						const fitBrief = JSON.parse(job.fitBriefJson);
-						saveFitBrief(appId, fitBrief);
-					} catch (e) {
-						console.error("Failed to parse fitBriefJson", e);
-					}
-				}
-
-				try {
-					await deleteCompanionJob(job.id);
-					await get().fetchJobs();
-				} catch (err) {
-					console.error("Failed to delete companion job during conversion", err);
-				}
-
-				return appId;
+				const app = await convertJobToApplicationApi(job.id);
+				await get().fetchJobs();
+				await useJobApplicationStore.getState().loadJobApplications();
+				return app.id;
 			},
 		}),
 		{ name: "companion-job-store" },

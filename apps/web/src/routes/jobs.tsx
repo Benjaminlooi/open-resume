@@ -29,6 +29,7 @@ function JobsDashboard() {
 	const {
 		jobApplications,
 		deleteJobApplication,
+		loadJobApplications,
 	} = useJobApplicationStore();
 
 	const hasPendingJobs = companionJobs.some((job) =>
@@ -38,6 +39,14 @@ function JobsDashboard() {
 	useEffect(() => {
 		setIsMounted(true);
 	}, []);
+
+	useEffect(() => {
+		if (isMounted) {
+			loadJobApplications().catch((err) =>
+				console.error("Failed to load job applications", err),
+			);
+		}
+	}, [isMounted, loadJobApplications]);
 
 	useEffect(() => {
 		if (!isMounted) return;

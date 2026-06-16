@@ -75,7 +75,7 @@ export default function NewJobApplicationModal({
 		setError("");
 		setIsSubmitting(true);
 		try {
-			const appId = createJobApplication(
+			const appId = await createJobApplication(
 				trimmedCompany,
 				trimmedTitle,
 				location.trim(),

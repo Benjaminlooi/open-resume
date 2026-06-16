@@ -5,6 +5,8 @@ import {
 	listCompanionJobs,
 	retryCompanionJobAnalyze,
 	retryCompanionJobCrawl,
+	convertJobToApplication,
+	listJobApplications,
 } from "#/lib/local-companion-client";
 import { useJobApplicationStore } from "./job-application-store";
 
@@ -13,12 +15,16 @@ vi.mock("#/lib/local-companion-client", () => ({
 	deleteCompanionJob: vi.fn(),
 	retryCompanionJobCrawl: vi.fn(),
 	retryCompanionJobAnalyze: vi.fn(),
+	convertJobToApplication: vi.fn(),
+	listJobApplications: vi.fn(),
 }));
 
 const listCompanionJobsMock = vi.mocked(listCompanionJobs);
 const deleteCompanionJobMock = vi.mocked(deleteCompanionJob);
 const retryCompanionJobCrawlMock = vi.mocked(retryCompanionJobCrawl);
 const retryCompanionJobAnalyzeMock = vi.mocked(retryCompanionJobAnalyze);
+const convertJobToApplicationMock = vi.mocked(convertJobToApplication);
+const listJobApplicationsMock = vi.mocked(listJobApplications);
 
 const initialCompanionState = JSON.parse(JSON.stringify(useCompanionJobStore.getState()));
 const initialJobAppState = JSON.parse(JSON.stringify(useJobApplicationStore.getState()));
@@ -70,7 +76,7 @@ describe("useCompanionJobStore", () => {
 		expect(listCompanionJobsMock).toHaveBeenCalled();
 	});
 
-	it("should convert job to application and delete from companion", async () => {
+	it("should convert job to application, fetch companion jobs, and load job applications", async () => {
 		const mockJob = {
 			id: "1",
 			sourceUrl: "https://example.com/job",
@@ -82,13 +88,27 @@ describe("useCompanionJobStore", () => {
 			fitBriefJson: JSON.stringify({ roleSummary: "Great role" }),
 		} as any;
 
-		deleteCompanionJobMock.mockResolvedValue({ deleted: true });
+		const mockApp = {
+			id: "app-123",
+			company: "Test Co",
+			title: "Dev",
+			location: "NY",
+			sourceUrl: "https://example.com/job",
+			description: "Description here",
+			status: "saved",
+			fitBrief: { roleSummary: "Great role" },
+		} as any;
+
+		convertJobToApplicationMock.mockResolvedValue(mockApp);
 		listCompanionJobsMock.mockResolvedValue([]);
+		listJobApplicationsMock.mockResolvedValue([mockApp]);
 
 		const appId = await useCompanionJobStore.getState().convertJobToApplication(mockJob);
 
-		expect(appId).toBeTypeOf("string");
-		expect(deleteCompanionJobMock).toHaveBeenCalledWith("1");
+		expect(appId).toBe("app-123");
+		expect(convertJobToApplicationMock).toHaveBeenCalledWith("1");
+		expect(listCompanionJobsMock).toHaveBeenCalled();
+		expect(listJobApplicationsMock).toHaveBeenCalled();
 		
 		const app = useJobApplicationStore.getState().jobApplications.find((a) => a.id === appId);
 		expect(app).toBeDefined();

@@ -39,6 +39,44 @@ vi.mock("#/lib/local-companion-client", () => {
 				isDefault: false,
 			};
 		}),
+		createJobApplication: vi.fn(async (id, company, title, location, sourceUrl, description) => {
+			return {
+				id,
+				company,
+				title,
+				location,
+				sourceUrl,
+				description,
+				status: "saved",
+				sourceResumeId: null,
+				sourceResumeName: null,
+				sourceResumeSnapshot: null,
+				tailoredResume: null,
+				fitBrief: null,
+				resumeEditProposals: [],
+				coverLetterDraft: null,
+				notes: "",
+				followUpAt: null,
+				createdAt: Date.now(),
+				updatedAt: Date.now(),
+			};
+		}),
+		updateJobApplication: vi.fn(async (id, data) => {
+			const { useJobApplicationStore } = await import("./job-application-store");
+			const existing = useJobApplicationStore.getState().jobApplications.find(app => app.id === id) || {};
+			return {
+				...existing,
+				...data,
+				updatedAt: Date.now(),
+			};
+		}),
+		deleteJobApplication: vi.fn(async (_id) => {
+			return { deleted: true };
+		}),
+		listJobApplications: vi.fn(async () => {
+			const { useJobApplicationStore } = await import("./job-application-store");
+			return useJobApplicationStore.getState().jobApplications;
+		}),
 	};
 });
 
@@ -109,9 +147,9 @@ describe("jobApplicationStore", () => {
 		vi.restoreAllMocks();
 	});
 
-	it("adds, updates, and deletes a job application", () => {
+	it("adds, updates, and deletes a job application", async () => {
 		// Add application
-		const id = useJobApplicationStore
+		const id = await useJobApplicationStore
 			.getState()
 			.createJobApplication(
 				"Google",
@@ -137,7 +175,7 @@ describe("jobApplicationStore", () => {
 		});
 
 		// Update application
-		useJobApplicationStore.getState().updateJobApplication(id, {
+		await useJobApplicationStore.getState().updateJobApplication(id, {
 			notes: "First round interview scheduled",
 		});
 
@@ -147,12 +185,12 @@ describe("jobApplicationStore", () => {
 		);
 
 		// Set status
-		useJobApplicationStore.getState().setStatus(id, "interviewing");
+		await useJobApplicationStore.getState().setStatus(id, "interviewing");
 		state = useJobApplicationStore.getState();
 		expect(state.jobApplications[0].status).toBe("interviewing");
 
 		// Delete application
-		useJobApplicationStore.getState().deleteJobApplication(id);
+		await useJobApplicationStore.getState().deleteJobApplication(id);
 		state = useJobApplicationStore.getState();
 		expect(state.jobApplications).toHaveLength(0);
 	});
@@ -214,7 +252,7 @@ describe("jobApplicationStore", () => {
 		mockStorage[`resume-${resumeId}`] = JSON.stringify(mockResume);
 
 		// 2. Create job application
-		const id = useJobApplicationStore
+		const id = await useJobApplicationStore
 			.getState()
 			.createJobApplication(
 				"Google",
@@ -310,7 +348,7 @@ describe("jobApplicationStore", () => {
 		});
 		mockStorage[`resume-${resumeId}`] = JSON.stringify(mockResume);
 
-		const id = useJobApplicationStore
+		const id = await useJobApplicationStore
 			.getState()
 			.createJobApplication(
 				"Google",
@@ -388,24 +426,24 @@ describe("jobApplicationStore", () => {
 			},
 		];
 
-		useJobApplicationStore
+		await useJobApplicationStore
 			.getState()
 			.saveResumeEditProposals(id, proposals as any);
 
 		// Apply proposal 1 (summary)
-		useJobApplicationStore.getState().applyResumeEditProposal(id, "prop-1");
+		await useJobApplicationStore.getState().applyResumeEditProposal(id, "prop-1");
 
 		// Apply proposal 2 (experience role)
-		useJobApplicationStore.getState().applyResumeEditProposal(id, "prop-2");
+		await useJobApplicationStore.getState().applyResumeEditProposal(id, "prop-2");
 
 		// Apply proposal 3 (experience bullet)
-		useJobApplicationStore.getState().applyResumeEditProposal(id, "prop-3");
+		await useJobApplicationStore.getState().applyResumeEditProposal(id, "prop-3");
 
 		// Apply proposal 4 (skills items)
-		useJobApplicationStore.getState().applyResumeEditProposal(id, "prop-4");
+		await useJobApplicationStore.getState().applyResumeEditProposal(id, "prop-4");
 
 		// Apply proposal 5 (project description)
-		useJobApplicationStore.getState().applyResumeEditProposal(id, "prop-5");
+		await useJobApplicationStore.getState().applyResumeEditProposal(id, "prop-5");
 
 		const app = useJobApplicationStore
 			.getState()
@@ -448,7 +486,7 @@ describe("jobApplicationStore", () => {
 
 	it("validatePipeline flags missing fields, missing source resumes, out-of-bounds bullet indexes, and archived jobs with pending proposals", async () => {
 		// 1. Create a job application with missing company, title, description, and sourceResumeId
-		const id1 = useJobApplicationStore
+		const id1 = await useJobApplicationStore
 			.getState()
 			.createJobApplication("", "", "Mountain View", "", "");
 
@@ -503,7 +541,7 @@ describe("jobApplicationStore", () => {
 		await useJobApplicationStore
 			.getState()
 			.associateSourceResume(id1, resumeId);
-		useJobApplicationStore.getState().updateJobApplication(id1, {
+		await useJobApplicationStore.getState().updateJobApplication(id1, {
 			title: "Developer",
 			company: "Startup",
 			description: "Coding stuff",
@@ -513,7 +551,7 @@ describe("jobApplicationStore", () => {
 		expect(warnings[id1]).toBeUndefined(); // All cleared now!
 
 		// 3. Save proposals with stale targets and out-of-bounds bullet
-		useJobApplicationStore.getState().updateJobApplication(id1, {
+		await useJobApplicationStore.getState().updateJobApplication(id1, {
 			resumeEditProposals: [
 				{
 					id: "prop-stale-exp",
@@ -554,14 +592,14 @@ describe("jobApplicationStore", () => {
 		);
 
 		// 4. Archive the job application
-		useJobApplicationStore.getState().archiveIncompleteJob(id1);
+		await useJobApplicationStore.getState().archiveIncompleteJob(id1);
 		warnings = useJobApplicationStore.getState().validatePipeline();
 		// For archived job, we only expect warning about pending proposals
 		expect(warnings[id1]).toEqual(["Archived job has pending proposals."]);
 
 		// Clear the pending proposals
-		useJobApplicationStore.getState().clearStaleProposal(id1, "prop-stale-exp");
-		useJobApplicationStore
+		await useJobApplicationStore.getState().clearStaleProposal(id1, "prop-stale-exp");
+		await useJobApplicationStore
 			.getState()
 			.clearStaleProposal(id1, "prop-oob-bullet");
 		warnings = useJobApplicationStore.getState().validatePipeline();
@@ -607,7 +645,7 @@ describe("jobApplicationStore", () => {
 		});
 		mockStorage[`resume-${resumeId}`] = JSON.stringify(mockResume);
 
-		const appId = useJobApplicationStore
+		const appId = await useJobApplicationStore
 			.getState()
 			.createJobApplication("Company", "Title", "Loc", "url", "desc");
 

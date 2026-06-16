@@ -10,6 +10,12 @@ import type {
 import { useResumeIndexStore } from "#/lib/resume-index-store";
 import { type Resume, resumeSchema } from "#/lib/resume-schema";
 import { getResumeData } from "#/lib/resume-store";
+import {
+	createJobApplication as createJobApplicationApi,
+	updateJobApplication as updateJobApplicationApi,
+	deleteJobApplication as deleteJobApplicationApi,
+	listJobApplications,
+} from "#/lib/local-companion-client";
 
 export interface JobApplicationState {
 	jobApplications: JobApplication[];
@@ -19,51 +25,44 @@ export interface JobApplicationState {
 		location: string,
 		sourceUrl: string,
 		description: string,
-	) => string;
-	updateJobApplication: (id: string, updates: Partial<JobApplication>) => void;
-	deleteJobApplication: (id: string) => void;
-	setStatus: (id: string, status: JobApplicationStatus) => void;
-	saveFitBrief: (id: string, fitBrief: JobFitBrief) => void;
+	) => Promise<string>;
+	updateJobApplication: (id: string, updates: Partial<JobApplication>) => Promise<void>;
+	deleteJobApplication: (id: string) => Promise<void>;
+	setStatus: (id: string, status: JobApplicationStatus) => Promise<void>;
+	saveFitBrief: (id: string, fitBrief: JobFitBrief) => Promise<void>;
 	ensureTailoredResume: (id: string) => Promise<void>;
 	saveResumeEditProposals: (
 		id: string,
 		proposals: ResumeEditProposal[],
-	) => void;
-	applyResumeEditProposal: (id: string, proposalId: string) => void;
-	rejectResumeEditProposal: (id: string, proposalId: string) => void;
+	) => Promise<void>;
+	applyResumeEditProposal: (id: string, proposalId: string) => Promise<void>;
+	rejectResumeEditProposal: (id: string, proposalId: string) => Promise<void>;
 	saveCoverLetterDraft: (
 		id: string,
 		coverLetterDraft: CoverLetterDraft,
-	) => void;
+	) => Promise<void>;
 	validatePipeline: () => Record<string, string[]>;
-	clearStaleProposal: (appId: string, proposalId: string) => void;
+	clearStaleProposal: (appId: string, proposalId: string) => Promise<void>;
 	associateSourceResume: (appId: string, resumeId: string) => Promise<void>;
-	archiveIncompleteJob: (appId: string) => void;
+	archiveIncompleteJob: (appId: string) => Promise<void>;
+	loadJobApplications: () => Promise<void>;
 }
-
-const getInitialState = (): { jobApplications: JobApplication[] } => {
-	if (typeof window !== "undefined") {
-		const saved = localStorage.getItem("job-applications");
-		if (saved) {
-			try {
-				const parsed = JSON.parse(saved);
-				if (parsed && Array.isArray(parsed.jobApplications)) {
-					return { jobApplications: parsed.jobApplications };
-				}
-			} catch (e) {
-				console.error("Failed to parse job applications state", e);
-			}
-		}
-	}
-	return { jobApplications: [] };
-};
 
 export const useJobApplicationStore = create<JobApplicationState>()(
 	devtools(
 		(set, get) => ({
-			...getInitialState(),
+			jobApplications: [],
 
-			createJobApplication: (
+			loadJobApplications: async () => {
+				try {
+					const apps = await listJobApplications();
+					set({ jobApplications: apps as unknown as JobApplication[] });
+				} catch (err) {
+					console.error("Failed to load job applications from companion backend", err);
+				}
+			},
+
+			createJobApplication: async (
 				company,
 				title,
 				location,
@@ -95,38 +94,74 @@ export const useJobApplicationStore = create<JobApplicationState>()(
 					updatedAt: now,
 				};
 
+				const previousApps = get().jobApplications;
 				set((state) => ({
 					jobApplications: [...state.jobApplications, newApp],
 				}));
 
-				return id;
+				try {
+					const created = await createJobApplicationApi(
+						id,
+						company,
+						title,
+						location,
+						sourceUrl,
+						description,
+					);
+					set((state) => ({
+						jobApplications: state.jobApplications.map((app) =>
+							app.id === id ? (created as unknown as JobApplication) : app,
+						),
+					}));
+					return id;
+				} catch (err) {
+					set({ jobApplications: previousApps });
+					throw err;
+				}
 			},
 
-			updateJobApplication: (id, updates) =>
+			updateJobApplication: async (id, updates) => {
+				const previousApps = get().jobApplications;
 				set((state) => ({
 					jobApplications: state.jobApplications.map((app) =>
 						app.id === id ? { ...app, ...updates, updatedAt: Date.now() } : app,
 					),
-				})),
+				}));
 
-			deleteJobApplication: (id) =>
+				try {
+					const updated = await updateJobApplicationApi(id, updates);
+					set((state) => ({
+						jobApplications: state.jobApplications.map((app) =>
+							app.id === id ? (updated as unknown as JobApplication) : app,
+						),
+					}));
+				} catch (err) {
+					set({ jobApplications: previousApps });
+					throw err;
+				}
+			},
+
+			deleteJobApplication: async (id) => {
+				const previousApps = get().jobApplications;
 				set((state) => ({
 					jobApplications: state.jobApplications.filter((app) => app.id !== id),
-				})),
+				}));
 
-			setStatus: (id, status) =>
-				set((state) => ({
-					jobApplications: state.jobApplications.map((app) =>
-						app.id === id ? { ...app, status, updatedAt: Date.now() } : app,
-					),
-				})),
+				try {
+					await deleteJobApplicationApi(id);
+				} catch (err) {
+					set({ jobApplications: previousApps });
+					throw err;
+				}
+			},
 
-			saveFitBrief: (id, fitBrief) =>
-				set((state) => ({
-					jobApplications: state.jobApplications.map((app) =>
-						app.id === id ? { ...app, fitBrief, updatedAt: Date.now() } : app,
-					),
-				})),
+			setStatus: async (id, status) => {
+				await get().updateJobApplication(id, { status });
+			},
+
+			saveFitBrief: async (id, fitBrief) => {
+				await get().updateJobApplication(id, { fitBrief });
+			},
 
 			ensureTailoredResume: async (id) => {
 				const app = get().jobApplications.find((a) => a.id === id);
@@ -149,147 +184,115 @@ export const useJobApplicationStore = create<JobApplicationState>()(
 				const sourceResumeSnapshot = resumeSchema.parse(defaultResume);
 				const tailoredResume = JSON.parse(JSON.stringify(sourceResumeSnapshot));
 
-				set((state) => ({
-					jobApplications: state.jobApplications.map((a) =>
-						a.id === id
-							? {
-									...a,
-									sourceResumeId: defaultResumeId,
-									sourceResumeName,
-									sourceResumeSnapshot,
-									tailoredResume,
-									status: "tailoring",
-									updatedAt: Date.now(),
-								}
-							: a,
-					),
-				}));
+				await get().updateJobApplication(id, {
+					sourceResumeId: defaultResumeId,
+					sourceResumeName,
+					sourceResumeSnapshot,
+					tailoredResume,
+					status: "tailoring",
+				});
 			},
 
-			saveResumeEditProposals: (id, proposals) =>
-				set((state) => ({
-					jobApplications: state.jobApplications.map((app) =>
-						app.id === id
-							? {
-									...app,
-									resumeEditProposals: proposals,
-									updatedAt: Date.now(),
-								}
-							: app,
-					),
-				})),
+			saveResumeEditProposals: async (id, proposals) => {
+				await get().updateJobApplication(id, { resumeEditProposals: proposals });
+			},
 
-			applyResumeEditProposal: (id, proposalId) =>
-				set((state) => {
-					return {
-						jobApplications: state.jobApplications.map((app) => {
-							if (app.id !== id) return app;
-							if (!app.tailoredResume) return app;
+			applyResumeEditProposal: async (id, proposalId) => {
+				const app = get().jobApplications.find((a) => a.id === id);
+				if (!app || !app.tailoredResume) return;
 
-							const proposals = app.resumeEditProposals.map((prop) => {
-								if (prop.id === proposalId) {
-									return {
-										...prop,
-										status: "applied" as const,
-										appliedAt: Date.now(),
-									};
-								}
-								return prop;
-							});
+				const proposals = app.resumeEditProposals.map((prop) => {
+					if (prop.id === proposalId) {
+						return {
+							...prop,
+							status: "applied" as const,
+							appliedAt: Date.now(),
+						};
+					}
+					return prop;
+				});
 
-							const proposal = app.resumeEditProposals.find(
-								(p) => p.id === proposalId,
-							);
-							if (!proposal) return app;
+				const proposal = app.resumeEditProposals.find(
+					(p) => p.id === proposalId,
+				);
+				if (!proposal) return;
 
-							const tailoredResume = JSON.parse(
-								JSON.stringify(app.tailoredResume),
-							) as Resume;
-							const { target, suggestedText } = proposal;
+				const tailoredResume = JSON.parse(
+					JSON.stringify(app.tailoredResume),
+				) as Resume;
+				const { target, suggestedText } = proposal;
 
-							if (target.section === "summary") {
-								tailoredResume.summary = suggestedText;
-							} else if (target.section === "experience") {
-								const exp = tailoredResume.experience?.find(
-									(item) => item.id === target.itemId,
-								);
-								if (exp) {
-									if (
-										target.field === "role" ||
-										target.field === "description"
-									) {
-										exp[target.field] = suggestedText;
-									} else if (target.field === "bullet") {
-										let bulletsList: string[] = [];
-										const desc = exp.description || "";
-										const matches = [...desc.matchAll(/<li>(.*?)<\/li>/g)];
-										if (matches.length > 0) {
-											bulletsList = matches.map((m) => m[1]);
-										} else if (desc.trim() !== "") {
-											bulletsList = [desc];
-										}
-
-										while (bulletsList.length <= target.bulletIndex) {
-											bulletsList.push("");
-										}
-										bulletsList[target.bulletIndex] = suggestedText;
-
-										exp.description = `<ul>${bulletsList
-											.map((b) => `<li>${b}</li>`)
-											.join("")}</ul>`;
-										exp.bullets = bulletsList;
-									}
-								}
-							} else if (target.section === "skills") {
-								const skill = tailoredResume.skills?.find(
-									(item) => item.id === target.itemId,
-								);
-								if (skill && target.field === "items") {
-									skill.items = suggestedText;
-								}
-							} else if (target.section === "projects") {
-								const proj = tailoredResume.projects?.find(
-									(item) => item.id === target.itemId,
-								);
-								if (proj && target.field === "description") {
-									proj.description = suggestedText;
-								}
+				if (target.section === "summary") {
+					tailoredResume.summary = suggestedText;
+				} else if (target.section === "experience") {
+					const exp = tailoredResume.experience?.find(
+						(item) => item.id === target.itemId,
+					);
+					if (exp) {
+						if (
+							target.field === "role" ||
+							target.field === "description"
+						) {
+							exp[target.field] = suggestedText;
+						} else if (target.field === "bullet") {
+							let bulletsList: string[] = [];
+							const desc = exp.description || "";
+							const matches = [...desc.matchAll(/<li>(.*?)<\/li>/g)];
+							if (matches.length > 0) {
+								bulletsList = matches.map((m) => m[1]);
+							} else if (desc.trim() !== "") {
+								bulletsList = [desc];
 							}
 
-							return {
-								...app,
-								tailoredResume,
-								resumeEditProposals: proposals,
-								updatedAt: Date.now(),
-							};
-						}),
-					};
-				}),
+							while (bulletsList.length <= target.bulletIndex) {
+								bulletsList.push("");
+							}
+							bulletsList[target.bulletIndex] = suggestedText;
 
-			rejectResumeEditProposal: (id, proposalId) =>
-				set((state) => ({
-					jobApplications: state.jobApplications.map((app) => {
-						if (app.id !== id) return app;
-						return {
-							...app,
-							resumeEditProposals: app.resumeEditProposals.map((prop) =>
-								prop.id === proposalId
-									? { ...prop, status: "rejected" as const }
-									: prop,
-							),
-							updatedAt: Date.now(),
-						};
-					}),
-				})),
+							exp.description = `<ul>${bulletsList
+								.map((b) => `<li>${b}</li>`)
+								.join("")}</ul>`;
+							exp.bullets = bulletsList;
+						}
+					}
+				} else if (target.section === "skills") {
+					const skill = tailoredResume.skills?.find(
+						(item) => item.id === target.itemId,
+					);
+					if (skill && target.field === "items") {
+						skill.items = suggestedText;
+					}
+				} else if (target.section === "projects") {
+					const proj = tailoredResume.projects?.find(
+						(item) => item.id === target.itemId,
+					);
+					if (proj && target.field === "description") {
+						proj.description = suggestedText;
+					}
+				}
 
-			saveCoverLetterDraft: (id, coverLetterDraft) =>
-				set((state) => ({
-					jobApplications: state.jobApplications.map((app) =>
-						app.id === id
-							? { ...app, coverLetterDraft, updatedAt: Date.now() }
-							: app,
-					),
-				})),
+				await get().updateJobApplication(id, {
+					tailoredResume,
+					resumeEditProposals: proposals,
+				});
+			},
+
+			rejectResumeEditProposal: async (id, proposalId) => {
+				const app = get().jobApplications.find((a) => a.id === id);
+				if (!app) return;
+
+				const proposals = app.resumeEditProposals.map((prop) =>
+					prop.id === proposalId
+						? { ...prop, status: "rejected" as const }
+						: prop,
+				);
+
+				await get().updateJobApplication(id, { resumeEditProposals: proposals });
+			},
+
+			saveCoverLetterDraft: async (id, coverLetterDraft) => {
+				await get().updateJobApplication(id, { coverLetterDraft });
+			},
 
 			validatePipeline: () => {
 				const { jobApplications } = get();
@@ -382,20 +385,16 @@ export const useJobApplicationStore = create<JobApplicationState>()(
 				return warnings;
 			},
 
-			clearStaleProposal: (appId, proposalId) =>
-				set((state) => ({
-					jobApplications: state.jobApplications.map((app) =>
-						app.id === appId
-							? {
-									...app,
-									resumeEditProposals: app.resumeEditProposals.filter(
-										(p) => p.id !== proposalId,
-									),
-									updatedAt: Date.now(),
-								}
-							: app,
-					),
-				})),
+			clearStaleProposal: async (appId, proposalId) => {
+				const app = get().jobApplications.find((a) => a.id === appId);
+				if (!app) return;
+
+				const proposals = app.resumeEditProposals.filter(
+					(p) => p.id !== proposalId,
+				);
+
+				await get().updateJobApplication(appId, { resumeEditProposals: proposals });
+			},
 
 			associateSourceResume: async (appId, resumeId) => {
 				const app = get().jobApplications.find((a) => a.id === appId);
@@ -415,42 +414,19 @@ export const useJobApplicationStore = create<JobApplicationState>()(
 				const sourceResumeSnapshot = resumeSchema.parse(resume);
 				const tailoredResume = JSON.parse(JSON.stringify(sourceResumeSnapshot));
 
-				set((state) => ({
-					jobApplications: state.jobApplications.map((a) =>
-						a.id === appId
-							? {
-									...a,
-									sourceResumeId: resumeId,
-									sourceResumeName,
-									sourceResumeSnapshot,
-									tailoredResume,
-									status: "tailoring",
-									updatedAt: Date.now(),
-								}
-							: a,
-					),
-				}));
+				await get().updateJobApplication(appId, {
+					sourceResumeId: resumeId,
+					sourceResumeName,
+					sourceResumeSnapshot,
+					tailoredResume,
+					status: "tailoring",
+				});
 			},
 
-			archiveIncompleteJob: (appId) =>
-				set((state) => ({
-					jobApplications: state.jobApplications.map((app) =>
-						app.id === appId
-							? { ...app, status: "archived", updatedAt: Date.now() }
-							: app,
-					),
-				})),
+			archiveIncompleteJob: async (appId) => {
+				await get().updateJobApplication(appId, { status: "archived" });
+			},
 		}),
 		{ name: "job-application-store" },
 	),
 );
-
-if (typeof window !== "undefined") {
-	useJobApplicationStore.subscribe((state) => {
-		const { jobApplications } = state;
-		localStorage.setItem(
-			"job-applications",
-			JSON.stringify({ jobApplications }),
-		);
-	});
-}
