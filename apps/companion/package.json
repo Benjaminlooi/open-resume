@@ -12,7 +12,7 @@
 		"start": "node --env-file-if-exists=.env dist/index.js",
 		"openapi": "node --import tsx src/export-openapi.ts",
 		"openapi:lint": "redocly lint openapi.json",
-		"build": "tsup src/index.ts --format esm --target node22 --dts",
+		"build": "tsup src/index.ts --format esm --target node22 --dts && cp -r drizzle dist/drizzle",
 		"test": "vitest run",
 		"typecheck": "tsc --noEmit",
 		"format": "biome format",

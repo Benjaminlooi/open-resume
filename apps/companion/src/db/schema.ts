@@ -1,10 +1,10 @@
 import { eq } from "drizzle-orm";
 import {
-	sqliteTable,
-	text,
+	index,
 	integer,
 	real,
-	index,
+	sqliteTable,
+	text,
 	uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 

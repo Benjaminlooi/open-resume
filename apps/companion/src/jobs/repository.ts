@@ -1,15 +1,15 @@
 import { DatabaseSync } from "node:sqlite";
 import type {
 	CompanionJob,
+	CoverLetterDraft,
 	CrawlStatus,
-	ResumeContent,
-	ResumeDetails,
-	ResumeSummary,
 	JobApplication,
 	JobApplicationStatus,
 	JobFitBrief,
+	ResumeContent,
+	ResumeDetails,
 	ResumeEditProposal,
-	CoverLetterDraft,
+	ResumeSummary,
 } from "../schema.js";
 
 interface JobRow {
