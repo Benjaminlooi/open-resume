@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import {
 	index,
 	integer,
@@ -47,7 +47,7 @@ export const resumes = sqliteTable(
 	(table) => [
 		uniqueIndex("resumes_default_idx")
 			.on(table.isDefault)
-			.where(eq(table.isDefault, 1)),
+			.where(sql`${table.isDefault} = 1`),
 		index("resumes_last_modified_idx").on(table.lastModified),
 	],
 );

@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "0d916748-d61d-467c-abb1-c4962b967d6e",
+  "id": "542b567d-1645-4c6b-8541-74fbd0d27fe2",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "job_applications": {
@@ -328,7 +328,7 @@
             "is_default"
           ],
           "isUnique": true,
-          "where": "\"resumes\".\"is_default\" = ?"
+          "where": "\"resumes\".\"is_default\" = 1"
         },
         "resumes_last_modified_idx": {
           "name": "resumes_last_modified_idx",

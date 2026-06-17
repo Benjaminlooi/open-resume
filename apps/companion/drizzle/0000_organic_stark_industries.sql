@@ -48,5 +48,5 @@ CREATE TABLE IF NOT EXISTS `resumes` (
 	`content_json` text NOT NULL
 );
 --> statement-breakpoint
-CREATE UNIQUE INDEX IF NOT EXISTS `resumes_default_idx` ON `resumes` (`is_default`) WHERE "resumes"."is_default" = ?;--> statement-breakpoint
+CREATE UNIQUE INDEX IF NOT EXISTS `resumes_default_idx` ON `resumes` (`is_default`) WHERE "resumes"."is_default" = 1;--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS `resumes_last_modified_idx` ON `resumes` (`last_modified`);
