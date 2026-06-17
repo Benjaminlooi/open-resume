@@ -39,31 +39,38 @@ vi.mock("#/lib/local-companion-client", () => {
 				isDefault: false,
 			};
 		}),
-		createJobApplication: vi.fn(async (id, company, title, location, sourceUrl, description) => {
-			return {
-				id,
-				company,
-				title,
-				location,
-				sourceUrl,
-				description,
-				status: "saved",
-				sourceResumeId: null,
-				sourceResumeName: null,
-				sourceResumeSnapshot: null,
-				tailoredResume: null,
-				fitBrief: null,
-				resumeEditProposals: [],
-				coverLetterDraft: null,
-				notes: "",
-				followUpAt: null,
-				createdAt: Date.now(),
-				updatedAt: Date.now(),
-			};
-		}),
+		createJobApplication: vi.fn(
+			async (id, company, title, location, sourceUrl, description) => {
+				return {
+					id,
+					company,
+					title,
+					location,
+					sourceUrl,
+					description,
+					status: "saved",
+					sourceResumeId: null,
+					sourceResumeName: null,
+					sourceResumeSnapshot: null,
+					tailoredResume: null,
+					fitBrief: null,
+					resumeEditProposals: [],
+					coverLetterDraft: null,
+					notes: "",
+					followUpAt: null,
+					createdAt: Date.now(),
+					updatedAt: Date.now(),
+				};
+			},
+		),
 		updateJobApplication: vi.fn(async (id, data) => {
-			const { useJobApplicationStore } = await import("./job-application-store");
-			const existing = useJobApplicationStore.getState().jobApplications.find(app => app.id === id) || {};
+			const { useJobApplicationStore } = await import(
+				"./job-application-store"
+			);
+			const existing =
+				useJobApplicationStore
+					.getState()
+					.jobApplications.find((app) => app.id === id) || {};
 			return {
 				...existing,
 				...data,
@@ -74,7 +81,9 @@ vi.mock("#/lib/local-companion-client", () => {
 			return { deleted: true };
 		}),
 		listJobApplications: vi.fn(async () => {
-			const { useJobApplicationStore } = await import("./job-application-store");
+			const { useJobApplicationStore } = await import(
+				"./job-application-store"
+			);
 			return useJobApplicationStore.getState().jobApplications;
 		}),
 	};
@@ -431,19 +440,29 @@ describe("jobApplicationStore", () => {
 			.saveResumeEditProposals(id, proposals as any);
 
 		// Apply proposal 1 (summary)
-		await useJobApplicationStore.getState().applyResumeEditProposal(id, "prop-1");
+		await useJobApplicationStore
+			.getState()
+			.applyResumeEditProposal(id, "prop-1");
 
 		// Apply proposal 2 (experience role)
-		await useJobApplicationStore.getState().applyResumeEditProposal(id, "prop-2");
+		await useJobApplicationStore
+			.getState()
+			.applyResumeEditProposal(id, "prop-2");
 
 		// Apply proposal 3 (experience bullet)
-		await useJobApplicationStore.getState().applyResumeEditProposal(id, "prop-3");
+		await useJobApplicationStore
+			.getState()
+			.applyResumeEditProposal(id, "prop-3");
 
 		// Apply proposal 4 (skills items)
-		await useJobApplicationStore.getState().applyResumeEditProposal(id, "prop-4");
+		await useJobApplicationStore
+			.getState()
+			.applyResumeEditProposal(id, "prop-4");
 
 		// Apply proposal 5 (project description)
-		await useJobApplicationStore.getState().applyResumeEditProposal(id, "prop-5");
+		await useJobApplicationStore
+			.getState()
+			.applyResumeEditProposal(id, "prop-5");
 
 		const app = useJobApplicationStore
 			.getState()
@@ -598,7 +617,9 @@ describe("jobApplicationStore", () => {
 		expect(warnings[id1]).toEqual(["Archived job has pending proposals."]);
 
 		// Clear the pending proposals
-		await useJobApplicationStore.getState().clearStaleProposal(id1, "prop-stale-exp");
+		await useJobApplicationStore
+			.getState()
+			.clearStaleProposal(id1, "prop-stale-exp");
 		await useJobApplicationStore
 			.getState()
 			.clearStaleProposal(id1, "prop-oob-bullet");

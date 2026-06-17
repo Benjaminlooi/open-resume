@@ -1,6 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { Resume } from "#/lib/resume-schema";
-import type { EditorState } from "#/lib/resume-store";
 import DemoTemplate from "#/components/editor/DemoTemplate";
 import ModernTemplate from "#/components/editor/ModernTemplate";
 import {
@@ -10,6 +8,8 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "#/components/ui/select";
+import type { Resume } from "#/lib/resume-schema";
+import type { EditorState } from "#/lib/resume-store";
 
 interface TailoredResumePreviewProps {
 	tailoredResume: Resume;

@@ -1,3 +1,4 @@
+import { useNavigate } from "@tanstack/react-router";
 import {
 	AlertTriangle,
 	ArrowRight,
@@ -13,10 +14,9 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "#/components/ui/dialog";
+import { useCompanionJobStore } from "#/features/jobs/companion-job-store";
 import type { LocalCompanionJob } from "#/lib/local-companion-client";
 import { companionBaseUrl } from "#/lib/local-companion-client";
-import { useCompanionJobStore } from "#/features/jobs/companion-job-store";
-import { useNavigate } from "@tanstack/react-router";
 
 interface CompanionJobDetailsDialogProps {
 	job: LocalCompanionJob;
@@ -39,7 +39,8 @@ export default function CompanionJobDetailsDialog({
 	isOpen,
 	onClose,
 }: CompanionJobDetailsDialogProps) {
-	const { convertJobToApplication, retryJobCrawl, retryJobAnalyze } = useCompanionJobStore();
+	const { convertJobToApplication, retryJobCrawl, retryJobAnalyze } =
+		useCompanionJobStore();
 	const navigate = useNavigate();
 	const [activeTab, setActiveTab] = useState<"ai" | "scraped" | "screenshot">(
 		"ai",

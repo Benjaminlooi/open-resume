@@ -300,7 +300,10 @@ describe("CompanionJobCard", () => {
 			parsedCompany: "SuperTech Inc",
 			fitScore: 85,
 		});
-		expect(mockNavigate).toHaveBeenCalledWith({ to: "/jobs/$id", params: { id: "app-123" } });
+		expect(mockNavigate).toHaveBeenCalledWith({
+			to: "/jobs/$id",
+			params: { id: "app-123" },
+		});
 
 		await act(async () => {
 			root.unmount();

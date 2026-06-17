@@ -1,13 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { useCompanionJobStore } from "./companion-job-store";
 import {
+	convertJobToApplication,
 	deleteCompanionJob,
 	listCompanionJobs,
+	listJobApplications,
 	retryCompanionJobAnalyze,
 	retryCompanionJobCrawl,
-	convertJobToApplication,
-	listJobApplications,
 } from "#/lib/local-companion-client";
+import { useCompanionJobStore } from "./companion-job-store";
 import { useJobApplicationStore } from "./job-application-store";
 
 vi.mock("#/lib/local-companion-client", () => ({
@@ -26,18 +26,32 @@ const retryCompanionJobAnalyzeMock = vi.mocked(retryCompanionJobAnalyze);
 const convertJobToApplicationMock = vi.mocked(convertJobToApplication);
 const listJobApplicationsMock = vi.mocked(listJobApplications);
 
-const initialCompanionState = JSON.parse(JSON.stringify(useCompanionJobStore.getState()));
-const initialJobAppState = JSON.parse(JSON.stringify(useJobApplicationStore.getState()));
+const initialCompanionState = JSON.parse(
+	JSON.stringify(useCompanionJobStore.getState()),
+);
+const initialJobAppState = JSON.parse(
+	JSON.stringify(useJobApplicationStore.getState()),
+);
 
 describe("useCompanionJobStore", () => {
 	beforeEach(() => {
-		useCompanionJobStore.setState(JSON.parse(JSON.stringify(initialCompanionState)));
-		useJobApplicationStore.setState(JSON.parse(JSON.stringify(initialJobAppState)));
+		useCompanionJobStore.setState(
+			JSON.parse(JSON.stringify(initialCompanionState)),
+		);
+		useJobApplicationStore.setState(
+			JSON.parse(JSON.stringify(initialJobAppState)),
+		);
 		vi.clearAllMocks();
 	});
 
 	it("should fetch jobs and update store", async () => {
-		const mockJobs = [{ id: "1", sourceUrl: "https://example.com", crawlStatus: "ready" as const }] as any;
+		const mockJobs = [
+			{
+				id: "1",
+				sourceUrl: "https://example.com",
+				crawlStatus: "ready" as const,
+			},
+		] as any;
 		listCompanionJobsMock.mockResolvedValue(mockJobs);
 
 		await useCompanionJobStore.getState().fetchJobs();
@@ -47,7 +61,11 @@ describe("useCompanionJobStore", () => {
 	});
 
 	it("should retry crawl and refresh jobs", async () => {
-		retryCompanionJobCrawlMock.mockResolvedValue({ id: "1", sourceUrl: "https://example.com", crawlStatus: "crawling" as const } as any);
+		retryCompanionJobCrawlMock.mockResolvedValue({
+			id: "1",
+			sourceUrl: "https://example.com",
+			crawlStatus: "crawling" as const,
+		} as any);
 		listCompanionJobsMock.mockResolvedValue([]);
 
 		await useCompanionJobStore.getState().retryJobCrawl("1");
@@ -57,7 +75,11 @@ describe("useCompanionJobStore", () => {
 	});
 
 	it("should retry analyze and refresh jobs", async () => {
-		retryCompanionJobAnalyzeMock.mockResolvedValue({ id: "1", sourceUrl: "https://example.com", crawlStatus: "analyzing" as const } as any);
+		retryCompanionJobAnalyzeMock.mockResolvedValue({
+			id: "1",
+			sourceUrl: "https://example.com",
+			crawlStatus: "analyzing" as const,
+		} as any);
 		listCompanionJobsMock.mockResolvedValue([]);
 
 		await useCompanionJobStore.getState().retryJobAnalyze("1");
@@ -103,14 +125,18 @@ describe("useCompanionJobStore", () => {
 		listCompanionJobsMock.mockResolvedValue([]);
 		listJobApplicationsMock.mockResolvedValue([mockApp]);
 
-		const appId = await useCompanionJobStore.getState().convertJobToApplication(mockJob);
+		const appId = await useCompanionJobStore
+			.getState()
+			.convertJobToApplication(mockJob);
 
 		expect(appId).toBe("app-123");
 		expect(convertJobToApplicationMock).toHaveBeenCalledWith("1");
 		expect(listCompanionJobsMock).toHaveBeenCalled();
 		expect(listJobApplicationsMock).toHaveBeenCalled();
-		
-		const app = useJobApplicationStore.getState().jobApplications.find((a) => a.id === appId);
+
+		const app = useJobApplicationStore
+			.getState()
+			.jobApplications.find((a) => a.id === appId);
 		expect(app).toBeDefined();
 		expect(app?.company).toBe("Test Co");
 		expect(app?.fitBrief).toEqual({ roleSummary: "Great role" });

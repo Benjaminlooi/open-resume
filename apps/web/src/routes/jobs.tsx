@@ -2,12 +2,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import DashboardHeader from "#/components/dashboard/DashboardHeader";
+import { useCompanionJobStore } from "#/features/jobs/companion-job-store";
 import CompanionJobCard from "#/features/jobs/components/CompanionJobCard";
 import JobApplicationCard from "#/features/jobs/components/JobApplicationCard";
 import NewJobApplicationModal from "#/features/jobs/components/NewJobApplicationModal";
 import PipelineIntegrityPanel from "#/features/jobs/components/PipelineIntegrityPanel";
 import { useJobApplicationStore } from "#/features/jobs/job-application-store";
-import { useCompanionJobStore } from "#/features/jobs/companion-job-store";
 
 export const Route = createFileRoute("/jobs")({
 	component: JobsDashboard,
@@ -26,11 +26,8 @@ function JobsDashboard() {
 	const [statusFilter, setStatusFilter] = useState("active");
 
 	// Active job applications store
-	const {
-		jobApplications,
-		deleteJobApplication,
-		loadJobApplications,
-	} = useJobApplicationStore();
+	const { jobApplications, deleteJobApplication, loadJobApplications } =
+		useJobApplicationStore();
 
 	const hasPendingJobs = companionJobs.some((job) =>
 		["pending", "crawling", "analyzing"].includes(job.crawlStatus),
@@ -163,10 +160,7 @@ function JobsDashboard() {
 										) : (
 											<div className="flex flex-col gap-4">
 												{pendingJobs.map((job) => (
-													<CompanionJobCard
-														key={job.id}
-														job={job}
-													/>
+													<CompanionJobCard key={job.id} job={job} />
 												))}
 											</div>
 										)}
@@ -187,10 +181,7 @@ function JobsDashboard() {
 										) : (
 											<div className="flex flex-col gap-4">
 												{readyJobs.map((job) => (
-													<CompanionJobCard
-														key={job.id}
-														job={job}
-													/>
+													<CompanionJobCard key={job.id} job={job} />
 												))}
 											</div>
 										)}
@@ -211,10 +202,7 @@ function JobsDashboard() {
 										) : (
 											<div className="flex flex-col gap-4">
 												{failedJobs.map((job) => (
-													<CompanionJobCard
-														key={job.id}
-														job={job}
-													/>
+													<CompanionJobCard key={job.id} job={job} />
 												))}
 											</div>
 										)}

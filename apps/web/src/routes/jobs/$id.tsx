@@ -55,7 +55,8 @@ const formatStatus = (status: JobApplicationStatus) => {
 
 function JobWorkspace() {
 	const { id } = Route.useParams();
-	const { jobApplications, validatePipeline, loadJobApplications } = useJobApplicationStore();
+	const { jobApplications, validatePipeline, loadJobApplications } =
+		useJobApplicationStore();
 	const [activeStep, setActiveStep] = useState(0);
 	const [isMounted, setIsMounted] = useState(false);
 

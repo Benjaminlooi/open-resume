@@ -1,12 +1,12 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import {
+	convertJobToApplication as convertJobToApplicationApi,
 	deleteCompanionJob,
 	type LocalCompanionJob,
 	listCompanionJobs,
 	retryCompanionJobAnalyze,
 	retryCompanionJobCrawl,
-	convertJobToApplication as convertJobToApplicationApi,
 } from "#/lib/local-companion-client";
 import { useJobApplicationStore } from "./job-application-store";
 
@@ -47,7 +47,9 @@ export const useCompanionJobStore = create<CompanionJobState>()(
 					await retryCompanionJobCrawl(id);
 					await get().fetchJobs();
 				} catch (err) {
-					set({ error: err instanceof Error ? err.message : "Failed to retry crawl" });
+					set({
+						error: err instanceof Error ? err.message : "Failed to retry crawl",
+					});
 				}
 			},
 
@@ -56,7 +58,10 @@ export const useCompanionJobStore = create<CompanionJobState>()(
 					await retryCompanionJobAnalyze(id);
 					await get().fetchJobs();
 				} catch (err) {
-					set({ error: err instanceof Error ? err.message : "Failed to retry analysis" });
+					set({
+						error:
+							err instanceof Error ? err.message : "Failed to retry analysis",
+					});
 				}
 			},
 
@@ -65,7 +70,9 @@ export const useCompanionJobStore = create<CompanionJobState>()(
 					await deleteCompanionJob(id);
 					await get().fetchJobs();
 				} catch (err) {
-					set({ error: err instanceof Error ? err.message : "Failed to delete job" });
+					set({
+						error: err instanceof Error ? err.message : "Failed to delete job",
+					});
 				}
 			},
 

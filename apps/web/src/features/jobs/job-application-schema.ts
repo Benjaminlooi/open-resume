@@ -1,20 +1,20 @@
-import { z } from "zod";
-import { resumeSchema } from "#/lib/resume-schema";
 import {
 	jobApplicationSchema as baseJobApplicationSchema,
-	jobApplicationStatusSchema,
-	resumeEditProposalStatusSchema,
-	resumeEditTargetSchema,
-	resumeEditProposalSchema,
-	jobFitBriefSchema,
+	type CoverLetterDraft,
 	coverLetterDraftSchema,
 	type JobApplicationStatus,
+	type JobFitBrief,
+	jobApplicationStatusSchema,
+	jobFitBriefSchema,
+	type ResumeEditProposal,
 	type ResumeEditProposalStatus,
 	type ResumeEditTarget,
-	type ResumeEditProposal,
-	type JobFitBrief,
-	type CoverLetterDraft,
+	resumeEditProposalSchema,
+	resumeEditProposalStatusSchema,
+	resumeEditTargetSchema,
 } from "@open-resume/contracts";
+import type { z } from "zod";
+import { resumeSchema } from "#/lib/resume-schema";
 
 export {
 	jobApplicationStatusSchema,

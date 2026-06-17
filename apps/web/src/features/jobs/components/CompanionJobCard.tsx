@@ -1,9 +1,9 @@
+import { useNavigate } from "@tanstack/react-router";
 import { Eye, RotateCcw, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { useCompanionJobStore } from "#/features/jobs/companion-job-store";
 import type { LocalCompanionJob } from "#/lib/local-companion-client";
 import CompanionJobDetailsDialog from "./CompanionJobDetailsDialog";
-import { useCompanionJobStore } from "#/features/jobs/companion-job-store";
-import { useNavigate } from "@tanstack/react-router";
 
 interface CompanionJobCardProps {
 	job: LocalCompanionJob;
@@ -21,10 +21,9 @@ function getPreview(text: string) {
 	return text.length > 180 ? `${text.slice(0, 180)}...` : text;
 }
 
-export default function CompanionJobCard({
-	job,
-}: CompanionJobCardProps) {
-	const { convertJobToApplication, retryJobCrawl, retryJobAnalyze, deleteJob } = useCompanionJobStore();
+export default function CompanionJobCard({ job }: CompanionJobCardProps) {
+	const { convertJobToApplication, retryJobCrawl, retryJobAnalyze, deleteJob } =
+		useCompanionJobStore();
 	const navigate = useNavigate();
 	const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 	const hostname = getHostname(job.sourceUrl);

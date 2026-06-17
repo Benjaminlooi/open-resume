@@ -159,7 +159,10 @@ describe("CompanionJobDetailsDialog", () => {
 		});
 
 		expect(convertJobToApplicationMock).toHaveBeenCalledWith(mockJob);
-		expect(mockNavigate).toHaveBeenCalledWith({ to: "/jobs/$id", params: { id: "app-123" } });
+		expect(mockNavigate).toHaveBeenCalledWith({
+			to: "/jobs/$id",
+			params: { id: "app-123" },
+		});
 
 		await act(async () => {
 			root.unmount();

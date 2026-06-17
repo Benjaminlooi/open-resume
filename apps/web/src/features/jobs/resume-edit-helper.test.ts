@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
+import type { Resume } from "#/lib/resume-schema";
 import {
-	parseBulletsFromHtml,
 	applyProposalToResume,
 	getStaleProposalWarning,
+	parseBulletsFromHtml,
 } from "./resume-edit-helper";
-import type { Resume } from "#/lib/resume-schema";
 
 describe("resume-edit-helper", () => {
 	describe("parseBulletsFromHtml", () => {
@@ -95,7 +95,9 @@ describe("resume-edit-helper", () => {
 				},
 				"Coding JS",
 			);
-			expect(result.experience[0].description).toBe("<ul><li>Coding JS</li></ul>");
+			expect(result.experience[0].description).toBe(
+				"<ul><li>Coding JS</li></ul>",
+			);
 			expect(result.experience[0].bullets).toEqual(["Coding JS"]);
 		});
 

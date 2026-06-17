@@ -35,6 +35,8 @@ export {
 import type {
 	CandidateProfile,
 	CreateResumeRequest,
+	JobApplication,
+	JobApplicationsResponse,
 	CompanionJob as LocalCompanionJob,
 	OkResponse,
 	ResumeContent,
@@ -43,8 +45,6 @@ import type {
 	ResumeSyncRequest,
 	TargetRoleArchetype,
 	UpdateResumeRequest,
-	JobApplication,
-	JobApplicationsResponse,
 } from "@open-resume/contracts";
 
 export type {

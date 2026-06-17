@@ -2,6 +2,8 @@ import { createAnthropic } from "@ai-sdk/anthropic";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createOpenAI } from "@ai-sdk/openai";
 import { generateText } from "ai";
+import type { Resume } from "#/lib/resume-schema";
+import type { AIProvider } from "#/lib/settings-store";
 import {
 	type CoverLetterDraft,
 	coverLetterDraftSchema,
@@ -11,8 +13,6 @@ import {
 	type ResumeEditProposal,
 	resumeEditProposalSchema,
 } from "./job-application-schema";
-import type { Resume } from "#/lib/resume-schema";
-import type { AIProvider } from "#/lib/settings-store";
 
 export interface ProviderConfig {
 	provider: AIProvider;

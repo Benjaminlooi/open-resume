@@ -1,5 +1,14 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
+import {
+	createJobApplication as createJobApplicationApi,
+	deleteJobApplication as deleteJobApplicationApi,
+	listJobApplications,
+	updateJobApplication as updateJobApplicationApi,
+} from "#/lib/local-companion-client";
+import { useResumeIndexStore } from "#/lib/resume-index-store";
+import { resumeSchema } from "#/lib/resume-schema";
+import { getResumeData } from "#/lib/resume-store";
 import type {
 	CoverLetterDraft,
 	JobApplication,
@@ -11,15 +20,6 @@ import {
 	applyProposalToResume,
 	getStaleProposalWarning,
 } from "./resume-edit-helper";
-import { useResumeIndexStore } from "#/lib/resume-index-store";
-import { resumeSchema } from "#/lib/resume-schema";
-import { getResumeData } from "#/lib/resume-store";
-import {
-	createJobApplication as createJobApplicationApi,
-	updateJobApplication as updateJobApplicationApi,
-	deleteJobApplication as deleteJobApplicationApi,
-	listJobApplications,
-} from "#/lib/local-companion-client";
 
 export interface JobApplicationState {
 	jobApplications: JobApplication[];
@@ -30,7 +30,10 @@ export interface JobApplicationState {
 		sourceUrl: string,
 		description: string,
 	) => Promise<string>;
-	updateJobApplication: (id: string, updates: Partial<JobApplication>) => Promise<void>;
+	updateJobApplication: (
+		id: string,
+		updates: Partial<JobApplication>,
+	) => Promise<void>;
 	deleteJobApplication: (id: string) => Promise<void>;
 	setStatus: (id: string, status: JobApplicationStatus) => Promise<void>;
 	saveFitBrief: (id: string, fitBrief: JobFitBrief) => Promise<void>;
@@ -62,7 +65,10 @@ export const useJobApplicationStore = create<JobApplicationState>()(
 					const apps = await listJobApplications();
 					set({ jobApplications: apps as unknown as JobApplication[] });
 				} catch (err) {
-					console.error("Failed to load job applications from companion backend", err);
+					console.error(
+						"Failed to load job applications from companion backend",
+						err,
+					);
 				}
 			},
 
@@ -198,7 +204,9 @@ export const useJobApplicationStore = create<JobApplicationState>()(
 			},
 
 			saveResumeEditProposals: async (id, proposals) => {
-				await get().updateJobApplication(id, { resumeEditProposals: proposals });
+				await get().updateJobApplication(id, {
+					resumeEditProposals: proposals,
+				});
 			},
 
 			applyResumeEditProposal: async (id, proposalId) => {
@@ -243,7 +251,9 @@ export const useJobApplicationStore = create<JobApplicationState>()(
 						: prop,
 				);
 
-				await get().updateJobApplication(id, { resumeEditProposals: proposals });
+				await get().updateJobApplication(id, {
+					resumeEditProposals: proposals,
+				});
 			},
 
 			saveCoverLetterDraft: async (id, coverLetterDraft) => {
@@ -308,7 +318,9 @@ export const useJobApplicationStore = create<JobApplicationState>()(
 					(p) => p.id !== proposalId,
 				);
 
-				await get().updateJobApplication(appId, { resumeEditProposals: proposals });
+				await get().updateJobApplication(appId, {
+					resumeEditProposals: proposals,
+				});
 			},
 
 			associateSourceResume: async (appId, resumeId) => {
