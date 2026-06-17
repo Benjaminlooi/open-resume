@@ -7,8 +7,12 @@ import type {
 	JobFitBrief,
 	ResumeEditProposal,
 } from "./job-application-schema";
+import {
+	applyProposalToResume,
+	getStaleProposalWarning,
+} from "./resume-edit-helper";
 import { useResumeIndexStore } from "#/lib/resume-index-store";
-import { type Resume, resumeSchema } from "#/lib/resume-schema";
+import { resumeSchema } from "#/lib/resume-schema";
 import { getResumeData } from "#/lib/resume-store";
 import {
 	createJobApplication as createJobApplicationApi,
@@ -217,59 +221,11 @@ export const useJobApplicationStore = create<JobApplicationState>()(
 				);
 				if (!proposal) return;
 
-				const tailoredResume = JSON.parse(
-					JSON.stringify(app.tailoredResume),
-				) as Resume;
-				const { target, suggestedText } = proposal;
-
-				if (target.section === "summary") {
-					tailoredResume.summary = suggestedText;
-				} else if (target.section === "experience") {
-					const exp = tailoredResume.experience?.find(
-						(item) => item.id === target.itemId,
-					);
-					if (exp) {
-						if (
-							target.field === "role" ||
-							target.field === "description"
-						) {
-							exp[target.field] = suggestedText;
-						} else if (target.field === "bullet") {
-							let bulletsList: string[] = [];
-							const desc = exp.description || "";
-							const matches = [...desc.matchAll(/<li>(.*?)<\/li>/g)];
-							if (matches.length > 0) {
-								bulletsList = matches.map((m) => m[1]);
-							} else if (desc.trim() !== "") {
-								bulletsList = [desc];
-							}
-
-							while (bulletsList.length <= target.bulletIndex) {
-								bulletsList.push("");
-							}
-							bulletsList[target.bulletIndex] = suggestedText;
-
-							exp.description = `<ul>${bulletsList
-								.map((b) => `<li>${b}</li>`)
-								.join("")}</ul>`;
-							exp.bullets = bulletsList;
-						}
-					}
-				} else if (target.section === "skills") {
-					const skill = tailoredResume.skills?.find(
-						(item) => item.id === target.itemId,
-					);
-					if (skill && target.field === "items") {
-						skill.items = suggestedText;
-					}
-				} else if (target.section === "projects") {
-					const proj = tailoredResume.projects?.find(
-						(item) => item.id === target.itemId,
-					);
-					if (proj && target.field === "description") {
-						proj.description = suggestedText;
-					}
-				}
+				const tailoredResume = applyProposalToResume(
+					app.tailoredResume,
+					proposal.target,
+					proposal.suggestedText,
+				);
 
 				await get().updateJobApplication(id, {
 					tailoredResume,
@@ -326,53 +282,12 @@ export const useJobApplicationStore = create<JobApplicationState>()(
 
 					if (app.tailoredResume) {
 						for (const prop of app.resumeEditProposals) {
-							const { target } = prop;
-							if (target.section === "experience") {
-								const exists = app.tailoredResume.experience?.find(
-									(item) => item.id === target.itemId,
-								);
-								if (!exists) {
-									appWarnings.push(
-										`Stale proposal target: experience item ${target.itemId} is no longer present.`,
-									);
-								} else if (target.field === "bullet") {
-									let bulletsList: string[] = [];
-									const desc = exists.description || "";
-									const matches = [...desc.matchAll(/<li>(.*?)<\/li>/g)];
-									if (matches.length > 0) {
-										bulletsList = matches.map((m) => m[1]);
-									} else if (desc.trim() !== "") {
-										bulletsList = [desc];
-									}
-									const idx = target.bulletIndex;
-									if (
-										idx === undefined ||
-										idx < 0 ||
-										idx >= bulletsList.length
-									) {
-										appWarnings.push(
-											`Stale proposal target: experience item ${target.itemId} bullet index ${idx} is out of bounds.`,
-										);
-									}
-								}
-							} else if (target.section === "skills") {
-								const exists = app.tailoredResume.skills?.some(
-									(item) => item.id === target.itemId,
-								);
-								if (!exists) {
-									appWarnings.push(
-										`Stale proposal target: skill group ${target.itemId} is no longer present.`,
-									);
-								}
-							} else if (target.section === "projects") {
-								const exists = app.tailoredResume.projects?.some(
-									(item) => item.id === target.itemId,
-								);
-								if (!exists) {
-									appWarnings.push(
-										`Stale proposal target: project item ${target.itemId} is no longer present.`,
-									);
-								}
+							const warning = getStaleProposalWarning(
+								app.tailoredResume,
+								prop.target,
+							);
+							if (warning) {
+								appWarnings.push(warning);
 							}
 						}
 					}
