@@ -1,4 +1,8 @@
 import { DatabaseSync } from "node:sqlite";
+import { drizzle } from "drizzle-orm/node-sqlite";
+import { migrate } from "drizzle-orm/node-sqlite/migrator";
+import { fileURLToPath } from "node:url";
+import path from "node:path";
 import type {
 	CompanionJob,
 	CoverLetterDraft,
@@ -11,6 +15,8 @@ import type {
 	ResumeEditProposal,
 	ResumeSummary,
 } from "../schema.js";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 interface JobRow {
 	id: string;
@@ -126,8 +132,8 @@ function mapJobApplication(row: JobApplicationRow): JobApplication {
 	};
 }
 
-export function createJobRepository(path: string) {
-	const database = new DatabaseSync(path);
+export function createJobRepository(dbPath: string) {
+	const database = new DatabaseSync(dbPath);
 
 	// Inspect existing table schema
 	const columns = database.prepare("PRAGMA table_info(jobs)").all() as Array<{
@@ -193,64 +199,13 @@ export function createJobRepository(path: string) {
 		}
 	}
 
-	database.exec(`
-		create table if not exists jobs (
-			id text primary key,
-			source_url text not null,
-			crawl_status text not null check (
-				crawl_status in ('pending', 'crawling', 'analyzing', 'ready', 'failed')
-			),
-			crawl_error text,
-			cleaned_text text not null default '',
-			created_at integer not null,
-			updated_at integer not null,
-			crawled_at integer,
-			parsed_title text,
-			parsed_company text,
-			parsed_location text,
-			parsed_description text,
-			fit_score real,
-			fit_brief_json text
-		);
-		create index if not exists jobs_updated_at_idx on jobs(updated_at desc);
-		create index if not exists jobs_runnable_idx
-			on jobs(crawl_status, created_at asc);
-		create table if not exists resumes (
-			id text primary key,
-			name text not null,
-			template_id text not null,
-			last_modified integer not null,
-			is_default integer not null default 0 check(is_default in (0, 1)),
-			content_json text not null
-		);
-		create unique index if not exists resumes_default_idx
-			on resumes(is_default)
-			where is_default = 1;
-		create index if not exists resumes_last_modified_idx
-			on resumes(last_modified desc);
+	// Initialize Drizzle with node:sqlite driver
+	const db = drizzle({ client: database });
 
-		create table if not exists job_applications (
-			id text primary key,
-			company text not null,
-			title text not null,
-			location text not null,
-			source_url text not null,
-			description text not null,
-			status text not null,
-			source_resume_id text,
-			source_resume_name text,
-			source_resume_snapshot_json text,
-			tailored_resume_json text,
-			fit_brief_json text,
-			resume_edit_proposals_json text,
-			cover_letter_draft_json text,
-			notes text not null default '',
-			follow_up_at integer,
-			created_at integer not null,
-			updated_at integer not null
-		);
-		create index if not exists job_applications_updated_at_idx on job_applications(updated_at desc);
-	`);
+	// Run migrations
+	migrate(db, {
+		migrationsFolder: path.resolve(__dirname, "../../drizzle"),
+	});
 
 	function getJob(id: string) {
 		const row = database
