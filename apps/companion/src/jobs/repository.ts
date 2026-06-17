@@ -1,4 +1,4 @@
-import { DatabaseSync } from "node:sqlite";
+import { createRequire } from "node:module";
 import { drizzle } from "drizzle-orm/node-sqlite";
 import { migrate } from "drizzle-orm/node-sqlite/migrator";
 import { fileURLToPath } from "node:url";
@@ -15,6 +15,11 @@ import type {
 	ResumeEditProposal,
 	ResumeSummary,
 } from "../schema.js";
+
+const require = createRequire(import.meta.url);
+const { DatabaseSync } = require("node:sqlite") as {
+	DatabaseSync: typeof import("node:sqlite").DatabaseSync;
+};
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -203,9 +208,12 @@ export function createJobRepository(dbPath: string) {
 	const db = drizzle({ client: database });
 
 	// Run migrations
-	migrate(db, {
-		migrationsFolder: path.resolve(__dirname, "../../drizzle"),
-	});
+	const isBundled = __dirname.endsWith("dist");
+	const migrationsFolder = isBundled
+		? path.resolve(__dirname, "./drizzle")
+		: path.resolve(__dirname, "../../drizzle");
+
+	migrate(db, { migrationsFolder });
 
 	function getJob(id: string) {
 		const row = database
