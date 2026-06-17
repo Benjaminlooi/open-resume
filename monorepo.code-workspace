@@ -1,19 +1,27 @@
 {
-    "folders": [
-        {
-            "name": "ð¦ ROOT",
-            "path": "."
-        },
-        {
-            "name": "ð APP: Web",
-            "path": "apps/web"
-        },
-        {
-            "name": "ð PKG: UI",
-            "path": "packages/ui"
-        }
-    ],
-    "settings": {
-        // Workspace-wide settings go here
+  "folders": [
+    {
+      "name": "📦 ROOT",
+      "path": "."
+    },
+    {
+      "name": "🚀 APP: Web",
+      "path": "apps/web"
+    },
+    {
+      "name": "🤖 APP: Companion",
+      "path": "apps/companion"
+    },
+    {
+      "name": "🔌 PKG: Contracts",
+      "path": "packages/contracts"
     }
+  ],
+  "settings": {
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/dist": true,
+      "**/.wrangler": true
+    }
+  }
 }
