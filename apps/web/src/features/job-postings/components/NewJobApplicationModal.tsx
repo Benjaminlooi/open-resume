@@ -1,7 +1,7 @@
 import { useNavigate } from "@tanstack/react-router";
 import { type FormEvent, useState } from "react";
-import { useJobApplicationStore } from "#/features/jobs/job-application-store";
-import { createCompanionJob } from "#/lib/local-companion-client";
+import { useJobApplicationStore } from "#/features/job-postings/job-application-store";
+import { createJobPosting } from "#/lib/local-companion-client";
 
 interface NewJobApplicationModalProps {
 	onClose: () => void;
@@ -51,7 +51,7 @@ export default function NewJobApplicationModal({
 		setError("");
 		setIsSubmitting(true);
 		try {
-			await createCompanionJob(trimmedUrl);
+			await createJobPosting(trimmedUrl);
 			onCreated?.();
 			onClose();
 		} catch (err) {

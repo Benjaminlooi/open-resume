@@ -1,12 +1,12 @@
 import { useNavigate } from "@tanstack/react-router";
 import { Eye, RotateCcw, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { useCompanionJobStore } from "#/features/jobs/companion-job-store";
-import type { LocalCompanionJob } from "#/lib/local-companion-client";
-import CompanionJobDetailsDialog from "./CompanionJobDetailsDialog";
+import { useJobPostingStore } from "#/features/job-postings/job-posting-store";
+import type { LocalJobPosting } from "#/lib/local-companion-client";
+import JobPostingDetailsDialog from "./JobPostingDetailsDialog";
 
-interface CompanionJobCardProps {
-	job: LocalCompanionJob;
+interface JobPostingCardProps {
+	job: LocalJobPosting;
 }
 
 function getHostname(sourceUrl: string) {
@@ -21,9 +21,9 @@ function getPreview(text: string) {
 	return text.length > 180 ? `${text.slice(0, 180)}...` : text;
 }
 
-export default function CompanionJobCard({ job }: CompanionJobCardProps) {
+export default function JobPostingCard({ job }: JobPostingCardProps) {
 	const { convertJobToApplication, retryJobCrawl, retryJobAnalyze, deleteJob } =
-		useCompanionJobStore();
+		useJobPostingStore();
 	const navigate = useNavigate();
 	const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 	const hostname = getHostname(job.sourceUrl);
@@ -151,7 +151,7 @@ export default function CompanionJobCard({ job }: CompanionJobCardProps) {
 						type="button"
 						onClick={() => deleteJob(job.id)}
 						className="inline-flex items-center gap-1 rounded-base border-2 border-border bg-white px-3 py-1.5 font-bold text-sm shadow-light hover:translate-x-boxShadowX hover:translate-y-boxShadowY hover:shadow-none transition-all cursor-pointer"
-						aria-label="Delete job"
+						aria-label="Delete job posting"
 					>
 						<Trash2 className="size-4" />
 					</button>
@@ -159,7 +159,7 @@ export default function CompanionJobCard({ job }: CompanionJobCardProps) {
 			</article>
 
 			{isDetailsOpen && (
-				<CompanionJobDetailsDialog
+				<JobPostingDetailsDialog
 					job={job}
 					isOpen={isDetailsOpen}
 					onClose={() => setIsDetailsOpen(false)}

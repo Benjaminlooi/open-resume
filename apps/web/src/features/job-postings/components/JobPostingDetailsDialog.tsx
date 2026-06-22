@@ -14,12 +14,12 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "#/components/ui/dialog";
-import { useCompanionJobStore } from "#/features/jobs/companion-job-store";
-import type { LocalCompanionJob } from "#/lib/local-companion-client";
+import { useJobPostingStore } from "#/features/job-postings/job-posting-store";
+import type { LocalJobPosting } from "#/lib/local-companion-client";
 import { companionBaseUrl } from "#/lib/local-companion-client";
 
-interface CompanionJobDetailsDialogProps {
-	job: LocalCompanionJob;
+interface JobPostingDetailsDialogProps {
+	job: LocalJobPosting;
 	isOpen: boolean;
 	onClose: () => void;
 }
@@ -34,13 +34,13 @@ interface FitBrief {
 	nextActions?: string[];
 }
 
-export default function CompanionJobDetailsDialog({
+export default function JobPostingDetailsDialog({
 	job,
 	isOpen,
 	onClose,
-}: CompanionJobDetailsDialogProps) {
+}: JobPostingDetailsDialogProps) {
 	const { convertJobToApplication, retryJobCrawl, retryJobAnalyze } =
-		useCompanionJobStore();
+		useJobPostingStore();
 	const navigate = useNavigate();
 	const [activeTab, setActiveTab] = useState<"ai" | "scraped" | "screenshot">(
 		"ai",
@@ -405,7 +405,7 @@ export default function CompanionJobDetailsDialog({
 							{!screenshotError ? (
 								<div className="flex-1 min-h-[400px] overflow-y-auto rounded-base border-2 border-border p-2 bg-gray-50 flex justify-center shadow-light">
 									<img
-										src={`${companionBaseUrl}/jobs/${job.id}/screenshot`}
+										src={`${companionBaseUrl}/job-postings/${job.id}/screenshot`}
 										alt="Crawl Screenshot"
 										onError={() => setScreenshotError(true)}
 										className="max-w-full h-auto object-contain border border-border rounded-base"

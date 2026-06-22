@@ -3,7 +3,7 @@
 import { act, type ComponentProps } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import CompanionJobDetailsDialog from "./CompanionJobDetailsDialog";
+import JobPostingDetailsDialog from "./JobPostingDetailsDialog";
 
 (
 	globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }
@@ -46,8 +46,8 @@ const convertJobToApplicationMock = vi.fn();
 const retryJobCrawlMock = vi.fn();
 const retryJobAnalyzeMock = vi.fn();
 
-vi.mock("#/features/jobs/companion-job-store", () => ({
-	useCompanionJobStore: () => ({
+vi.mock("#/features/job-postings/job-posting-store", () => ({
+	useJobPostingStore: () => ({
 		convertJobToApplication: convertJobToApplicationMock,
 		retryJobCrawl: retryJobCrawlMock,
 		retryJobAnalyze: retryJobAnalyzeMock,
@@ -84,9 +84,9 @@ const mockJob = {
 	}),
 };
 
-describe("CompanionJobDetailsDialog", () => {
+describe("JobPostingDetailsDialog", () => {
 	async function renderDialog(
-		props: Partial<ComponentProps<typeof CompanionJobDetailsDialog>>,
+		props: Partial<ComponentProps<typeof JobPostingDetailsDialog>>,
 	) {
 		const container = document.createElement("div");
 		document.body.appendChild(container);
@@ -99,7 +99,7 @@ describe("CompanionJobDetailsDialog", () => {
 		};
 
 		await act(async () => {
-			root.render(<CompanionJobDetailsDialog {...defaultProps} {...props} />);
+			root.render(<JobPostingDetailsDialog {...defaultProps} {...props} />);
 		});
 
 		return { container, root };
@@ -230,7 +230,7 @@ describe("CompanionJobDetailsDialog", () => {
 		const img = container.querySelector("img");
 		expect(img).not.toBeNull();
 		expect(img?.getAttribute("src")).toContain(
-			`/jobs/${mockJob.id}/screenshot`,
+			`/job-postings/${mockJob.id}/screenshot`,
 		);
 
 		await act(async () => {

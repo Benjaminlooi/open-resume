@@ -3,7 +3,7 @@
 import { act, type ComponentProps } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import CompanionJobCard from "./CompanionJobCard";
+import JobPostingCard from "./JobPostingCard";
 
 (
 	globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }
@@ -50,8 +50,8 @@ const retryJobCrawlMock = vi.fn();
 const retryJobAnalyzeMock = vi.fn();
 const deleteJobMock = vi.fn();
 
-vi.mock("#/features/jobs/companion-job-store", () => ({
-	useCompanionJobStore: () => ({
+vi.mock("#/features/job-postings/job-posting-store", () => ({
+	useJobPostingStore: () => ({
 		convertJobToApplication: convertJobToApplicationMock,
 		retryJobCrawl: retryJobCrawlMock,
 		retryJobAnalyze: retryJobAnalyzeMock,
@@ -75,9 +75,9 @@ const baseJob = {
 	crawledAt: null,
 };
 
-describe("CompanionJobCard", () => {
+describe("JobPostingCard", () => {
 	async function renderCard(
-		props: Partial<ComponentProps<typeof CompanionJobCard>>,
+		props: Partial<ComponentProps<typeof JobPostingCard>>,
 	) {
 		const container = document.createElement("div");
 		document.body.appendChild(container);
@@ -88,7 +88,7 @@ describe("CompanionJobCard", () => {
 		};
 
 		await act(async () => {
-			root.render(<CompanionJobCard {...defaultProps} {...props} />);
+			root.render(<JobPostingCard {...defaultProps} {...props} />);
 		});
 
 		return { container, root };

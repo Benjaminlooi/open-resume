@@ -17,7 +17,7 @@ vi.mock("@tanstack/react-router", () => ({
 	useNavigate: () => mockNavigate,
 }));
 
-vi.mock("#/features/jobs/job-application-store", () => ({
+vi.mock("#/features/job-postings/job-application-store", () => ({
 	useJobApplicationStore: (selector?: (state: any) => any) => {
 		const state = {
 			createJobApplication: mockCreateJobApplication,
@@ -27,7 +27,7 @@ vi.mock("#/features/jobs/job-application-store", () => ({
 }));
 
 vi.mock("#/lib/local-companion-client", () => ({
-	createCompanionJob: vi.fn(),
+	createJobPosting: vi.fn(),
 }));
 
 describe("NewJobApplicationModal", () => {
@@ -67,8 +67,8 @@ describe("NewJobApplicationModal", () => {
 	});
 
 	it("submits only a URL to the local companion in Crawl tab", async () => {
-		const createCompanionJob = vi.mocked(localCompanion.createCompanionJob);
-		createCompanionJob.mockResolvedValue({
+		const mockCreateJobPosting = vi.mocked(localCompanion.createJobPosting);
+		mockCreateJobPosting.mockResolvedValue({
 			id: "job-1",
 			sourceUrl: "https://example.com/job",
 			crawlStatus: "pending",
@@ -103,7 +103,7 @@ describe("NewJobApplicationModal", () => {
 			form?.dispatchEvent(new Event("submit", { bubbles: true }));
 		});
 
-		expect(createCompanionJob).toHaveBeenCalledWith("https://example.com/job");
+		expect(mockCreateJobPosting).toHaveBeenCalledWith("https://example.com/job");
 		expect(onCreated).toHaveBeenCalled();
 		expect(onClose).toHaveBeenCalled();
 
