@@ -6,10 +6,10 @@ import type { ZodTypeProvider } from "fastify-type-provider-zod";
 import { z } from "zod";
 import {
 	companionErrorResponseSchema,
-	companionJobSchema,
-	companionJobsResponseSchema,
-	createJobRequestSchema,
-	deleteJobResponseSchema,
+	jobPostingSchema,
+	jobPostingsResponseSchema,
+	createJobPostingRequestSchema,
+	deleteJobPostingResponseSchema,
 	jobApplicationSchema,
 	jobIdParamsSchema,
 } from "../schema.js";
@@ -23,22 +23,22 @@ export function createJobRoutes(context: JobRouteContext): FastifyPluginAsync {
 		const typedServer = server.withTypeProvider<ZodTypeProvider>();
 
 		typedServer.post(
-			"/jobs",
+			"/job-postings",
 			{
 				schema: {
-					operationId: "createJob",
-					tags: ["Jobs"],
-					summary: "Create a companion job and enqueue crawling",
-					body: createJobRequestSchema,
+					operationId: "createJobPosting",
+					tags: ["Job Postings"],
+					summary: "Create a job posting and enqueue crawling",
+					body: createJobPostingRequestSchema,
 					response: {
-						201: companionJobSchema,
+						201: jobPostingSchema,
 						400: companionErrorResponseSchema,
 						500: companionErrorResponseSchema,
 					},
 				},
 			},
 			async (request, reply) => {
-				const job = context.jobRepository.createJob({
+				const job = context.jobRepository.createJobPosting({
 					id: randomUUID(),
 					sourceUrl: request.body.sourceUrl,
 					now: Date.now(),
@@ -49,41 +49,41 @@ export function createJobRoutes(context: JobRouteContext): FastifyPluginAsync {
 		);
 
 		typedServer.get(
-			"/jobs",
+			"/job-postings",
 			{
 				logLevel: "silent",
 				schema: {
-					operationId: "listJobs",
-					tags: ["Jobs"],
-					summary: "List companion jobs",
+					operationId: "listJobPostings",
+					tags: ["Job Postings"],
+					summary: "List job postings",
 					response: {
-						200: companionJobsResponseSchema,
+						200: jobPostingsResponseSchema,
 					},
 				},
 			},
 			async () => ({
-				jobs: context.jobRepository.listJobs(),
+				jobPostings: context.jobRepository.listJobPostings(),
 			}),
 		);
 
 		typedServer.get(
-			"/jobs/:id",
+			"/job-postings/:id",
 			{
 				schema: {
-					operationId: "getJob",
-					tags: ["Jobs"],
-					summary: "Get a companion job",
+					operationId: "getJobPosting",
+					tags: ["Job Postings"],
+					summary: "Get a job posting",
 					params: routeJobIdParamsSchema,
 					response: {
-						200: companionJobSchema,
+						200: jobPostingSchema,
 						404: companionErrorResponseSchema,
 					},
 				},
 			},
 			async (request, reply) => {
-				const job = context.jobRepository.getJob(request.params.id);
+				const job = context.jobRepository.getJobPosting(request.params.id);
 				if (!job) {
-					return reply.status(404).send({ error: "Job not found" });
+					return reply.status(404).send({ error: "Job posting not found" });
 				}
 
 				return reply.send(job);
@@ -91,12 +91,12 @@ export function createJobRoutes(context: JobRouteContext): FastifyPluginAsync {
 		);
 
 		typedServer.get(
-			"/jobs/:id/screenshot",
+			"/job-postings/:id/screenshot",
 			{
 				schema: {
-					operationId: "getJobScreenshot",
-					tags: ["Jobs"],
-					summary: "Get a job crawl screenshot",
+					operationId: "getJobPostingScreenshot",
+					tags: ["Job Postings"],
+					summary: "Get a job posting crawl screenshot",
 					params: routeJobIdParamsSchema,
 					response: {
 						200: z.any().describe("The captured screenshot PNG image."),
@@ -106,9 +106,9 @@ export function createJobRoutes(context: JobRouteContext): FastifyPluginAsync {
 				},
 			},
 			async (request, reply) => {
-				const job = context.jobRepository.getJob(request.params.id);
+				const job = context.jobRepository.getJobPosting(request.params.id);
 				if (!job) {
-					return reply.status(404).send({ error: "Job not found" });
+					return reply.status(404).send({ error: "Job posting not found" });
 				}
 
 				const screenshotPath = join(
@@ -131,15 +131,15 @@ export function createJobRoutes(context: JobRouteContext): FastifyPluginAsync {
 		);
 
 		typedServer.post(
-			"/jobs/:id/retry-crawl",
+			"/job-postings/:id/retry-crawl",
 			{
 				schema: {
-					operationId: "retryJobCrawl",
-					tags: ["Jobs"],
-					summary: "Retry crawling a companion job",
+					operationId: "retryJobPostingCrawl",
+					tags: ["Job Postings"],
+					summary: "Retry crawling a job posting",
 					params: routeJobIdParamsSchema,
 					response: {
-						200: companionJobSchema,
+						200: jobPostingSchema,
 						404: companionErrorResponseSchema,
 					},
 				},
@@ -150,7 +150,7 @@ export function createJobRoutes(context: JobRouteContext): FastifyPluginAsync {
 					Date.now(),
 				);
 				if (!job) {
-					return reply.status(404).send({ error: "Job not found" });
+					return reply.status(404).send({ error: "Job posting not found" });
 				}
 
 				context.crawlQueue.enqueue(job.id);
@@ -159,15 +159,15 @@ export function createJobRoutes(context: JobRouteContext): FastifyPluginAsync {
 		);
 
 		typedServer.post(
-			"/jobs/:id/retry-analyze",
+			"/job-postings/:id/retry-analyze",
 			{
 				schema: {
-					operationId: "retryJobAnalysis",
-					tags: ["Jobs"],
-					summary: "Retry analysis for a companion job",
+					operationId: "retryJobPostingAnalysis",
+					tags: ["Job Postings"],
+					summary: "Retry analysis for a job posting",
 					params: routeJobIdParamsSchema,
 					response: {
-						200: companionJobSchema,
+						200: jobPostingSchema,
 						404: companionErrorResponseSchema,
 					},
 				},
@@ -178,7 +178,7 @@ export function createJobRoutes(context: JobRouteContext): FastifyPluginAsync {
 					Date.now(),
 				);
 				if (!job) {
-					return reply.status(404).send({ error: "Job not found" });
+					return reply.status(404).send({ error: "Job posting not found" });
 				}
 
 				context.crawlQueue.enqueue(job.id);
@@ -187,12 +187,12 @@ export function createJobRoutes(context: JobRouteContext): FastifyPluginAsync {
 		);
 
 		typedServer.post(
-			"/jobs/:id/convert",
+			"/job-postings/:id/convert",
 			{
 				schema: {
 					operationId: "convertJobToApplication",
-					tags: ["Jobs"],
-					summary: "Convert a companion job to a job application",
+					tags: ["Job Postings"],
+					summary: "Convert a job posting to a job application",
 					params: routeJobIdParamsSchema,
 					response: {
 						200: jobApplicationSchema,
@@ -202,9 +202,9 @@ export function createJobRoutes(context: JobRouteContext): FastifyPluginAsync {
 			},
 			async (request, reply) => {
 				const id = request.params.id;
-				const job = context.jobRepository.getJob(id);
+				const job = context.jobRepository.getJobPosting(id);
 				if (!job) {
-					return reply.status(404).send({ error: "Job not found" });
+					return reply.status(404).send({ error: "Job posting not found" });
 				}
 
 				const jobApplication = context.jobRepository.convertJobToApplication(
@@ -226,21 +226,21 @@ export function createJobRoutes(context: JobRouteContext): FastifyPluginAsync {
 		);
 
 		typedServer.delete(
-			"/jobs/:id",
+			"/job-postings/:id",
 			{
 				schema: {
-					operationId: "deleteJob",
-					tags: ["Jobs"],
-					summary: "Delete a companion job",
+					operationId: "deleteJobPosting",
+					tags: ["Job Postings"],
+					summary: "Delete a job posting",
 					params: routeJobIdParamsSchema,
 					response: {
-						200: deleteJobResponseSchema,
+						200: deleteJobPostingResponseSchema,
 					},
 				},
 			},
 			async (request) => {
 				const id = request.params.id;
-				const deleted = context.jobRepository.deleteJob(id);
+				const deleted = context.jobRepository.deleteJobPosting(id);
 				if (deleted) {
 					const screenshotPath = join(context.screenshotsPath, `${id}.png`);
 					if (dirname(screenshotPath) === context.screenshotsPath) {

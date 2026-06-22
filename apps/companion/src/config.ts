@@ -1,7 +1,7 @@
 import { dirname, resolve } from "node:path";
 import { z } from "zod";
-import type { CrawlQueue } from "./jobs/crawl-queue.js";
-import type { JobRepository } from "./jobs/repository.js";
+import type { CrawlQueue } from "./job-postings/crawl-queue.js";
+import type { JobRepository } from "./job-postings/repository.js";
 
 export const LogLevelSchema = z.enum([
 	"info",

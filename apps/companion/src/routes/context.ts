@@ -1,5 +1,5 @@
-import type { CrawlQueue } from "../jobs/crawl-queue.js";
-import type { JobRepository } from "../jobs/repository.js";
+import type { CrawlQueue } from "../job-postings/crawl-queue.js";
+import type { JobRepository } from "../job-postings/repository.js";
 
 export interface ProfileRouteContext {
 	jobRepository: JobRepository;

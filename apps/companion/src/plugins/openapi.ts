@@ -33,16 +33,16 @@ export const registerOpenApi = fp(async (server) => {
 					description: "Saved resume management endpoints.",
 				},
 				{
-					name: "Jobs",
-					description: "Companion job intake and crawl lifecycle endpoints.",
+					name: "Job Postings",
+					description: "Job posting intake and crawl lifecycle endpoints.",
 				},
 			],
 		},
 		transform: (input: any) => {
 			const result = jsonSchemaTransform(input);
 			if (
-				(input.url === "/jobs/:id/screenshot" ||
-					input.url === "/jobs/{id}/screenshot") &&
+				(input.url === "/job-postings/:id/screenshot" ||
+					input.url === "/job-postings/{id}/screenshot") &&
 				result.schema?.response
 			) {
 				(result.schema.response as any)["200"] = {
