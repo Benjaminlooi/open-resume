@@ -16,6 +16,7 @@ todos.json
 routeTree.gen.ts
 .worktrees/
 .superpowers/
+.omo/
 
 # Dependency directories
 .pnpm-store/
