@@ -2,20 +2,20 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
 	clearDefaultResume,
 	convertJobToApplication,
-	createCompanionJob,
 	createJobApplication,
+	createJobPosting,
 	createResume,
-	deleteCompanionJob,
 	deleteJobApplication,
+	deleteJobPosting,
 	deleteResume,
 	getJobApplication,
 	getProfile,
 	getResume,
-	listCompanionJobs,
 	listJobApplications,
+	listJobPostings,
 	listResumes,
-	retryCompanionJobAnalyze,
-	retryCompanionJobCrawl,
+	retryJobPostingAnalyze,
+	retryJobPostingCrawl,
 	setDefaultResume,
 	syncResume,
 	updateJobApplication,
@@ -60,7 +60,7 @@ const mockProfile = {
 		city: "New York",
 		timezone: "EST",
 		visaStatus: "Citizen",
-		onsiteAvailability: "2 days",
+		 onsiteAvailability: "2 days",
 		remotePolicy: "Flexible",
 	},
 };
@@ -109,7 +109,7 @@ describe("local companion client", () => {
 		vi.unstubAllGlobals();
 	});
 
-	it("creates a companion job", async () => {
+	it("creates a job posting", async () => {
 		vi.stubGlobal(
 			"fetch",
 			vi.fn(async () => ({
@@ -127,35 +127,35 @@ describe("local companion client", () => {
 			})),
 		);
 
-		const result = await createCompanionJob("https://example.com/job");
+		const result = await createJobPosting("https://example.com/job");
 
 		expect(result).toMatchObject({
 			id: "job-1",
 			crawlStatus: "pending",
 		});
 		expect(fetch).toHaveBeenCalledWith(
-			"http://127.0.0.1:47321/jobs",
+			"http://127.0.0.1:47321/job-postings",
 			expect.objectContaining({ method: "POST" }),
 		);
 	});
 
-	it("lists companion jobs", async () => {
+	it("lists job postings", async () => {
 		vi.stubGlobal(
 			"fetch",
 			vi.fn(async () => ({
 				ok: true,
-				json: async () => ({ jobs: [] }),
+				json: async () => ({ jobPostings: [] }),
 			})),
 		);
 
-		await expect(listCompanionJobs()).resolves.toEqual([]);
+		await expect(listJobPostings()).resolves.toEqual([]);
 	});
 
-	it("retries and deletes companion jobs", async () => {
+	it("retries and deletes job postings", async () => {
 		vi.stubGlobal(
 			"fetch",
 			vi.fn(async (url: string) => {
-				if (url.endsWith("/jobs/job-1")) {
+				if (url.endsWith("/job-postings/job-1")) {
 					return {
 						ok: true,
 						json: async () => ({
@@ -179,17 +179,17 @@ describe("local companion client", () => {
 			}),
 		);
 
-		await expect(retryCompanionJobCrawl("job-1")).resolves.toMatchObject({
+		await expect(retryJobPostingCrawl("job-1")).resolves.toMatchObject({
 			id: "job-1",
 		});
-		await expect(retryCompanionJobAnalyze("job-1")).resolves.toMatchObject({
+		await expect(retryJobPostingAnalyze("job-1")).resolves.toMatchObject({
 			id: "job-1",
 		});
 		expect(fetch).toHaveBeenCalledWith(
-			"http://127.0.0.1:47321/jobs/job-1/retry-analyze",
+			"http://127.0.0.1:47321/job-postings/job-1/retry-analyze",
 			expect.objectContaining({ method: "POST" }),
 		);
-		await expect(deleteCompanionJob("job-1")).resolves.toEqual({
+		await expect(deleteJobPosting("job-1")).resolves.toEqual({
 			deleted: true,
 		});
 	});
@@ -412,7 +412,7 @@ describe("local companion client", () => {
 			}),
 		);
 
-		await expect(listCompanionJobs()).rejects.toThrow(
+		await expect(listJobPostings()).rejects.toThrow(
 			"Local companion is not reachable",
 		);
 	});
@@ -526,7 +526,7 @@ describe("local companion client", () => {
 		);
 	});
 
-	it("converts a companion job to a job application", async () => {
+	it("converts a job posting to a job application", async () => {
 		vi.stubGlobal(
 			"fetch",
 			vi.fn(async () => ({
@@ -539,7 +539,7 @@ describe("local companion client", () => {
 			mockJobApplication,
 		);
 		expect(fetch).toHaveBeenCalledWith(
-			"http://127.0.0.1:47321/jobs/job-1/convert",
+			"http://127.0.0.1:47321/job-postings/job-1/convert",
 			expect.objectContaining({ method: "POST" }),
 		);
 	});

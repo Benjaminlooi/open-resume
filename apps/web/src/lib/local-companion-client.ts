@@ -1,12 +1,12 @@
 import {
 	candidateProfileSchema,
-	companionJobSchema,
-	companionJobsResponseSchema,
 	createResumeRequestSchema,
-	deleteJobResponseSchema,
+	deleteJobPostingResponseSchema,
 	deleteResumeResponseSchema,
 	jobApplicationSchema,
 	jobApplicationsResponseSchema,
+	jobPostingSchema,
+	jobPostingsResponseSchema,
 	okResponseSchema,
 	resumeContentSchema,
 	resumeDetailsSchema,
@@ -37,7 +37,7 @@ import type {
 	CreateResumeRequest,
 	JobApplication,
 	JobApplicationsResponse,
-	CompanionJob as LocalCompanionJob,
+	JobPosting as LocalJobPosting,
 	OkResponse,
 	ResumeContent,
 	ResumeDetails,
@@ -48,7 +48,7 @@ import type {
 } from "@open-resume/contracts";
 
 export type {
-	LocalCompanionJob,
+	LocalJobPosting,
 	TargetRoleArchetype,
 	CandidateProfile,
 	ResumeSyncRequest,
@@ -88,10 +88,10 @@ async function parseCompanionResponse<T>(
 	return schema.parse(await response.json());
 }
 
-export async function createCompanionJob(
+export async function createJobPosting(
 	sourceUrl: string,
-): Promise<LocalCompanionJob> {
-	const response = await companionFetch("/jobs", {
+): Promise<LocalJobPosting> {
+	const response = await companionFetch("/job-postings", {
 		method: "POST",
 		headers: {
 			"content-type": "application/json",
@@ -100,57 +100,57 @@ export async function createCompanionJob(
 	});
 	return parseCompanionResponse(
 		response,
-		companionJobSchema,
-		"Local companion could not create this job.",
+		jobPostingSchema,
+		"Local companion could not create this job posting.",
 	);
 }
 
-export async function listCompanionJobs(): Promise<LocalCompanionJob[]> {
-	const response = await companionFetch("/jobs");
+export async function listJobPostings(): Promise<LocalJobPosting[]> {
+	const response = await companionFetch("/job-postings");
 	const parsed = await parseCompanionResponse(
 		response,
-		companionJobsResponseSchema,
-		"Local companion could not list jobs.",
+		jobPostingsResponseSchema,
+		"Local companion could not list job postings.",
 	);
-	return parsed.jobs;
+	return parsed.jobPostings;
 }
 
-export async function retryCompanionJobCrawl(
+export async function retryJobPostingCrawl(
 	id: string,
-): Promise<LocalCompanionJob> {
-	const response = await companionFetch(`/jobs/${id}/retry-crawl`, {
+): Promise<LocalJobPosting> {
+	const response = await companionFetch(`/job-postings/${id}/retry-crawl`, {
 		method: "POST",
 	});
 	return parseCompanionResponse(
 		response,
-		companionJobSchema,
+		jobPostingSchema,
 		"Local companion could not retry this crawl.",
 	);
 }
 
-export async function retryCompanionJobAnalyze(
+export async function retryJobPostingAnalyze(
 	id: string,
-): Promise<LocalCompanionJob> {
-	const response = await companionFetch(`/jobs/${id}/retry-analyze`, {
+): Promise<LocalJobPosting> {
+	const response = await companionFetch(`/job-postings/${id}/retry-analyze`, {
 		method: "POST",
 	});
 	return parseCompanionResponse(
 		response,
-		companionJobSchema,
+		jobPostingSchema,
 		"Local companion could not retry this analysis.",
 	);
 }
 
-export async function deleteCompanionJob(
+export async function deleteJobPosting(
 	id: string,
 ): Promise<{ deleted: boolean }> {
-	const response = await companionFetch(`/jobs/${id}`, {
+	const response = await companionFetch(`/job-postings/${id}`, {
 		method: "DELETE",
 	});
 	return parseCompanionResponse(
 		response,
-		deleteJobResponseSchema,
-		"Local companion could not delete this job.",
+		deleteJobPostingResponseSchema,
+		"Local companion could not delete this job posting.",
 	);
 }
 
@@ -361,7 +361,7 @@ export async function deleteJobApplication(
 	});
 	return parseCompanionResponse(
 		response,
-		deleteJobResponseSchema,
+		deleteJobPostingResponseSchema,
 		"Local companion could not delete this job application.",
 	);
 }
@@ -369,12 +369,12 @@ export async function deleteJobApplication(
 export async function convertJobToApplication(
 	id: string,
 ): Promise<JobApplication> {
-	const response = await companionFetch(`/jobs/${id}/convert`, {
+	const response = await companionFetch(`/job-postings/${id}/convert`, {
 		method: "POST",
 	});
 	return parseCompanionResponse(
 		response,
 		jobApplicationSchema,
-		"Local companion could not convert this job.",
+		"Local companion could not convert this job posting.",
 	);
 }
