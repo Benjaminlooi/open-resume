@@ -3,9 +3,9 @@ import { existsSync, rmSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import type { FastifyInstance } from "fastify";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { createCrawlQueue } from "./jobs/crawl-queue.js";
-import type { JobRepository } from "./jobs/repository.js";
-import { createJobRepository } from "./jobs/repository.js";
+import { createCrawlQueue } from "./job-postings/crawl-queue.js";
+import type { JobRepository } from "./job-postings/repository.js";
+import { createJobRepository } from "./job-postings/repository.js";
 import { createServer } from "./server.js";
 
 function parseJsonLogs(output: string) {
@@ -115,7 +115,7 @@ describe("companion server", () => {
 		const { server } = createTestServer();
 		const response = await server.inject({
 			method: "POST",
-			url: "/jobs",
+			url: "/job-postings",
 			payload: { sourceUrl: "file:///etc/passwd" },
 		});
 
@@ -129,7 +129,7 @@ describe("companion server", () => {
 		const { server } = createTestServer();
 		const response = await server.inject({
 			method: "POST",
-			url: "/jobs",
+			url: "/job-postings",
 			payload: { sourceUrl: "string" },
 		});
 
@@ -143,7 +143,7 @@ describe("companion server", () => {
 		const { server } = createTestServer();
 		const response = await server.inject({
 			method: "POST",
-			url: "/jobs",
+			url: "/job-postings",
 			headers: {
 				"content-type": "application/json",
 			},
@@ -195,7 +195,7 @@ describe("companion server", () => {
 
 		const response = await server.inject({
 			method: "POST",
-			url: "/jobs",
+			url: "/job-postings",
 			payload: { sourceUrl: "https://example.com/job" },
 		});
 
@@ -211,7 +211,7 @@ describe("companion server", () => {
 	it("lists, retries, gets, and deletes companion jobs", async () => {
 		const { crawlQueue, repository, server } = createTestServer();
 		vi.spyOn(crawlQueue, "enqueue");
-		const created = repository.createJob({
+		const created = repository.createJobPosting({
 			id: "job-1",
 			sourceUrl: "https://example.com/job",
 			now: 1000,
@@ -219,23 +219,23 @@ describe("companion server", () => {
 		repository.markFailed(created.id, { error: "Timeout", now: 1100 });
 
 		expect(
-			(await server.inject({ method: "GET", url: "/jobs" })).json(),
-		).toMatchObject({ jobs: [expect.objectContaining({ id: "job-1" })] });
+			(await server.inject({ method: "GET", url: "/job-postings" })).json(),
+		).toMatchObject({ jobPostings: [expect.objectContaining({ id: "job-1" })] });
 
 		expect(
 			(
-				await server.inject({ method: "POST", url: "/jobs/job-1/retry-crawl" })
+				await server.inject({ method: "POST", url: "/job-postings/job-1/retry-crawl" })
 			).json(),
 		).toMatchObject({ id: "job-1", crawlStatus: "pending" });
 		expect(crawlQueue.enqueue).toHaveBeenCalledWith("job-1");
 
 		expect(
-			(await server.inject({ method: "GET", url: "/jobs/job-1" })).json(),
+			(await server.inject({ method: "GET", url: "/job-postings/job-1" })).json(),
 		).toMatchObject({ id: "job-1" });
 
 		const deleteResponse = await server.inject({
 			method: "DELETE",
-			url: "/jobs/job-1",
+			url: "/job-postings/job-1",
 		});
 		expect(deleteResponse.statusCode).toBe(200);
 		expect(deleteResponse.json()).toEqual({ deleted: true });
@@ -247,56 +247,56 @@ describe("companion server", () => {
 
 		const getResponse = await server.inject({
 			method: "GET",
-			url: "/jobs/missing-job",
+			url: "/job-postings/missing-job",
 		});
 		expect(getResponse.statusCode).toBe(404);
-		expect(getResponse.json()).toEqual({ error: "Job not found" });
+		expect(getResponse.json()).toEqual({ error: "Job posting not found" });
 
 		const retryResponse = await server.inject({
 			method: "POST",
-			url: "/jobs/missing-job/retry-crawl",
+			url: "/job-postings/missing-job/retry-crawl",
 		});
 		expect(retryResponse.statusCode).toBe(404);
-		expect(retryResponse.json()).toEqual({ error: "Job not found" });
+		expect(retryResponse.json()).toEqual({ error: "Job posting not found" });
 		expect(crawlQueue.enqueue).not.toHaveBeenCalled();
 
 		const deleteResponse = await server.inject({
 			method: "DELETE",
-			url: "/jobs/missing-job",
+			url: "/job-postings/missing-job",
 		});
 		expect(deleteResponse.statusCode).toBe(200);
 		expect(deleteResponse.json()).toEqual({ deleted: false });
 	});
 
-	it("GET /jobs/:id/screenshot returns 404 if screenshot does not exist", async () => {
+	it("GET /job-postings/:id/screenshot returns 404 if screenshot does not exist", async () => {
 		const { server, repository } = createTestServer();
 
 		// Case 1: Job does not exist
 		const response1 = await server.inject({
 			method: "GET",
-			url: "/jobs/non-existent-id/screenshot",
+			url: "/job-postings/non-existent-id/screenshot",
 		});
 		expect(response1.statusCode).toBe(404);
-		expect(response1.json()).toEqual({ error: "Job not found" });
+		expect(response1.json()).toEqual({ error: "Job posting not found" });
 
 		// Case 2: Job exists but screenshot file does not
-		repository.createJob({
+		repository.createJobPosting({
 			id: "job-without-screenshot",
 			sourceUrl: "https://example.com/job",
 			now: 1000,
 		});
 		const response2 = await server.inject({
 			method: "GET",
-			url: "/jobs/job-without-screenshot/screenshot",
+			url: "/job-postings/job-without-screenshot/screenshot",
 		});
 		expect(response2.statusCode).toBe(404);
 		expect(response2.json()).toEqual({ error: "Screenshot not found" });
 	});
 
-	it("GET /jobs/:id/screenshot returns 200 and image/png stream if screenshot exists, and DELETE /jobs/:id deletes the screenshot file", async () => {
+	it("GET /job-postings/:id/screenshot returns 200 and image/png stream if screenshot exists, and DELETE /job-postings/:id deletes the screenshot file", async () => {
 		const { server, repository, testDbDir } = createTestServer();
 		const jobId = "job-with-screenshot";
-		repository.createJob({
+		repository.createJobPosting({
 			id: jobId,
 			sourceUrl: "https://example.com/job",
 			now: 1000,
@@ -309,7 +309,7 @@ describe("companion server", () => {
 		// 1. Fetch screenshot
 		const response = await server.inject({
 			method: "GET",
-			url: `/jobs/${jobId}/screenshot`,
+			url: `/job-postings/${jobId}/screenshot`,
 		});
 		expect(response.statusCode).toBe(200);
 		expect(response.headers["content-type"]).toBe("image/png");
@@ -318,7 +318,7 @@ describe("companion server", () => {
 		// 2. Delete job and verify screenshot is deleted
 		const deleteResponse = await server.inject({
 			method: "DELETE",
-			url: `/jobs/${jobId}`,
+			url: `/job-postings/${jobId}`,
 		});
 		expect(deleteResponse.statusCode).toBe(200);
 		expect(deleteResponse.json()).toEqual({ deleted: true });
@@ -334,14 +334,14 @@ describe("companion server", () => {
 		// 1. If the job doesn't exist, it returns 404.
 		const missingResponse = await server.inject({
 			method: "POST",
-			url: "/jobs/missing-job/retry-analyze",
+			url: "/job-postings/missing-job/retry-analyze",
 		});
 		expect(missingResponse.statusCode).toBe(404);
-		expect(missingResponse.json()).toEqual({ error: "Job not found" });
+		expect(missingResponse.json()).toEqual({ error: "Job posting not found" });
 		expect(crawlQueue.enqueue).not.toHaveBeenCalled();
 
 		// 2. If the job exists, it resets the job status to analyzing, retains the cleaned_text and enqueues the job.
-		const created = repository.createJob({
+		const created = repository.createJobPosting({
 			id: "job-analyze-1",
 			sourceUrl: "https://example.com/job",
 			now: 1000,
@@ -355,7 +355,7 @@ describe("companion server", () => {
 
 		const retryResponse = await server.inject({
 			method: "POST",
-			url: `/jobs/${created.id}/retry-analyze`,
+			url: `/job-postings/${created.id}/retry-analyze`,
 		});
 		expect(retryResponse.statusCode).toBe(200);
 		expect(retryResponse.json()).toMatchObject({
@@ -611,32 +611,32 @@ describe("companion server", () => {
 			operationId: "getHealth",
 			tags: ["System"],
 		});
-		expect(document.paths["/jobs"].post).toMatchObject({
-			operationId: "createJob",
-			tags: ["Jobs"],
+		expect(document.paths["/job-postings"].post).toMatchObject({
+			operationId: "createJobPosting",
+			tags: ["Job Postings"],
 		});
-		expect(document.paths["/jobs"].get).toMatchObject({
-			operationId: "listJobs",
-			tags: ["Jobs"],
+		expect(document.paths["/job-postings"].get).toMatchObject({
+			operationId: "listJobPostings",
+			tags: ["Job Postings"],
 		});
-		expect(document.paths["/jobs/{id}"].get).toMatchObject({
-			operationId: "getJob",
-			tags: ["Jobs"],
+		expect(document.paths["/job-postings/{id}"].get).toMatchObject({
+			operationId: "getJobPosting",
+			tags: ["Job Postings"],
 		});
-		expect(document.paths["/jobs/{id}/retry-crawl"].post).toMatchObject({
-			operationId: "retryJobCrawl",
-			tags: ["Jobs"],
+		expect(document.paths["/job-postings/{id}/retry-crawl"].post).toMatchObject({
+			operationId: "retryJobPostingCrawl",
+			tags: ["Job Postings"],
 		});
 		expect(document.components.schemas).toMatchObject({
-			CompanionJob: expect.any(Object),
-			CompanionJobsResponse: expect.any(Object),
-			CreateJobRequest: expect.any(Object),
+			JobPosting: expect.any(Object),
+			JobPostingsResponse: expect.any(Object),
+			CreateJobPostingRequest: expect.any(Object),
 			CompanionErrorResponse: expect.any(Object),
-			DeleteJobResponse: expect.any(Object),
+			DeleteJobPostingResponse: expect.any(Object),
 			HealthResponse: expect.any(Object),
 		});
 		expect(
-			document.components.schemas.CreateJobRequest.properties.sourceUrl,
+			document.components.schemas.CreateJobPostingRequest.properties.sourceUrl,
 		).toMatchObject({
 			type: "string",
 			format: "uri",
@@ -764,7 +764,7 @@ describe("companion server", () => {
 		const { server, repository } = createTestServer();
 
 		// Create a job first
-		repository.createJob({
+		repository.createJobPosting({
 			id: "job-convert-test",
 			sourceUrl: "https://example.com/convert-test",
 			now: 1000,
@@ -794,7 +794,7 @@ describe("companion server", () => {
 		// Convert it via POST /jobs/:id/convert
 		const convertRes = await server.inject({
 			method: "POST",
-			url: "/jobs/job-convert-test/convert",
+			url: "/job-postings/job-convert-test/convert",
 		});
 
 		expect(convertRes.statusCode).toBe(200);
@@ -821,7 +821,7 @@ describe("companion server", () => {
 		// Verify that the job is deleted
 		const getJobRes = await server.inject({
 			method: "GET",
-			url: "/jobs/job-convert-test",
+			url: "/job-postings/job-convert-test",
 		});
 		expect(getJobRes.statusCode).toBe(404);
 
@@ -836,7 +836,7 @@ describe("companion server", () => {
 		// Test 404 on converting non-existent job
 		const convertMissingRes = await server.inject({
 			method: "POST",
-			url: "/jobs/missing-job/convert",
+			url: "/job-postings/missing-job/convert",
 		});
 		expect(convertMissingRes.statusCode).toBe(404);
 	});

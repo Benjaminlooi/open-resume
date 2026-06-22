@@ -109,7 +109,7 @@
           "failed"
         ]
       },
-      "CreateJobRequestInput": {
+      "CreateJobPostingRequestInput": {
         "type": "object",
         "properties": {
           "sourceUrl": {
@@ -136,7 +136,7 @@
         ],
         "additionalProperties": false
       },
-      "CompanionJobInput": {
+      "JobPostingInput": {
         "type": "object",
         "properties": {
           "id": {
@@ -255,13 +255,13 @@
         ],
         "additionalProperties": false
       },
-      "CompanionJobsResponseInput": {
+      "JobPostingsResponseInput": {
         "type": "object",
         "properties": {
           "jobs": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/CompanionJobInput"
+              "$ref": "#/components/schemas/JobPostingInput"
             }
           }
         },
@@ -270,7 +270,7 @@
         ],
         "additionalProperties": false
       },
-      "DeleteJobResponseInput": {
+      "DeleteJobPostingResponseInput": {
         "type": "object",
         "properties": {
           "deleted": {
@@ -1135,7 +1135,7 @@
           "failed"
         ]
       },
-      "CreateJobRequest": {
+      "CreateJobPostingRequest": {
         "type": "object",
         "properties": {
           "sourceUrl": {
@@ -1162,7 +1162,7 @@
         ],
         "additionalProperties": false
       },
-      "CompanionJob": {
+      "JobPosting": {
         "type": "object",
         "properties": {
           "id": {
@@ -1281,13 +1281,13 @@
         ],
         "additionalProperties": false
       },
-      "CompanionJobsResponse": {
+      "JobPostingsResponse": {
         "type": "object",
         "properties": {
           "jobs": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/CompanionJob"
+              "$ref": "#/components/schemas/JobPosting"
             }
           }
         },
@@ -1296,7 +1296,7 @@
         ],
         "additionalProperties": false
       },
-      "DeleteJobResponse": {
+      "DeleteJobPostingResponse": {
         "type": "object",
         "properties": {
           "deleted": {
@@ -2494,327 +2494,6 @@
         }
       }
     },
-    "/jobs": {
-      "post": {
-        "operationId": "createJob",
-        "summary": "Create a companion job and enqueue crawling",
-        "tags": [
-          "Jobs"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateJobRequestInput"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CompanionJob"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CompanionErrorResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CompanionErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      },
-      "get": {
-        "operationId": "listJobs",
-        "summary": "List companion jobs",
-        "tags": [
-          "Jobs"
-        ],
-        "responses": {
-          "200": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CompanionJobsResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/jobs/{id}": {
-      "get": {
-        "operationId": "getJob",
-        "summary": "Get a companion job",
-        "tags": [
-          "Jobs"
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            },
-            "in": "path",
-            "name": "id",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CompanionJob"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CompanionErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "operationId": "deleteJob",
-        "summary": "Delete a companion job",
-        "tags": [
-          "Jobs"
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            },
-            "in": "path",
-            "name": "id",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DeleteJobResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/jobs/{id}/screenshot": {
-      "get": {
-        "operationId": "getJobScreenshot",
-        "summary": "Get a job crawl screenshot",
-        "tags": [
-          "Jobs"
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            },
-            "in": "path",
-            "name": "id",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The captured screenshot PNG image.",
-            "content": {
-              "image/png": {
-                "schema": {
-                  "type": "string",
-                  "format": "binary"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CompanionErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CompanionErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/jobs/{id}/retry-crawl": {
-      "post": {
-        "operationId": "retryJobCrawl",
-        "summary": "Retry crawling a companion job",
-        "tags": [
-          "Jobs"
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            },
-            "in": "path",
-            "name": "id",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CompanionJob"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CompanionErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/jobs/{id}/retry-analyze": {
-      "post": {
-        "operationId": "retryJobAnalysis",
-        "summary": "Retry analysis for a companion job",
-        "tags": [
-          "Jobs"
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            },
-            "in": "path",
-            "name": "id",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CompanionJob"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CompanionErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/jobs/{id}/convert": {
-      "post": {
-        "operationId": "convertJobToApplication",
-        "summary": "Convert a companion job to a job application",
-        "tags": [
-          "Jobs"
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            },
-            "in": "path",
-            "name": "id",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/JobApplication"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CompanionErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/job-applications": {
       "get": {
         "operationId": "listJobApplications",
@@ -3300,6 +2979,327 @@
                     "deleted"
                   ],
                   "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/job-postings": {
+      "post": {
+        "operationId": "createJobPosting",
+        "summary": "Create a companion job and enqueue crawling",
+        "tags": [
+          "Job Postings"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateJobPostingRequestInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobPosting"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "listJobPostings",
+        "summary": "List companion jobs",
+        "tags": [
+          "Job Postings"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobPostingsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/job-postings/{id}": {
+      "get": {
+        "operationId": "getJobPosting",
+        "summary": "Get a companion job",
+        "tags": [
+          "Job Postings"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobPosting"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteJobPosting",
+        "summary": "Delete a companion job",
+        "tags": [
+          "Job Postings"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteJobPostingResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/job-postings/{id}/screenshot": {
+      "get": {
+        "operationId": "getJobPostingScreenshot",
+        "summary": "Get a job crawl screenshot",
+        "tags": [
+          "Job Postings"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The captured screenshot PNG image.",
+            "content": {
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/job-postings/{id}/retry-crawl": {
+      "post": {
+        "operationId": "retryJobPostingCrawl",
+        "summary": "Retry crawling a companion job",
+        "tags": [
+          "Job Postings"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobPosting"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/job-postings/{id}/retry-analyze": {
+      "post": {
+        "operationId": "retryJobPostingAnalyze",
+        "summary": "Retry analysis for a companion job",
+        "tags": [
+          "Job Postings"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobPosting"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/job-postings/{id}/convert": {
+      "post": {
+        "operationId": "convertJobToApplication",
+        "summary": "Convert a companion job to a job application",
+        "tags": [
+          "Job Postings"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobApplication"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionErrorResponse"
                 }
               }
             }

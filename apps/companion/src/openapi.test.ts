@@ -7,11 +7,11 @@ const spec = JSON.parse(readFileSync(specUrl, "utf8"));
 const requiredSchemas = [
 	"HealthResponse",
 	"CompanionErrorResponse",
-	"CreateJobRequest",
+	"CreateJobPostingRequest",
 	"JobIdParams",
-	"CompanionJob",
-	"CompanionJobsResponse",
-	"DeleteJobResponse",
+	"JobPosting",
+	"JobPostingsResponse",
+	"DeleteJobPostingResponse",
 	"CandidateProfile",
 	"ResumeSyncRequest",
 	"OkResponse",
@@ -108,38 +108,38 @@ const requiredOperations = [
 		responses: ["200"],
 	},
 	{
-		path: "/jobs",
+		path: "/job-postings",
 		method: "post",
-		operationId: "createJob",
-		tags: ["Jobs"],
+		operationId: "createJobPosting",
+		tags: ["Job Postings"],
 		responses: ["201", "400", "500"],
 	},
 	{
-		path: "/jobs",
+		path: "/job-postings",
 		method: "get",
-		operationId: "listJobs",
-		tags: ["Jobs"],
+		operationId: "listJobPostings",
+		tags: ["Job Postings"],
 		responses: ["200"],
 	},
 	{
-		path: "/jobs/{id}",
+		path: "/job-postings/{id}",
 		method: "get",
-		operationId: "getJob",
-		tags: ["Jobs"],
+		operationId: "getJobPosting",
+		tags: ["Job Postings"],
 		responses: ["200", "404"],
 	},
 	{
-		path: "/jobs/{id}/retry-crawl",
+		path: "/job-postings/{id}/retry-crawl",
 		method: "post",
-		operationId: "retryJobCrawl",
-		tags: ["Jobs"],
+		operationId: "retryJobPostingCrawl",
+		tags: ["Job Postings"],
 		responses: ["200", "404"],
 	},
 	{
-		path: "/jobs/{id}",
+		path: "/job-postings/{id}",
 		method: "delete",
-		operationId: "deleteJob",
-		tags: ["Jobs"],
+		operationId: "deleteJobPosting",
+		tags: ["Job Postings"],
 		responses: ["200"],
 	},
 ] as const;
@@ -159,7 +159,7 @@ describe("OpenAPI Contract Validation", () => {
 	});
 
 	it("should include zod-derived request validation details", () => {
-		const requestSchema = spec.components?.schemas?.CreateJobRequest;
+		const requestSchema = spec.components?.schemas?.CreateJobPostingRequest;
 
 		expect(requestSchema?.properties?.sourceUrl).toMatchObject({
 			type: "string",
@@ -169,7 +169,7 @@ describe("OpenAPI Contract Validation", () => {
 	});
 
 	it("should include zod-derived response descriptions", () => {
-		const resultSchema = spec.components?.schemas?.CompanionJob;
+		const resultSchema = spec.components?.schemas?.JobPosting;
 
 		expect(resultSchema?.properties?.createdAt).toMatchObject({
 			type: "number",

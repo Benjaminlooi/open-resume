@@ -2,11 +2,11 @@ import { describe, expect, it } from "vitest";
 import { ZodError, z } from "zod";
 import {
 	candidateProfileSchema,
-	companionJobSchema,
-	companionJobsResponseSchema,
+	jobPostingSchema,
+	jobPostingsResponseSchema,
 	crawlStatusSchema,
-	createJobRequestSchema,
-	deleteJobResponseSchema,
+	createJobPostingRequestSchema,
+	deleteJobPostingResponseSchema,
 	deleteResumeResponseSchema,
 	extractJobRequestSchema,
 	healthResponseSchema,
@@ -72,8 +72,8 @@ describe("companion schema", () => {
 		expect(parsed.extractionMethod).toBe("json-ld");
 	});
 
-	it("accepts a companion job with pending crawl state", () => {
-		const parsed = companionJobSchema.parse({
+	it("accepts a job posting with pending crawl state", () => {
+		const parsed = jobPostingSchema.parse({
 			id: "job-1",
 			sourceUrl: "https://example.com/jobs/1",
 			crawlStatus: "pending",
@@ -89,7 +89,7 @@ describe("companion schema", () => {
 
 	it("rejects companion jobs with empty IDs", () => {
 		expect(() =>
-			companionJobSchema.parse({
+			jobPostingSchema.parse({
 				id: "",
 				sourceUrl: "https://example.com/jobs/1",
 				crawlStatus: "pending",
@@ -104,13 +104,13 @@ describe("companion schema", () => {
 
 	it("rejects create job requests with non-http URLs", () => {
 		expect(() =>
-			createJobRequestSchema.parse({ sourceUrl: "file:///tmp/a" }),
+			createJobPostingRequestSchema.parse({ sourceUrl: "file:///tmp/a" }),
 		).toThrow(ZodError);
 	});
 
 	it("accepts job route params and delete responses", () => {
 		expect(jobIdParamsSchema.parse({ id: "job-1" })).toEqual({ id: "job-1" });
-		expect(deleteJobResponseSchema.parse({ deleted: true })).toEqual({
+		expect(deleteJobPostingResponseSchema.parse({ deleted: true })).toEqual({
 			deleted: true,
 		});
 		expect(deleteResumeResponseSchema.parse({ deleted: true })).toEqual({
@@ -185,16 +185,16 @@ describe("companion schema", () => {
 
 	it("registers job schemas for OpenAPI component generation", () => {
 		expect(z.globalRegistry.get(crawlStatusSchema)?.id).toBe("CrawlStatus");
-		expect(z.globalRegistry.get(createJobRequestSchema)?.id).toBe(
-			"CreateJobRequest",
+		expect(z.globalRegistry.get(createJobPostingRequestSchema)?.id).toBe(
+			"CreateJobPostingRequest",
 		);
 		expect(z.globalRegistry.get(jobIdParamsSchema)?.id).toBe("JobIdParams");
-		expect(z.globalRegistry.get(companionJobSchema)?.id).toBe("CompanionJob");
-		expect(z.globalRegistry.get(companionJobsResponseSchema)?.id).toBe(
-			"CompanionJobsResponse",
+		expect(z.globalRegistry.get(jobPostingSchema)?.id).toBe("JobPosting");
+		expect(z.globalRegistry.get(jobPostingsResponseSchema)?.id).toBe(
+			"JobPostingsResponse",
 		);
-		expect(z.globalRegistry.get(deleteJobResponseSchema)?.id).toBe(
-			"DeleteJobResponse",
+		expect(z.globalRegistry.get(deleteJobPostingResponseSchema)?.id).toBe(
+			"DeleteJobPostingResponse",
 		);
 		expect(z.globalRegistry.get(deleteResumeResponseSchema)?.id).toBe(
 			"DeleteResumeResponse",
