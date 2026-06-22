@@ -29,7 +29,7 @@ export function createCrawlQueue(options: CrawlQueueOptions) {
 
 	async function runJob(id: string) {
 		if (activeJobs.has(id)) return;
-		const job = options.repository.getJob(id);
+		const job = options.repository.getJobPosting(id);
 		if (!job || job.crawlStatus === "ready") return;
 
 		activeJobs.add(id);
@@ -49,7 +49,7 @@ export function createCrawlQueue(options: CrawlQueueOptions) {
 				}
 			}
 
-			if (options.repository.getJob(id)) {
+			if (options.repository.getJobPosting(id)) {
 				options.repository.markAnalyzing(id, cleanedText, now());
 				const defaultResume = options.repository.getDefaultResume();
 				if (!defaultResume && !options.resumePath) {
@@ -68,7 +68,7 @@ export function createCrawlQueue(options: CrawlQueueOptions) {
 					logger: options.logger,
 				});
 
-				const currentJob = options.repository.getJob(id);
+				const currentJob = options.repository.getJobPosting(id);
 				if (currentJob) {
 					options.repository.markReady(id, {
 						cleanedText,
@@ -89,7 +89,7 @@ export function createCrawlQueue(options: CrawlQueueOptions) {
 				{ error: errorMessage, jobId: id, sourceUrl: job.sourceUrl },
 				"crawl queue job failed",
 			);
-			if (options.repository.getJob(id)) {
+			if (options.repository.getJobPosting(id)) {
 				options.repository.markFailed(id, {
 					error: errorMessage,
 					now: now(),
@@ -107,7 +107,7 @@ export function createCrawlQueue(options: CrawlQueueOptions) {
 	}
 
 	function enqueueRunnableJobs() {
-		for (const job of options.repository.listRunnableJobs()) {
+		for (const job of options.repository.listRunnableJobPostings()) {
 			enqueue(job.id);
 		}
 	}

@@ -60,7 +60,7 @@ describe("crawl queue", () => {
 	it("marks a job ready when crawling succeeds", async () => {
 		const repository = createTestRepository();
 		createDefaultResume(repository);
-		repository.createJob({
+		repository.createJobPosting({
 			id: "job-1",
 			sourceUrl: "https://example.com/job",
 			now: 1000,
@@ -77,7 +77,7 @@ describe("crawl queue", () => {
 
 		await queue.runJob("job-1");
 
-		expect(repository.getJob("job-1")).toMatchObject({
+		expect(repository.getJobPosting("job-1")).toMatchObject({
 			crawlStatus: "ready",
 			crawlError: null,
 			cleanedText: "Build useful software.",
@@ -87,7 +87,7 @@ describe("crawl queue", () => {
 
 	it("marks a job failed when crawling throws", async () => {
 		const repository = createTestRepository();
-		repository.createJob({
+		repository.createJobPosting({
 			id: "job-1",
 			sourceUrl: "https://example.com/job",
 			now: 1000,
@@ -102,7 +102,7 @@ describe("crawl queue", () => {
 
 		await queue.runJob("job-1");
 
-		expect(repository.getJob("job-1")).toMatchObject({
+		expect(repository.getJobPosting("job-1")).toMatchObject({
 			crawlStatus: "failed",
 			crawlError: "Blocked by site",
 		});
@@ -110,7 +110,7 @@ describe("crawl queue", () => {
 
 	it("logs ordinary crawl failures with job context", async () => {
 		const repository = createTestRepository();
-		repository.createJob({
+		repository.createJobPosting({
 			id: "job-1",
 			sourceUrl: "https://example.com/job",
 			now: 1000,
@@ -142,7 +142,7 @@ describe("crawl queue", () => {
 
 	it("marks a job failed when crawling returns empty text", async () => {
 		const repository = createTestRepository();
-		repository.createJob({
+		repository.createJobPosting({
 			id: "job-1",
 			sourceUrl: "https://example.com/job",
 			now: 1000,
@@ -159,7 +159,7 @@ describe("crawl queue", () => {
 
 		await queue.runJob("job-1");
 
-		expect(repository.getJob("job-1")).toMatchObject({
+		expect(repository.getJobPosting("job-1")).toMatchObject({
 			crawlStatus: "failed",
 			crawlError: "Crawl completed but no useful text was found.",
 		});
@@ -167,7 +167,7 @@ describe("crawl queue", () => {
 
 	it("does not recreate a deleted job after crawl completion", async () => {
 		const repository = createTestRepository();
-		repository.createJob({
+		repository.createJobPosting({
 			id: "job-1",
 			sourceUrl: "https://example.com/job",
 			now: 1000,
@@ -175,7 +175,7 @@ describe("crawl queue", () => {
 		const queue = createCrawlQueue({
 			repository,
 			crawl: async () => {
-				repository.deleteJob("job-1");
+				repository.deleteJobPosting("job-1");
 				return {
 					sourceUrl: "https://example.com/job",
 					cleanedText: "Late result",
@@ -187,13 +187,13 @@ describe("crawl queue", () => {
 
 		await queue.runJob("job-1");
 
-		expect(repository.getJob("job-1")).toBeNull();
+		expect(repository.getJobPosting("job-1")).toBeNull();
 	});
 
 	it("clears active job state when marking crawling fails", async () => {
 		const repository = createTestRepository();
 		createDefaultResume(repository);
-		repository.createJob({
+		repository.createJobPosting({
 			id: "job-1",
 			sourceUrl: "https://example.com/job",
 			now: 1000,
@@ -219,7 +219,7 @@ describe("crawl queue", () => {
 		await queue.runJob("job-1");
 
 		expect(crawl).toHaveBeenCalledTimes(1);
-		expect(repository.getJob("job-1")).toMatchObject({
+		expect(repository.getJobPosting("job-1")).toMatchObject({
 			crawlStatus: "ready",
 			crawlError: null,
 			cleanedText: "Recovered result",
@@ -230,7 +230,7 @@ describe("crawl queue", () => {
 	it("runs a job only once concurrently and clears active state afterward", async () => {
 		const repository = createTestRepository();
 		createDefaultResume(repository);
-		repository.createJob({
+		repository.createJobPosting({
 			id: "job-1",
 			sourceUrl: "https://example.com/job",
 			now: 1000,
@@ -270,7 +270,7 @@ describe("crawl queue", () => {
 
 	it("does nothing for missing or ready jobs", async () => {
 		const repository = createTestRepository();
-		repository.createJob({
+		repository.createJobPosting({
 			id: "job-1",
 			sourceUrl: "https://example.com/job",
 			now: 1000,
@@ -294,7 +294,7 @@ describe("crawl queue", () => {
 		await queue.runJob("job-1");
 
 		expect(crawl).not.toHaveBeenCalled();
-		expect(repository.getJob("job-1")).toMatchObject({
+		expect(repository.getJobPosting("job-1")).toMatchObject({
 			crawlStatus: "ready",
 			cleanedText: "Already done",
 			crawledAt: 1100,
@@ -304,18 +304,18 @@ describe("crawl queue", () => {
 	it("enqueues only runnable jobs", async () => {
 		const repository = createTestRepository();
 		createDefaultResume(repository);
-		repository.createJob({
+		repository.createJobPosting({
 			id: "pending-job",
 			sourceUrl: "https://example.com/pending",
 			now: 1000,
 		});
-		repository.createJob({
+		repository.createJobPosting({
 			id: "crawling-job",
 			sourceUrl: "https://example.com/crawling",
 			now: 1100,
 		});
 		repository.markCrawling("crawling-job", 1200);
-		repository.createJob({
+		repository.createJobPosting({
 			id: "ready-job",
 			sourceUrl: "https://example.com/ready",
 			now: 1300,
@@ -324,7 +324,7 @@ describe("crawl queue", () => {
 			cleanedText: "Done",
 			now: 1400,
 		});
-		repository.createJob({
+		repository.createJobPosting({
 			id: "failed-job",
 			sourceUrl: "https://example.com/failed",
 			now: 1500,
@@ -367,7 +367,7 @@ describe("crawl queue", () => {
 
 	it("swallows unexpected enqueue rejections", async () => {
 		const repository = createTestRepository();
-		repository.createJob({
+		repository.createJobPosting({
 			id: "job-1",
 			sourceUrl: "https://example.com/job",
 			now: 1000,
@@ -399,7 +399,7 @@ describe("crawl queue", () => {
 	it("transitions status to analyzing and updates to ready with all AI details on success", async () => {
 		const repository = createTestRepository();
 		createDefaultResume(repository);
-		repository.createJob({
+		repository.createJobPosting({
 			id: "job-1",
 			sourceUrl: "https://example.com/job",
 			now: 1000,
@@ -446,7 +446,7 @@ describe("crawl queue", () => {
 			cleanedText: "Cleaned job text",
 		});
 
-		expect(repository.getJob("job-1")).toMatchObject({
+		expect(repository.getJobPosting("job-1")).toMatchObject({
 			crawlStatus: "ready",
 			crawlError: null,
 			cleanedText: "Cleaned job text",
@@ -471,7 +471,7 @@ describe("crawl queue", () => {
 	it("passes the SQLite default resume content to the analyzer", async () => {
 		const repository = createTestRepository();
 		createDefaultResume(repository);
-		repository.createJob({
+		repository.createJobPosting({
 			id: "job-1",
 			sourceUrl: "https://example.com/job",
 			now: 1000,
@@ -519,7 +519,7 @@ describe("crawl queue", () => {
 
 	it("falls back to resumePath when no SQLite default resume exists", async () => {
 		const repository = createTestRepository();
-		repository.createJob({
+		repository.createJobPosting({
 			id: "job-1",
 			sourceUrl: "https://example.com/job",
 			now: 1000,
@@ -565,7 +565,7 @@ describe("crawl queue", () => {
 
 	it("fails analysis with a useful error when no default resume is synced", async () => {
 		const repository = createTestRepository();
-		repository.createJob({
+		repository.createJobPosting({
 			id: "job-1",
 			sourceUrl: "https://example.com/job",
 			now: 1000,
@@ -585,7 +585,7 @@ describe("crawl queue", () => {
 		await queue.runJob("job-1");
 
 		expect(customAnalyze).not.toHaveBeenCalled();
-		expect(repository.getJob("job-1")).toMatchObject({
+		expect(repository.getJobPosting("job-1")).toMatchObject({
 			crawlStatus: "failed",
 			crawlError:
 				"Synced default resume not found. Please sync your resume in the settings panel.",
@@ -595,7 +595,7 @@ describe("crawl queue", () => {
 	it("transitions status to failed if AI analysis fails", async () => {
 		const repository = createTestRepository();
 		createDefaultResume(repository);
-		repository.createJob({
+		repository.createJobPosting({
 			id: "job-1",
 			sourceUrl: "https://example.com/job",
 			now: 1000,
@@ -618,7 +618,7 @@ describe("crawl queue", () => {
 
 		await queue.runJob("job-1");
 
-		expect(repository.getJob("job-1")).toMatchObject({
+		expect(repository.getJobPosting("job-1")).toMatchObject({
 			crawlStatus: "failed",
 			crawlError: "AI Key Mismatch",
 		});
@@ -627,7 +627,7 @@ describe("crawl queue", () => {
 	it("bypasses crawl and executes AI analysis when cleanedText is already populated", async () => {
 		const repository = createTestRepository();
 		createDefaultResume(repository);
-		repository.createJob({
+		repository.createJobPosting({
 			id: "job-1",
 			sourceUrl: "https://example.com",
 			now: 1000,
@@ -671,7 +671,7 @@ describe("crawl queue", () => {
 			resumeContent: JSON.stringify({ personalInfo: { fullName: "Jane Doe" } }),
 			cleanedText: "Pre-scraped job text",
 		});
-		expect(repository.getJob("job-1")).toMatchObject({
+		expect(repository.getJobPosting("job-1")).toMatchObject({
 			crawlStatus: "ready",
 			cleanedText: "Pre-scraped job text",
 			parsedTitle: "Pre-scraped AI Engineer",
@@ -681,7 +681,7 @@ describe("crawl queue", () => {
 	it("preserves crawl timestamp if already present when bypassing crawl", async () => {
 		const repository = createTestRepository();
 		createDefaultResume(repository);
-		repository.createJob({
+		repository.createJobPosting({
 			id: "job-1",
 			sourceUrl: "https://example.com",
 			now: 1000,
@@ -698,7 +698,7 @@ describe("crawl queue", () => {
 		});
 		await queue1.runJob("job-1");
 
-		expect(repository.getJob("job-1")?.crawledAt).toBe(1050);
+		expect(repository.getJobPosting("job-1")?.crawledAt).toBe(1050);
 
 		repository.markAnalyzing("job-1", "First scraped text", 1100);
 
@@ -733,7 +733,7 @@ describe("crawl queue", () => {
 		await queue2.runJob("job-1");
 
 		expect(crawlSpy).not.toHaveBeenCalled();
-		expect(repository.getJob("job-1")).toMatchObject({
+		expect(repository.getJobPosting("job-1")).toMatchObject({
 			crawlStatus: "ready",
 			crawledAt: 1050,
 		});
@@ -743,7 +743,7 @@ describe("crawl queue", () => {
 		const repository = createTestRepository();
 		createDefaultResume(repository);
 
-		repository.createJob({
+		repository.createJobPosting({
 			id: "analyzing-job",
 			sourceUrl: "https://example.com/analyzing",
 			now: 1000,
@@ -787,6 +787,6 @@ describe("crawl queue", () => {
 		await vi.waitFor(() => expect(customAnalyze).toHaveBeenCalledTimes(1));
 
 		expect(crawlSpy).not.toHaveBeenCalled();
-		expect(repository.getJob("analyzing-job")?.crawlStatus).toBe("ready");
+		expect(repository.getJobPosting("analyzing-job")?.crawlStatus).toBe("ready");
 	});
 });

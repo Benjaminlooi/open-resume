@@ -4,9 +4,9 @@ import { fileURLToPath } from "node:url";
 import { asc, desc, eq, inArray } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-sqlite";
 import { migrate } from "drizzle-orm/node-sqlite/migrator";
-import { jobApplications, jobs, resumes } from "../db/schema.js";
+import { jobApplications, jobPostings, resumes } from "../db/schema.js";
 import type {
-	CompanionJob,
+	JobPosting,
 	CoverLetterDraft,
 	JobApplication,
 	JobApplicationStatus,
@@ -77,8 +77,16 @@ function mapJobApplication(
 export function createJobRepository(dbPath: string) {
 	const database = new DatabaseSync(dbPath);
 
-	// Inspect existing table schema
-	const columns = database.prepare("PRAGMA table_info(jobs)").all() as Array<{
+	// Migrate old `jobs` table to `job_postings` if it exists
+	const oldJobsTable = database.prepare("PRAGMA table_info(jobs)").all() as Array<{
+		name: string;
+	}>;
+	if (oldJobsTable.length > 0) {
+		database.exec("ALTER TABLE jobs RENAME TO job_postings;");
+	}
+
+	// Inspect existing table schema for missing columns
+	const columns = database.prepare("PRAGMA table_info(job_postings)").all() as Array<{
 		name: string;
 	}>;
 	const tableExists = columns.length > 0;
@@ -86,12 +94,12 @@ export function createJobRepository(dbPath: string) {
 		tableExists && !columns.some((col) => col.name === "parsed_title");
 
 	if (missingColumns) {
-		const oldJobs = database.prepare("select * from jobs").all() as any[];
+		const oldJobs = database.prepare("select * from job_postings").all() as any[];
 		database.exec("BEGIN TRANSACTION;");
 		try {
-			database.exec("drop table jobs;");
+			database.exec("drop table job_postings;");
 			database.exec(`
-				create table jobs (
+				create table job_postings (
 					id text primary key,
 					source_url text not null,
 					crawl_status text not null check (
@@ -113,7 +121,7 @@ export function createJobRepository(dbPath: string) {
 
 			// Restore backup
 			const insertStmt = database.prepare(`
-				insert into jobs (
+				insert into job_postings (
 					id, source_url, crawl_status, crawl_error, cleaned_text,
 					created_at, updated_at, crawled_at,
 					parsed_title, parsed_company, parsed_location, parsed_description,
@@ -152,8 +160,8 @@ export function createJobRepository(dbPath: string) {
 
 	migrate(db, { migrationsFolder });
 
-	function getJob(id: string): CompanionJob | null {
-		const row = db.select().from(jobs).where(eq(jobs.id, id)).get();
+	function getJobPosting(id: string): JobPosting | null {
+		const row = db.select().from(jobPostings).where(eq(jobPostings.id, id)).get();
 		return row ?? null;
 	}
 
@@ -172,8 +180,8 @@ export function createJobRepository(dbPath: string) {
 	}
 
 	return {
-		createJob(input: { id: string; sourceUrl: string; now: number }) {
-			db.insert(jobs)
+		createJobPosting(input: { id: string; sourceUrl: string; now: number }) {
+			db.insert(jobPostings)
 				.values({
 					id: input.id,
 					sourceUrl: input.sourceUrl,
@@ -182,51 +190,51 @@ export function createJobRepository(dbPath: string) {
 					updatedAt: input.now,
 				})
 				.run();
-			return getJob(input.id) as CompanionJob;
+			return getJobPosting(input.id) as JobPosting;
 		},
 
-		listJobs() {
+		listJobPostings() {
 			return db
 				.select()
-				.from(jobs)
-				.orderBy(desc(jobs.updatedAt), desc(jobs.createdAt))
+				.from(jobPostings)
+				.orderBy(desc(jobPostings.updatedAt), desc(jobPostings.createdAt))
 				.all();
 		},
 
-		getJob,
+		getJobPosting,
 
-		listRunnableJobs() {
+		listRunnableJobPostings() {
 			return db
 				.select()
-				.from(jobs)
-				.where(inArray(jobs.crawlStatus, ["pending", "crawling", "analyzing"]))
-				.orderBy(asc(jobs.createdAt))
+				.from(jobPostings)
+				.where(inArray(jobPostings.crawlStatus, ["pending", "crawling", "analyzing"]))
+				.orderBy(asc(jobPostings.createdAt))
 				.all();
 		},
 
 		markCrawling(id: string, now: number) {
-			db.update(jobs)
+			db.update(jobPostings)
 				.set({
 					crawlStatus: "crawling",
 					crawlError: null,
 					updatedAt: now,
 				})
-				.where(eq(jobs.id, id))
+				.where(eq(jobPostings.id, id))
 				.run();
-			return getJob(id);
+			return getJobPosting(id);
 		},
 
 		markAnalyzing(id: string, cleanedText: string, now: number) {
-			db.update(jobs)
+			db.update(jobPostings)
 				.set({
 					crawlStatus: "analyzing",
 					crawlError: null,
 					cleanedText,
 					updatedAt: now,
 				})
-				.where(eq(jobs.id, id))
+				.where(eq(jobPostings.id, id))
 				.run();
-			return getJob(id);
+			return getJobPosting(id);
 		},
 
 		markReady(
@@ -242,7 +250,7 @@ export function createJobRepository(dbPath: string) {
 				now: number;
 			},
 		) {
-			db.update(jobs)
+			db.update(jobPostings)
 				.set({
 					crawlStatus: "ready",
 					crawlError: null,
@@ -256,50 +264,50 @@ export function createJobRepository(dbPath: string) {
 					fitScore: input.fitScore ?? null,
 					fitBriefJson: input.fitBriefJson ?? null,
 				})
-				.where(eq(jobs.id, id))
+				.where(eq(jobPostings.id, id))
 				.run();
-			return getJob(id);
+			return getJobPosting(id);
 		},
 
 		markFailed(id: string, input: { error: string; now: number }) {
-			db.update(jobs)
+			db.update(jobPostings)
 				.set({
 					crawlStatus: "failed",
 					crawlError: input.error,
 					updatedAt: input.now,
 				})
-				.where(eq(jobs.id, id))
+				.where(eq(jobPostings.id, id))
 				.run();
-			return getJob(id);
+			return getJobPosting(id);
 		},
 
 		resetForRetry(id: string, now: number) {
-			db.update(jobs)
+			db.update(jobPostings)
 				.set({
 					crawlStatus: "pending",
 					crawlError: null,
 					cleanedText: "",
 					updatedAt: now,
 				})
-				.where(eq(jobs.id, id))
+				.where(eq(jobPostings.id, id))
 				.run();
-			return getJob(id);
+			return getJobPosting(id);
 		},
 
 		resetForAnalysisRetry(id: string, now: number) {
-			db.update(jobs)
+			db.update(jobPostings)
 				.set({
 					crawlStatus: "analyzing",
 					crawlError: null,
 					updatedAt: now,
 				})
-				.where(eq(jobs.id, id))
+				.where(eq(jobPostings.id, id))
 				.run();
-			return getJob(id);
+			return getJobPosting(id);
 		},
 
-		deleteJob(id: string) {
-			const result = db.delete(jobs).where(eq(jobs.id, id)).run();
+		deleteJobPosting(id: string) {
+			const result = db.delete(jobPostings).where(eq(jobPostings.id, id)).run();
 			return result.changes > 0;
 		},
 
@@ -547,9 +555,9 @@ export function createJobRepository(dbPath: string) {
 		},
 
 		convertJobToApplication(jobId: string, now: number) {
-			const job = getJob(jobId);
+			const job = getJobPosting(jobId);
 			if (!job) {
-				throw new Error(`Job with id ${jobId} not found`);
+				throw new Error(`Job posting with id ${jobId} not found`);
 			}
 
 			let company = job.parsedCompany;
@@ -581,7 +589,7 @@ export function createJobRepository(dbPath: string) {
 					})
 					.run();
 
-				tx.delete(jobs).where(eq(jobs.id, job.id)).run();
+				tx.delete(jobPostings).where(eq(jobPostings.id, job.id)).run();
 			});
 
 			return getJobApplication(job.id) as JobApplication;

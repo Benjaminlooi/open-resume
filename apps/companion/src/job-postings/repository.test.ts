@@ -36,12 +36,12 @@ describe("job repository", () => {
 	it("creates and lists jobs newest first", () => {
 		const repository = createTestRepository();
 
-		const first = repository.createJob({
+		const first = repository.createJobPosting({
 			id: "job-1",
 			sourceUrl: "https://example.com/one",
 			now: 1000,
 		});
-		const second = repository.createJob({
+		const second = repository.createJobPosting({
 			id: "job-2",
 			sourceUrl: "https://example.com/two",
 			now: 2000,
@@ -61,17 +61,17 @@ describe("job repository", () => {
 			fitScore: null,
 			fitBriefJson: null,
 		});
-		expect(repository.listJobs()).toEqual([second, first]);
+		expect(repository.listJobPostings()).toEqual([second, first]);
 	});
 
 	it("lists jobs by update time", () => {
 		const repository = createTestRepository();
-		repository.createJob({
+		repository.createJobPosting({
 			id: "job-1",
 			sourceUrl: "https://example.com/one",
 			now: 1000,
 		});
-		repository.createJob({
+		repository.createJobPosting({
 			id: "job-2",
 			sourceUrl: "https://example.com/two",
 			now: 2000,
@@ -79,14 +79,14 @@ describe("job repository", () => {
 
 		repository.markFailed("job-1", { error: "Blocked", now: 3000 });
 
-		expect(repository.listJobs()[0]?.id).toBe("job-1");
+		expect(repository.listJobPostings()[0]?.id).toBe("job-1");
 	});
 
 	it("persists jobs in a file-backed database", () => {
 		const path = createTempDatabasePath();
 		const firstRepository = createJobRepository(path);
 		repositories.push(firstRepository);
-		firstRepository.createJob({
+		firstRepository.createJobPosting({
 			id: "job-1",
 			sourceUrl: "https://example.com/job",
 			now: 1000,
@@ -97,7 +97,7 @@ describe("job repository", () => {
 		const secondRepository = createJobRepository(path);
 		repositories.push(secondRepository);
 
-		expect(secondRepository.getJob("job-1")).toMatchObject({
+		expect(secondRepository.getJobPosting("job-1")).toMatchObject({
 			id: "job-1",
 			sourceUrl: "https://example.com/job",
 			crawlStatus: "pending",
@@ -181,22 +181,22 @@ describe("job repository", () => {
 
 	it("lists runnable jobs ordered by creation time", () => {
 		const repository = createTestRepository();
-		repository.createJob({
+		repository.createJobPosting({
 			id: "job-1",
 			sourceUrl: "https://example.com/one",
 			now: 1000,
 		});
-		repository.createJob({
+		repository.createJobPosting({
 			id: "job-2",
 			sourceUrl: "https://example.com/two",
 			now: 2000,
 		});
-		repository.createJob({
+		repository.createJobPosting({
 			id: "job-3",
 			sourceUrl: "https://example.com/three",
 			now: 3000,
 		});
-		repository.createJob({
+		repository.createJobPosting({
 			id: "job-4",
 			sourceUrl: "https://example.com/four",
 			now: 4000,
@@ -209,7 +209,7 @@ describe("job repository", () => {
 		});
 		repository.markFailed("job-4", { error: "Blocked", now: 7000 });
 
-		expect(repository.listRunnableJobs().map((job) => job.id)).toEqual([
+		expect(repository.listRunnableJobPostings().map((job) => job.id)).toEqual([
 			"job-1",
 			"job-2",
 		]);
@@ -217,14 +217,14 @@ describe("job repository", () => {
 
 	it("updates crawl success and failure state", () => {
 		const repository = createTestRepository();
-		repository.createJob({
+		repository.createJobPosting({
 			id: "job-1",
 			sourceUrl: "https://example.com/job",
 			now: 1000,
 		});
 
 		repository.markCrawling("job-1", 1100);
-		expect(repository.getJob("job-1")).toMatchObject({
+		expect(repository.getJobPosting("job-1")).toMatchObject({
 			crawlStatus: "crawling",
 			updatedAt: 1100,
 		});
@@ -233,7 +233,7 @@ describe("job repository", () => {
 			cleanedText: "Build useful software.",
 			now: 1200,
 		});
-		expect(repository.getJob("job-1")).toMatchObject({
+		expect(repository.getJobPosting("job-1")).toMatchObject({
 			crawlStatus: "ready",
 			crawlError: null,
 			cleanedText: "Build useful software.",
@@ -245,7 +245,7 @@ describe("job repository", () => {
 			error: "Blocked",
 			now: 1300,
 		});
-		expect(repository.getJob("job-1")).toMatchObject({
+		expect(repository.getJobPosting("job-1")).toMatchObject({
 			crawlStatus: "failed",
 			crawlError: "Blocked",
 			updatedAt: 1300,
@@ -254,7 +254,7 @@ describe("job repository", () => {
 
 	it("resets failed jobs for retry and deletes jobs", () => {
 		const repository = createTestRepository();
-		repository.createJob({
+		repository.createJobPosting({
 			id: "job-1",
 			sourceUrl: "https://example.com/job",
 			now: 1000,
@@ -268,27 +268,27 @@ describe("job repository", () => {
 			crawlError: null,
 			updatedAt: 1200,
 		});
-		expect(repository.deleteJob("job-1")).toBe(true);
-		expect(repository.getJob("job-1")).toBeNull();
-		expect(repository.deleteJob("job-1")).toBe(false);
+		expect(repository.deleteJobPosting("job-1")).toBe(true);
+		expect(repository.getJobPosting("job-1")).toBeNull();
+		expect(repository.deleteJobPosting("job-1")).toBe(false);
 	});
 
 	it("transitions status to analyzing correctly", () => {
 		const repository = createTestRepository();
-		repository.createJob({
+		repository.createJobPosting({
 			id: "job-1",
 			sourceUrl: "https://example.com/job",
 			now: 1000,
 		});
 
 		repository.markCrawling("job-1", 1100);
-		expect(repository.getJob("job-1")).toMatchObject({
+		expect(repository.getJobPosting("job-1")).toMatchObject({
 			crawlStatus: "crawling",
 			updatedAt: 1100,
 		});
 
 		repository.markAnalyzing("job-1", "", 1150);
-		expect(repository.getJob("job-1")).toMatchObject({
+		expect(repository.getJobPosting("job-1")).toMatchObject({
 			crawlStatus: "analyzing",
 			updatedAt: 1150,
 		});
@@ -296,13 +296,13 @@ describe("job repository", () => {
 
 	it("saves cleanedText in markAnalyzing", () => {
 		const repository = createTestRepository();
-		repository.createJob({
+		repository.createJobPosting({
 			id: "job-1",
 			sourceUrl: "https://example.com",
 			now: 1000,
 		});
 		repository.markAnalyzing("job-1", "Sample cleaned text", 1100);
-		expect(repository.getJob("job-1")).toMatchObject({
+		expect(repository.getJobPosting("job-1")).toMatchObject({
 			crawlStatus: "analyzing",
 			cleanedText: "Sample cleaned text",
 			updatedAt: 1100,
@@ -311,14 +311,14 @@ describe("job repository", () => {
 
 	it("clears cleanedText to empty string on resetForRetry", () => {
 		const repository = createTestRepository();
-		repository.createJob({
+		repository.createJobPosting({
 			id: "job-1",
 			sourceUrl: "https://example.com",
 			now: 1000,
 		});
 		repository.markAnalyzing("job-1", "Sample cleaned text", 1100);
 		repository.resetForRetry("job-1", 1200);
-		expect(repository.getJob("job-1")).toMatchObject({
+		expect(repository.getJobPosting("job-1")).toMatchObject({
 			crawlStatus: "pending",
 			cleanedText: "",
 		});
@@ -326,7 +326,7 @@ describe("job repository", () => {
 
 	it("resets status to analyzing and keeps cleanedText on resetForAnalysisRetry", () => {
 		const repository = createTestRepository();
-		repository.createJob({
+		repository.createJobPosting({
 			id: "job-1",
 			sourceUrl: "https://example.com",
 			now: 1000,
@@ -334,7 +334,7 @@ describe("job repository", () => {
 		repository.markAnalyzing("job-1", "Sample cleaned text", 1100);
 		repository.markFailed("job-1", { error: "AI Failed", now: 1200 });
 		repository.resetForAnalysisRetry("job-1", 1300);
-		expect(repository.getJob("job-1")).toMatchObject({
+		expect(repository.getJobPosting("job-1")).toMatchObject({
 			crawlStatus: "analyzing",
 			crawlError: null,
 			cleanedText: "Sample cleaned text",
@@ -343,19 +343,19 @@ describe("job repository", () => {
 
 	it("includes analyzing jobs in listRunnableJobs", () => {
 		const repository = createTestRepository();
-		repository.createJob({
+		repository.createJobPosting({
 			id: "job-1",
 			sourceUrl: "https://example.com",
 			now: 1000,
 		});
 		repository.markAnalyzing("job-1", "Sample", 1100);
-		const runnable = repository.listRunnableJobs();
+		const runnable = repository.listRunnableJobPostings();
 		expect(runnable.map((j) => j.id)).toContain("job-1");
 	});
 
 	it("saves parsed details, fit score, and fit brief json on markReady", () => {
 		const repository = createTestRepository();
-		repository.createJob({
+		repository.createJobPosting({
 			id: "job-1",
 			sourceUrl: "https://example.com/job",
 			now: 1000,
@@ -372,7 +372,7 @@ describe("job repository", () => {
 			now: 1200,
 		});
 
-		expect(repository.getJob("job-1")).toMatchObject({
+		expect(repository.getJobPosting("job-1")).toMatchObject({
 			crawlStatus: "ready",
 			crawlError: null,
 			cleanedText: "Build useful software.",
@@ -416,7 +416,7 @@ describe("job repository", () => {
 		const repository = createJobRepository(path);
 		repositories.push(repository);
 
-		const migratedJob = repository.getJob("old-job");
+		const migratedJob = repository.getJobPosting("old-job");
 		expect(migratedJob).toMatchObject({
 			id: "old-job",
 			sourceUrl: "https://example.com/old",
@@ -441,7 +441,7 @@ describe("job repository", () => {
 			now: 1200,
 		});
 
-		expect(repository.getJob("old-job")).toMatchObject({
+		expect(repository.getJobPosting("old-job")).toMatchObject({
 			parsedTitle: "Senior dev",
 			fitScore: 90,
 			updatedAt: 1200,
@@ -577,7 +577,7 @@ describe("job repository", () => {
 
 		it("converts job to job application", () => {
 			const repository = createTestRepository();
-			repository.createJob({
+			repository.createJobPosting({
 				id: "job-123",
 				sourceUrl: "https://netflix.com/careers/456",
 				now: 1000,
@@ -617,12 +617,12 @@ describe("job repository", () => {
 			});
 
 			// Verify the job is deleted from jobs table
-			expect(repository.getJob("job-123")).toBeNull();
+			expect(repository.getJobPosting("job-123")).toBeNull();
 		});
 
 		it("converts job to application using sourceUrl hostname fallback when company/title are missing", () => {
 			const repository = createTestRepository();
-			repository.createJob({
+			repository.createJobPosting({
 				id: "job-abc",
 				sourceUrl: "https://sub.domain.company.com/careers/info",
 				now: 1000,
