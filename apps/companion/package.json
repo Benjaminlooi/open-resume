@@ -1,0 +1,48 @@
+{
+	"name": "@open-resume/companion",
+	"private": true,
+	"type": "module",
+	"tsup": {
+		"noExternal": [
+			"@open-resume/contracts"
+		]
+	},
+	"scripts": {
+		"dev": "node --watch --env-file-if-exists=.env --import tsx src/index.ts",
+		"start": "node --env-file-if-exists=.env dist/index.js",
+		"openapi": "node --import tsx src/export-openapi.ts",
+		"openapi:lint": "redocly lint openapi.json",
+		"build": "tsup src/index.ts --format esm --target node22 --dts && rm -rf dist/drizzle && cp -r drizzle dist/drizzle",
+		"test": "vitest run",
+		"typecheck": "tsc --noEmit",
+		"format": "biome format",
+		"lint": "biome lint",
+		"check": "biome check"
+	},
+	"dependencies": {
+		"@ai-sdk/anthropic": "^3.0.81",
+		"@ai-sdk/google": "^3.0.80",
+		"@ai-sdk/openai": "^3.0.67",
+		"@fastify/cors": "^11.1.0",
+		"@fastify/swagger": "^9.7.0",
+		"@fastify/swagger-ui": "^5.2.6",
+		"@open-resume/contracts": "workspace:*",
+		"ai": "^6.0.193",
+		"drizzle-orm": "1.0.0-rc.3",
+		"fastify": "^5.8.0",
+		"fastify-plugin": "^6.0.0",
+		"fastify-type-provider-zod": "^6.1.0",
+		"playwright": "^1.57.0",
+		"zod": "^4.4.3"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.4.5",
+		"@redocly/cli": "^2.31.6",
+		"@types/node": "^22.19.19",
+		"drizzle-kit": "1.0.0-rc.3",
+		"tsup": "^8.5.0",
+		"tsx": "^4.20.6",
+		"typescript": "^5.9.3",
+		"vitest": "^3.2.4"
+	}
+}

@@ -1,0 +1,3329 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Open Resume Companion API",
+    "version": "0.1.0",
+    "description": "Local companion service for extracting job details from pasted job URLs."
+  },
+  "components": {
+    "schemas": {
+      "HealthResponseInput": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "service": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "ok",
+          "service"
+        ],
+        "additionalProperties": false
+      },
+      "ExtractJobRequestInput": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "HTTP or HTTPS job posting URL to extract."
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "additionalProperties": false
+      },
+      "JobExtractionResultInput": {
+        "type": "object",
+        "properties": {
+          "sourceUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "title": {
+            "type": "string"
+          },
+          "company": {
+            "type": "string"
+          },
+          "location": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "rawText": {
+            "type": "string"
+          },
+          "extractionMethod": {
+            "type": "string",
+            "enum": [
+              "json-ld",
+              "readability",
+              "playwright"
+            ]
+          },
+          "extractedAt": {
+            "type": "number",
+            "description": "Unix timestamp in milliseconds."
+          }
+        },
+        "required": [
+          "sourceUrl",
+          "title",
+          "company",
+          "location",
+          "description",
+          "rawText",
+          "extractionMethod",
+          "extractedAt"
+        ],
+        "additionalProperties": false
+      },
+      "CompanionErrorResponseInput": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "details": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "additionalProperties": false
+      },
+      "CrawlStatusInput": {
+        "type": "string",
+        "enum": [
+          "pending",
+          "crawling",
+          "analyzing",
+          "ready",
+          "failed"
+        ]
+      },
+      "CreateJobPostingRequestInput": {
+        "type": "object",
+        "properties": {
+          "sourceUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "HTTP or HTTPS job posting URL to crawl."
+          }
+        },
+        "required": [
+          "sourceUrl"
+        ],
+        "additionalProperties": false
+      },
+      "JobIdParamsInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "JobPostingInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sourceUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "crawlStatus": {
+            "$ref": "#/components/schemas/CrawlStatusInput"
+          },
+          "crawlError": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "cleanedText": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "number",
+            "description": "Unix timestamp in milliseconds."
+          },
+          "updatedAt": {
+            "type": "number",
+            "description": "Unix timestamp in milliseconds."
+          },
+          "crawledAt": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Unix timestamp in milliseconds, or null before crawl success."
+          },
+          "parsedTitle": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "parsedCompany": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "parsedLocation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "parsedDescription": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "fitScore": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "fitBriefJson": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "sourceUrl",
+          "crawlStatus",
+          "crawlError",
+          "cleanedText",
+          "createdAt",
+          "updatedAt",
+          "crawledAt"
+        ],
+        "additionalProperties": false
+      },
+      "JobPostingsResponseInput": {
+        "type": "object",
+        "properties": {
+          "jobs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JobPostingInput"
+            }
+          }
+        },
+        "required": [
+          "jobs"
+        ],
+        "additionalProperties": false
+      },
+      "DeleteJobPostingResponseInput": {
+        "type": "object",
+        "properties": {
+          "deleted": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "deleted"
+        ],
+        "additionalProperties": false
+      },
+      "ResumeContentInput": {
+        "type": "object",
+        "additionalProperties": {}
+      },
+      "ResumeSummaryInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "templateId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "lastModified": {
+            "type": "number",
+            "description": "Unix timestamp in milliseconds."
+          },
+          "isDefault": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "templateId",
+          "lastModified",
+          "isDefault"
+        ],
+        "additionalProperties": false
+      },
+      "ResumeDetailsInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "templateId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "lastModified": {
+            "type": "number",
+            "description": "Unix timestamp in milliseconds."
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "content": {
+            "$ref": "#/components/schemas/ResumeContentInput"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "templateId",
+          "lastModified",
+          "isDefault",
+          "content"
+        ],
+        "additionalProperties": false
+      },
+      "ResumesResponseInput": {
+        "type": "object",
+        "properties": {
+          "resumes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResumeSummaryInput"
+            }
+          }
+        },
+        "required": [
+          "resumes"
+        ],
+        "additionalProperties": false
+      },
+      "DeleteResumeResponseInput": {
+        "type": "object",
+        "properties": {
+          "deleted": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "deleted"
+        ],
+        "additionalProperties": false
+      },
+      "CreateResumeRequestInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "templateId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "content": {
+            "$ref": "#/components/schemas/ResumeContentInput"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "templateId",
+          "content"
+        ],
+        "additionalProperties": false
+      },
+      "UpdateResumeRequestInput": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "templateId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "content": {
+            "$ref": "#/components/schemas/ResumeContentInput"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CandidateProfileInput": {
+        "type": "object",
+        "properties": {
+          "candidate": {
+            "type": "object",
+            "properties": {
+              "fullName": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string"
+              },
+              "phone": {
+                "type": "string"
+              },
+              "location": {
+                "type": "string"
+              },
+              "linkedin": {
+                "type": "string"
+              },
+              "portfolioUrl": {
+                "type": "string"
+              },
+              "github": {
+                "type": "string"
+              },
+              "twitter": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "fullName",
+              "email",
+              "phone",
+              "location",
+              "linkedin",
+              "portfolioUrl",
+              "github"
+            ],
+            "additionalProperties": false
+          },
+          "targetRoles": {
+            "type": "object",
+            "properties": {
+              "primary": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "archetypes": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "level": {
+                      "type": "string"
+                    },
+                    "fit": {
+                      "type": "string",
+                      "enum": [
+                        "primary",
+                        "secondary",
+                        "adjacent"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "level",
+                    "fit"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "primary",
+              "archetypes"
+            ],
+            "additionalProperties": false
+          },
+          "narrative": {
+            "type": "object",
+            "properties": {
+              "headline": {
+                "type": "string"
+              },
+              "exitStory": {
+                "type": "string"
+              },
+              "superpowers": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "proofPoints": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "url": {
+                      "type": "string"
+                    },
+                    "heroMetric": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "url",
+                    "heroMetric"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "headline",
+              "exitStory",
+              "superpowers",
+              "proofPoints"
+            ],
+            "additionalProperties": false
+          },
+          "compensation": {
+            "type": "object",
+            "properties": {
+              "targetRange": {
+                "type": "string"
+              },
+              "currency": {
+                "type": "string"
+              },
+              "minimum": {
+                "type": "string"
+              },
+              "preferred": {
+                "type": "string"
+              },
+              "locationFlexibility": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "targetRange",
+              "currency",
+              "minimum",
+              "preferred",
+              "locationFlexibility"
+            ],
+            "additionalProperties": false
+          },
+          "location": {
+            "type": "object",
+            "properties": {
+              "country": {
+                "type": "string"
+              },
+              "city": {
+                "type": "string"
+              },
+              "timezone": {
+                "type": "string"
+              },
+              "visaStatus": {
+                "type": "string"
+              },
+              "onsiteAvailability": {
+                "type": "string"
+              },
+              "remotePolicy": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "country",
+              "city",
+              "timezone",
+              "visaStatus",
+              "onsiteAvailability",
+              "remotePolicy"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "candidate",
+          "targetRoles",
+          "narrative",
+          "compensation",
+          "location"
+        ],
+        "additionalProperties": false
+      },
+      "ResumeSyncRequestInput": {
+        "type": "object",
+        "properties": {
+          "resume": {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        },
+        "required": [
+          "resume"
+        ],
+        "additionalProperties": false
+      },
+      "OkResponseInput": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ok"
+        ],
+        "additionalProperties": false
+      },
+      "JobFitBriefInput": {
+        "type": "object",
+        "properties": {
+          "roleSummary": {
+            "type": "string"
+          },
+          "requirements": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "keywords": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "strengths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "gaps": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "risks": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "nextActions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "generatedAt": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "roleSummary",
+          "requirements",
+          "keywords",
+          "strengths",
+          "gaps",
+          "risks",
+          "nextActions",
+          "generatedAt"
+        ],
+        "additionalProperties": false
+      },
+      "JobApplicationInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "company": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "location": {
+            "type": "string"
+          },
+          "sourceUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "saved",
+              "analyzing",
+              "tailoring",
+              "applied",
+              "interviewing",
+              "offer",
+              "rejected",
+              "archived"
+            ]
+          },
+          "sourceResumeId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sourceResumeName": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sourceResumeSnapshot": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ResumeContentInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "tailoredResume": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ResumeContentInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "fitBrief": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JobFitBriefInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "resumeEditProposals": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "target": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "section": {
+                          "type": "string",
+                          "const": "summary"
+                        }
+                      },
+                      "required": [
+                        "section"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "section": {
+                          "type": "string",
+                          "const": "experience"
+                        },
+                        "itemId": {
+                          "type": "string"
+                        },
+                        "field": {
+                          "type": "string",
+                          "enum": [
+                            "role",
+                            "description"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "section",
+                        "itemId",
+                        "field"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "section": {
+                          "type": "string",
+                          "const": "experience"
+                        },
+                        "itemId": {
+                          "type": "string"
+                        },
+                        "field": {
+                          "type": "string",
+                          "const": "bullet"
+                        },
+                        "bulletIndex": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "section",
+                        "itemId",
+                        "field",
+                        "bulletIndex"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "section": {
+                          "type": "string",
+                          "const": "skills"
+                        },
+                        "itemId": {
+                          "type": "string"
+                        },
+                        "field": {
+                          "type": "string",
+                          "const": "items"
+                        }
+                      },
+                      "required": [
+                        "section",
+                        "itemId",
+                        "field"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "section": {
+                          "type": "string",
+                          "const": "projects"
+                        },
+                        "itemId": {
+                          "type": "string"
+                        },
+                        "field": {
+                          "type": "string",
+                          "const": "description"
+                        }
+                      },
+                      "required": [
+                        "section",
+                        "itemId",
+                        "field"
+                      ]
+                    }
+                  ]
+                },
+                "currentText": {
+                  "type": "string"
+                },
+                "suggestedText": {
+                  "type": "string"
+                },
+                "rationale": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "pending",
+                    "approved",
+                    "rejected",
+                    "applied"
+                  ]
+                },
+                "createdAt": {
+                  "type": "number"
+                },
+                "appliedAt": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "id",
+                "target",
+                "currentText",
+                "suggestedText",
+                "rationale",
+                "status",
+                "createdAt"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "coverLetterDraft": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "content": {
+                    "type": "string"
+                  },
+                  "generatedAt": {
+                    "type": "number"
+                  },
+                  "updatedAt": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "content",
+                  "generatedAt",
+                  "updatedAt"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "notes": {
+            "type": "string"
+          },
+          "followUpAt": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "number"
+          },
+          "updatedAt": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "company",
+          "title",
+          "location",
+          "sourceUrl",
+          "description",
+          "status",
+          "sourceResumeId",
+          "sourceResumeName",
+          "sourceResumeSnapshot",
+          "tailoredResume",
+          "fitBrief",
+          "resumeEditProposals",
+          "coverLetterDraft",
+          "notes",
+          "followUpAt",
+          "createdAt",
+          "updatedAt"
+        ],
+        "additionalProperties": false
+      },
+      "JobApplicationsResponseInput": {
+        "type": "object",
+        "properties": {
+          "jobApplications": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JobApplicationInput"
+            }
+          }
+        },
+        "required": [
+          "jobApplications"
+        ],
+        "additionalProperties": false
+      },
+      "HealthResponse": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "service": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "ok",
+          "service"
+        ],
+        "additionalProperties": false
+      },
+      "ExtractJobRequest": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "HTTP or HTTPS job posting URL to extract."
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "additionalProperties": false
+      },
+      "JobExtractionResult": {
+        "type": "object",
+        "properties": {
+          "sourceUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "title": {
+            "type": "string"
+          },
+          "company": {
+            "type": "string"
+          },
+          "location": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "rawText": {
+            "type": "string"
+          },
+          "extractionMethod": {
+            "type": "string",
+            "enum": [
+              "json-ld",
+              "readability",
+              "playwright"
+            ]
+          },
+          "extractedAt": {
+            "type": "number",
+            "description": "Unix timestamp in milliseconds."
+          }
+        },
+        "required": [
+          "sourceUrl",
+          "title",
+          "company",
+          "location",
+          "description",
+          "rawText",
+          "extractionMethod",
+          "extractedAt"
+        ],
+        "additionalProperties": false
+      },
+      "CompanionErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "details": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "additionalProperties": false
+      },
+      "CrawlStatus": {
+        "type": "string",
+        "enum": [
+          "pending",
+          "crawling",
+          "analyzing",
+          "ready",
+          "failed"
+        ]
+      },
+      "CreateJobPostingRequest": {
+        "type": "object",
+        "properties": {
+          "sourceUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "HTTP or HTTPS job posting URL to crawl."
+          }
+        },
+        "required": [
+          "sourceUrl"
+        ],
+        "additionalProperties": false
+      },
+      "JobIdParams": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "JobPosting": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sourceUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "crawlStatus": {
+            "$ref": "#/components/schemas/CrawlStatus"
+          },
+          "crawlError": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "cleanedText": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "number",
+            "description": "Unix timestamp in milliseconds."
+          },
+          "updatedAt": {
+            "type": "number",
+            "description": "Unix timestamp in milliseconds."
+          },
+          "crawledAt": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Unix timestamp in milliseconds, or null before crawl success."
+          },
+          "parsedTitle": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "parsedCompany": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "parsedLocation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "parsedDescription": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "fitScore": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "fitBriefJson": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "sourceUrl",
+          "crawlStatus",
+          "crawlError",
+          "cleanedText",
+          "createdAt",
+          "updatedAt",
+          "crawledAt"
+        ],
+        "additionalProperties": false
+      },
+      "JobPostingsResponse": {
+        "type": "object",
+        "properties": {
+          "jobs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JobPosting"
+            }
+          }
+        },
+        "required": [
+          "jobs"
+        ],
+        "additionalProperties": false
+      },
+      "DeleteJobPostingResponse": {
+        "type": "object",
+        "properties": {
+          "deleted": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "deleted"
+        ],
+        "additionalProperties": false
+      },
+      "ResumeContent": {
+        "type": "object",
+        "additionalProperties": {}
+      },
+      "ResumeSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "templateId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "lastModified": {
+            "type": "number",
+            "description": "Unix timestamp in milliseconds."
+          },
+          "isDefault": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "templateId",
+          "lastModified",
+          "isDefault"
+        ],
+        "additionalProperties": false
+      },
+      "ResumeDetails": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "templateId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "lastModified": {
+            "type": "number",
+            "description": "Unix timestamp in milliseconds."
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "content": {
+            "$ref": "#/components/schemas/ResumeContent"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "templateId",
+          "lastModified",
+          "isDefault",
+          "content"
+        ],
+        "additionalProperties": false
+      },
+      "ResumesResponse": {
+        "type": "object",
+        "properties": {
+          "resumes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResumeSummary"
+            }
+          }
+        },
+        "required": [
+          "resumes"
+        ],
+        "additionalProperties": false
+      },
+      "DeleteResumeResponse": {
+        "type": "object",
+        "properties": {
+          "deleted": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "deleted"
+        ],
+        "additionalProperties": false
+      },
+      "CreateResumeRequest": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "templateId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "content": {
+            "$ref": "#/components/schemas/ResumeContent"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "templateId",
+          "content"
+        ],
+        "additionalProperties": false
+      },
+      "UpdateResumeRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "templateId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "content": {
+            "$ref": "#/components/schemas/ResumeContent"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CandidateProfile": {
+        "type": "object",
+        "properties": {
+          "candidate": {
+            "type": "object",
+            "properties": {
+              "fullName": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string"
+              },
+              "phone": {
+                "type": "string"
+              },
+              "location": {
+                "type": "string"
+              },
+              "linkedin": {
+                "type": "string"
+              },
+              "portfolioUrl": {
+                "type": "string"
+              },
+              "github": {
+                "type": "string"
+              },
+              "twitter": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "fullName",
+              "email",
+              "phone",
+              "location",
+              "linkedin",
+              "portfolioUrl",
+              "github"
+            ],
+            "additionalProperties": false
+          },
+          "targetRoles": {
+            "type": "object",
+            "properties": {
+              "primary": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "archetypes": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "level": {
+                      "type": "string"
+                    },
+                    "fit": {
+                      "type": "string",
+                      "enum": [
+                        "primary",
+                        "secondary",
+                        "adjacent"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "level",
+                    "fit"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "primary",
+              "archetypes"
+            ],
+            "additionalProperties": false
+          },
+          "narrative": {
+            "type": "object",
+            "properties": {
+              "headline": {
+                "type": "string"
+              },
+              "exitStory": {
+                "type": "string"
+              },
+              "superpowers": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "proofPoints": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "url": {
+                      "type": "string"
+                    },
+                    "heroMetric": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "url",
+                    "heroMetric"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "headline",
+              "exitStory",
+              "superpowers",
+              "proofPoints"
+            ],
+            "additionalProperties": false
+          },
+          "compensation": {
+            "type": "object",
+            "properties": {
+              "targetRange": {
+                "type": "string"
+              },
+              "currency": {
+                "type": "string"
+              },
+              "minimum": {
+                "type": "string"
+              },
+              "preferred": {
+                "type": "string"
+              },
+              "locationFlexibility": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "targetRange",
+              "currency",
+              "minimum",
+              "preferred",
+              "locationFlexibility"
+            ],
+            "additionalProperties": false
+          },
+          "location": {
+            "type": "object",
+            "properties": {
+              "country": {
+                "type": "string"
+              },
+              "city": {
+                "type": "string"
+              },
+              "timezone": {
+                "type": "string"
+              },
+              "visaStatus": {
+                "type": "string"
+              },
+              "onsiteAvailability": {
+                "type": "string"
+              },
+              "remotePolicy": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "country",
+              "city",
+              "timezone",
+              "visaStatus",
+              "onsiteAvailability",
+              "remotePolicy"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "candidate",
+          "targetRoles",
+          "narrative",
+          "compensation",
+          "location"
+        ],
+        "additionalProperties": false
+      },
+      "ResumeSyncRequest": {
+        "type": "object",
+        "properties": {
+          "resume": {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        },
+        "required": [
+          "resume"
+        ],
+        "additionalProperties": false
+      },
+      "OkResponse": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ok"
+        ],
+        "additionalProperties": false
+      },
+      "JobFitBrief": {
+        "type": "object",
+        "properties": {
+          "roleSummary": {
+            "type": "string"
+          },
+          "requirements": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "keywords": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "strengths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "gaps": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "risks": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "nextActions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "generatedAt": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "roleSummary",
+          "requirements",
+          "keywords",
+          "strengths",
+          "gaps",
+          "risks",
+          "nextActions",
+          "generatedAt"
+        ],
+        "additionalProperties": false
+      },
+      "JobApplication": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "company": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "location": {
+            "type": "string"
+          },
+          "sourceUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "saved",
+              "analyzing",
+              "tailoring",
+              "applied",
+              "interviewing",
+              "offer",
+              "rejected",
+              "archived"
+            ]
+          },
+          "sourceResumeId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sourceResumeName": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sourceResumeSnapshot": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ResumeContent"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "tailoredResume": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ResumeContent"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "fitBrief": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JobFitBrief"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "resumeEditProposals": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "target": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "section": {
+                          "type": "string",
+                          "const": "summary"
+                        }
+                      },
+                      "required": [
+                        "section"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "section": {
+                          "type": "string",
+                          "const": "experience"
+                        },
+                        "itemId": {
+                          "type": "string"
+                        },
+                        "field": {
+                          "type": "string",
+                          "enum": [
+                            "role",
+                            "description"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "section",
+                        "itemId",
+                        "field"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "section": {
+                          "type": "string",
+                          "const": "experience"
+                        },
+                        "itemId": {
+                          "type": "string"
+                        },
+                        "field": {
+                          "type": "string",
+                          "const": "bullet"
+                        },
+                        "bulletIndex": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "section",
+                        "itemId",
+                        "field",
+                        "bulletIndex"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "section": {
+                          "type": "string",
+                          "const": "skills"
+                        },
+                        "itemId": {
+                          "type": "string"
+                        },
+                        "field": {
+                          "type": "string",
+                          "const": "items"
+                        }
+                      },
+                      "required": [
+                        "section",
+                        "itemId",
+                        "field"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "section": {
+                          "type": "string",
+                          "const": "projects"
+                        },
+                        "itemId": {
+                          "type": "string"
+                        },
+                        "field": {
+                          "type": "string",
+                          "const": "description"
+                        }
+                      },
+                      "required": [
+                        "section",
+                        "itemId",
+                        "field"
+                      ],
+                      "additionalProperties": false
+                    }
+                  ]
+                },
+                "currentText": {
+                  "type": "string"
+                },
+                "suggestedText": {
+                  "type": "string"
+                },
+                "rationale": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "pending",
+                    "approved",
+                    "rejected",
+                    "applied"
+                  ]
+                },
+                "createdAt": {
+                  "type": "number"
+                },
+                "appliedAt": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "id",
+                "target",
+                "currentText",
+                "suggestedText",
+                "rationale",
+                "status",
+                "createdAt"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "coverLetterDraft": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "content": {
+                    "type": "string"
+                  },
+                  "generatedAt": {
+                    "type": "number"
+                  },
+                  "updatedAt": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "content",
+                  "generatedAt",
+                  "updatedAt"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "notes": {
+            "type": "string"
+          },
+          "followUpAt": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "number"
+          },
+          "updatedAt": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "company",
+          "title",
+          "location",
+          "sourceUrl",
+          "description",
+          "status",
+          "sourceResumeId",
+          "sourceResumeName",
+          "sourceResumeSnapshot",
+          "tailoredResume",
+          "fitBrief",
+          "resumeEditProposals",
+          "coverLetterDraft",
+          "notes",
+          "followUpAt",
+          "createdAt",
+          "updatedAt"
+        ],
+        "additionalProperties": false
+      },
+      "JobApplicationsResponse": {
+        "type": "object",
+        "properties": {
+          "jobApplications": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JobApplication"
+            }
+          }
+        },
+        "required": [
+          "jobApplications"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "operationId": "getHealth",
+        "summary": "Check companion health",
+        "tags": [
+          "System"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/profile": {
+      "get": {
+        "operationId": "getProfile",
+        "summary": "Get candidate profile",
+        "tags": [
+          "Profile"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CandidateProfile"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateProfile",
+        "summary": "Update candidate profile",
+        "tags": [
+          "Profile"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CandidateProfileInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CandidateProfile"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/profile/resume": {
+      "get": {
+        "operationId": "getSyncedResume",
+        "summary": "Get synced default resume",
+        "tags": [
+          "Profile"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "syncResume",
+        "summary": "Sync default resume",
+        "tags": [
+          "Profile"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResumeSyncRequestInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OkResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/resumes": {
+      "get": {
+        "operationId": "listResumes",
+        "summary": "List saved resumes",
+        "tags": [
+          "Resumes"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResumesResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createResume",
+        "summary": "Create a saved resume",
+        "tags": [
+          "Resumes"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateResumeRequestInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResumeDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/resumes/{id}": {
+      "get": {
+        "operationId": "getResume",
+        "summary": "Get a saved resume",
+        "tags": [
+          "Resumes"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResumeDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateResume",
+        "summary": "Update a saved resume",
+        "tags": [
+          "Resumes"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateResumeRequestInput"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResumeDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteResume",
+        "summary": "Delete a saved resume",
+        "tags": [
+          "Resumes"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteResumeResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/resumes/{id}/default": {
+      "put": {
+        "operationId": "setDefaultResume",
+        "summary": "Set the default resume",
+        "tags": [
+          "Resumes"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResumeDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/resumes/default": {
+      "delete": {
+        "operationId": "clearDefaultResume",
+        "summary": "Clear the default resume",
+        "tags": [
+          "Resumes"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OkResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/job-applications": {
+      "get": {
+        "operationId": "listJobApplications",
+        "summary": "List job applications",
+        "tags": [
+          "Job Applications"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobApplicationsResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createJobApplication",
+        "summary": "Create a job application",
+        "tags": [
+          "Job Applications"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "company": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "location": {
+                    "type": "string"
+                  },
+                  "sourceUrl": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "company",
+                  "title",
+                  "location",
+                  "sourceUrl",
+                  "description"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobApplication"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/job-applications/{id}": {
+      "get": {
+        "operationId": "getJobApplication",
+        "summary": "Get a job application",
+        "tags": [
+          "Job Applications"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobApplication"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateJobApplication",
+        "summary": "Update a job application",
+        "tags": [
+          "Job Applications"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "company": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "title": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "location": {
+                    "type": "string"
+                  },
+                  "sourceUrl": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "saved",
+                      "analyzing",
+                      "tailoring",
+                      "applied",
+                      "interviewing",
+                      "offer",
+                      "rejected",
+                      "archived"
+                    ]
+                  },
+                  "sourceResumeId": {
+                    "nullable": true,
+                    "type": "string"
+                  },
+                  "sourceResumeName": {
+                    "nullable": true,
+                    "type": "string"
+                  },
+                  "sourceResumeSnapshot": {
+                    "nullable": true,
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/ResumeContentInput"
+                      }
+                    ]
+                  },
+                  "tailoredResume": {
+                    "nullable": true,
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/ResumeContentInput"
+                      }
+                    ]
+                  },
+                  "fitBrief": {
+                    "nullable": true,
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/JobFitBriefInput"
+                      }
+                    ]
+                  },
+                  "resumeEditProposals": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "target": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "section": {
+                                  "type": "string",
+                                  "enum": [
+                                    "summary"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "section"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "section": {
+                                  "type": "string",
+                                  "enum": [
+                                    "experience"
+                                  ]
+                                },
+                                "itemId": {
+                                  "type": "string"
+                                },
+                                "field": {
+                                  "type": "string",
+                                  "enum": [
+                                    "role",
+                                    "description"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "section",
+                                "itemId",
+                                "field"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "section": {
+                                  "type": "string",
+                                  "enum": [
+                                    "experience"
+                                  ]
+                                },
+                                "itemId": {
+                                  "type": "string"
+                                },
+                                "field": {
+                                  "type": "string",
+                                  "enum": [
+                                    "bullet"
+                                  ]
+                                },
+                                "bulletIndex": {
+                                  "type": "number"
+                                }
+                              },
+                              "required": [
+                                "section",
+                                "itemId",
+                                "field",
+                                "bulletIndex"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "section": {
+                                  "type": "string",
+                                  "enum": [
+                                    "skills"
+                                  ]
+                                },
+                                "itemId": {
+                                  "type": "string"
+                                },
+                                "field": {
+                                  "type": "string",
+                                  "enum": [
+                                    "items"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "section",
+                                "itemId",
+                                "field"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "section": {
+                                  "type": "string",
+                                  "enum": [
+                                    "projects"
+                                  ]
+                                },
+                                "itemId": {
+                                  "type": "string"
+                                },
+                                "field": {
+                                  "type": "string",
+                                  "enum": [
+                                    "description"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "section",
+                                "itemId",
+                                "field"
+                              ]
+                            }
+                          ]
+                        },
+                        "currentText": {
+                          "type": "string"
+                        },
+                        "suggestedText": {
+                          "type": "string"
+                        },
+                        "rationale": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "pending",
+                            "approved",
+                            "rejected",
+                            "applied"
+                          ]
+                        },
+                        "createdAt": {
+                          "type": "number"
+                        },
+                        "appliedAt": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "target",
+                        "currentText",
+                        "suggestedText",
+                        "rationale",
+                        "status",
+                        "createdAt"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "coverLetterDraft": {
+                    "nullable": true,
+                    "type": "object",
+                    "properties": {
+                      "content": {
+                        "type": "string"
+                      },
+                      "generatedAt": {
+                        "type": "number"
+                      },
+                      "updatedAt": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "content",
+                      "generatedAt",
+                      "updatedAt"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "notes": {
+                    "type": "string"
+                  },
+                  "followUpAt": {
+                    "nullable": true,
+                    "type": "number"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobApplication"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteJobApplication",
+        "summary": "Delete a job application",
+        "tags": [
+          "Job Applications"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "deleted": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "deleted"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/job-postings": {
+      "post": {
+        "operationId": "createJobPosting",
+        "summary": "Create a companion job and enqueue crawling",
+        "tags": [
+          "Job Postings"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateJobPostingRequestInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobPosting"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "listJobPostings",
+        "summary": "List companion jobs",
+        "tags": [
+          "Job Postings"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobPostingsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/job-postings/{id}": {
+      "get": {
+        "operationId": "getJobPosting",
+        "summary": "Get a companion job",
+        "tags": [
+          "Job Postings"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobPosting"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteJobPosting",
+        "summary": "Delete a companion job",
+        "tags": [
+          "Job Postings"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteJobPostingResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/job-postings/{id}/screenshot": {
+      "get": {
+        "operationId": "getJobPostingScreenshot",
+        "summary": "Get a job crawl screenshot",
+        "tags": [
+          "Job Postings"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The captured screenshot PNG image.",
+            "content": {
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/job-postings/{id}/retry-crawl": {
+      "post": {
+        "operationId": "retryJobPostingCrawl",
+        "summary": "Retry crawling a companion job",
+        "tags": [
+          "Job Postings"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobPosting"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/job-postings/{id}/retry-analyze": {
+      "post": {
+        "operationId": "retryJobPostingAnalyze",
+        "summary": "Retry analysis for a companion job",
+        "tags": [
+          "Job Postings"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobPosting"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/job-postings/{id}/convert": {
+      "post": {
+        "operationId": "convertJobToApplication",
+        "summary": "Convert a companion job to a job application",
+        "tags": [
+          "Job Postings"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobApplication"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "System",
+      "description": "Operational companion endpoints."
+    },
+    {
+      "name": "Profile",
+      "description": "Candidate profile and synced default resume endpoints."
+    },
+    {
+      "name": "Resumes",
+      "description": "Saved resume management endpoints."
+    },
+    {
+      "name": "Jobs",
+      "description": "Companion job intake and crawl lifecycle endpoints."
+    }
+  ]
+}

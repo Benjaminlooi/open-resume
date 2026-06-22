@@ -1,0 +1,149 @@
+# This file instructs Redocly's linter to ignore the rules contained for specific parts of your API.
+# See https://redocly.com/docs/cli/ for more information.
+openapi.json:
+  no-empty-servers:
+    - '#/openapi'
+  info-license:
+    - '#/info'
+  operation-4xx-response:
+    - '#/paths/~1health/get/responses'
+    - '#/paths/~1profile/get/responses'
+    - '#/paths/~1profile/put/responses'
+    - '#/paths/~1profile~1resume/put/responses'
+    - '#/paths/~1resumes/get/responses'
+    - '#/paths/~1resumes~1{id}/delete/responses'
+    - '#/paths/~1resumes~1default/delete/responses'
+    - '#/paths/~1jobs/get/responses'
+    - '#/paths/~1jobs~1{id}/delete/responses'
+    - '#/paths/~1job-applications/get/responses'
+    - '#/paths/~1job-applications~1{id}/delete/responses'
+  struct:
+    - '#/components/schemas/CompanionJob/properties/crawlError/anyOf/1/type'
+    - '#/components/schemas/CompanionJob/properties/crawledAt/anyOf/1/type'
+    - '#/components/schemas/CompanionJob/properties/parsedTitle/anyOf/1/type'
+    - '#/components/schemas/CompanionJob/properties/parsedCompany/anyOf/1/type'
+    - '#/components/schemas/CompanionJob/properties/parsedLocation/anyOf/1/type'
+    - >-
+      #/components/schemas/CompanionJob/properties/parsedDescription/anyOf/1/type
+    - '#/components/schemas/CompanionJob/properties/fitScore/anyOf/1/type'
+    - '#/components/schemas/CompanionJob/properties/fitBriefJson/anyOf/1/type'
+    - '#/components/schemas/JobApplication/properties/sourceResumeId/anyOf/1/type'
+    - >-
+      #/components/schemas/JobApplication/properties/sourceResumeName/anyOf/1/type
+    - >-
+      #/components/schemas/JobApplication/properties/sourceResumeSnapshot/anyOf/1/type
+    - '#/components/schemas/JobApplication/properties/tailoredResume/anyOf/1/type'
+    - '#/components/schemas/JobApplication/properties/fitBrief/anyOf/1/type'
+    - >-
+      #/components/schemas/JobApplication/properties/resumeEditProposals/items/properties/target/anyOf/0/properties/section/const
+    - >-
+      #/components/schemas/JobApplication/properties/resumeEditProposals/items/properties/target/anyOf/1/properties/section/const
+    - >-
+      #/components/schemas/JobApplication/properties/resumeEditProposals/items/properties/target/anyOf/2/properties/section/const
+    - >-
+      #/components/schemas/JobApplication/properties/resumeEditProposals/items/properties/target/anyOf/2/properties/field/const
+    - >-
+      #/components/schemas/JobApplication/properties/resumeEditProposals/items/properties/target/anyOf/3/properties/section/const
+    - >-
+      #/components/schemas/JobApplication/properties/resumeEditProposals/items/properties/target/anyOf/3/properties/field/const
+    - >-
+      #/components/schemas/JobApplication/properties/resumeEditProposals/items/properties/target/anyOf/4/properties/section/const
+    - >-
+      #/components/schemas/JobApplication/properties/resumeEditProposals/items/properties/target/anyOf/4/properties/field/const
+    - >-
+      #/components/schemas/JobApplication/properties/coverLetterDraft/anyOf/1/type
+    - '#/components/schemas/JobApplication/properties/followUpAt/anyOf/1/type'
+    - '#/components/schemas/CompanionJobInput/properties/crawlError/anyOf/1/type'
+    - '#/components/schemas/CompanionJobInput/properties/crawledAt/anyOf/1/type'
+    - '#/components/schemas/CompanionJobInput/properties/parsedTitle/anyOf/1/type'
+    - >-
+      #/components/schemas/CompanionJobInput/properties/parsedCompany/anyOf/1/type
+    - >-
+      #/components/schemas/CompanionJobInput/properties/parsedLocation/anyOf/1/type
+    - >-
+      #/components/schemas/CompanionJobInput/properties/parsedDescription/anyOf/1/type
+    - '#/components/schemas/CompanionJobInput/properties/fitScore/anyOf/1/type'
+    - >-
+      #/components/schemas/CompanionJobInput/properties/fitBriefJson/anyOf/1/type
+    - >-
+      #/components/schemas/JobApplicationInput/properties/sourceResumeId/anyOf/1/type
+    - >-
+      #/components/schemas/JobApplicationInput/properties/sourceResumeName/anyOf/1/type
+    - >-
+      #/components/schemas/JobApplicationInput/properties/sourceResumeSnapshot/anyOf/1/type
+    - >-
+      #/components/schemas/JobApplicationInput/properties/tailoredResume/anyOf/1/type
+    - '#/components/schemas/JobApplicationInput/properties/fitBrief/anyOf/1/type'
+    - >-
+      #/components/schemas/JobApplicationInput/properties/resumeEditProposals/items/properties/target/anyOf/0/properties/section/const
+    - >-
+      #/components/schemas/JobApplicationInput/properties/resumeEditProposals/items/properties/target/anyOf/1/properties/section/const
+    - >-
+      #/components/schemas/JobApplicationInput/properties/resumeEditProposals/items/properties/target/anyOf/2/properties/section/const
+    - >-
+      #/components/schemas/JobApplicationInput/properties/resumeEditProposals/items/properties/target/anyOf/2/properties/field/const
+    - >-
+      #/components/schemas/JobApplicationInput/properties/resumeEditProposals/items/properties/target/anyOf/3/properties/section/const
+    - >-
+      #/components/schemas/JobApplicationInput/properties/resumeEditProposals/items/properties/target/anyOf/3/properties/field/const
+    - >-
+      #/components/schemas/JobApplicationInput/properties/resumeEditProposals/items/properties/target/anyOf/4/properties/section/const
+    - >-
+      #/components/schemas/JobApplicationInput/properties/resumeEditProposals/items/properties/target/anyOf/4/properties/field/const
+    - >-
+      #/components/schemas/JobApplicationInput/properties/coverLetterDraft/anyOf/1/type
+    - >-
+      #/components/schemas/JobApplicationInput/properties/followUpAt/anyOf/1/type
+  nullable-type-sibling:
+    - >-
+      #/paths/~1job-applications~1{id}/put/requestBody/content/application~1json/schema/properties/sourceResumeSnapshot/nullable
+    - >-
+      #/paths/~1job-applications~1{id}/put/requestBody/content/application~1json/schema/properties/tailoredResume/nullable
+    - >-
+      #/paths/~1job-applications~1{id}/put/requestBody/content/application~1json/schema/properties/fitBrief/nullable
+  no-unused-components:
+    - '#/components/schemas/HealthResponseInput'
+    - '#/components/schemas/ExtractJobRequestInput'
+    - '#/components/schemas/JobExtractionResultInput'
+    - '#/components/schemas/CompanionErrorResponseInput'
+    - '#/components/schemas/JobIdParamsInput'
+    - '#/components/schemas/CompanionJobsResponseInput'
+    - '#/components/schemas/DeleteJobResponseInput'
+    - '#/components/schemas/ResumeDetailsInput'
+    - '#/components/schemas/ResumesResponseInput'
+    - '#/components/schemas/DeleteResumeResponseInput'
+    - '#/components/schemas/OkResponseInput'
+    - '#/components/schemas/JobApplicationsResponseInput'
+    - '#/components/schemas/ExtractJobRequest'
+    - '#/components/schemas/JobExtractionResult'
+    - '#/components/schemas/CreateJobRequest'
+    - '#/components/schemas/JobIdParams'
+    - '#/components/schemas/CreateResumeRequest'
+    - '#/components/schemas/UpdateResumeRequest'
+    - '#/components/schemas/ResumeSyncRequest'
+  security-defined:
+    - '#/paths/~1health/get'
+    - '#/paths/~1profile/get'
+    - '#/paths/~1profile/put'
+    - '#/paths/~1profile~1resume/get'
+    - '#/paths/~1profile~1resume/put'
+    - '#/paths/~1resumes/get'
+    - '#/paths/~1resumes/post'
+    - '#/paths/~1resumes~1{id}/get'
+    - '#/paths/~1resumes~1{id}/put'
+    - '#/paths/~1resumes~1{id}/delete'
+    - '#/paths/~1resumes~1{id}~1default/put'
+    - '#/paths/~1resumes~1default/delete'
+    - '#/paths/~1jobs/get'
+    - '#/paths/~1jobs/post'
+    - '#/paths/~1jobs~1{id}/get'
+    - '#/paths/~1jobs~1{id}/delete'
+    - '#/paths/~1jobs~1{id}~1screenshot/get'
+    - '#/paths/~1jobs~1{id}~1retry-crawl/post'
+    - '#/paths/~1jobs~1{id}~1retry-analyze/post'
+    - '#/paths/~1jobs~1{id}~1convert/post'
+    - '#/paths/~1job-applications/get'
+    - '#/paths/~1job-applications/post'
+    - '#/paths/~1job-applications~1{id}/get'
+    - '#/paths/~1job-applications~1{id}/put'
+    - '#/paths/~1job-applications~1{id}/delete'

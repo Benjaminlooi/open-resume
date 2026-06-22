@@ -1,19 +1,22 @@
 # Open Resume
 
-A modern, fast, and highly customizable resume builder application. Built with cutting-edge web technologies, it features file-based routing, server-side rendering, and AI integration, optimized for deployment on Cloudflare Workers.
+A modern, fast, and highly customizable resume builder application. Built with cutting-edge web technologies, it features file-based routing, server-side rendering, and AI integration, optimized for deployment on Cloudflare Workers. It includes a companion backend service to scrape and track job postings.
 
 ## 🚀 Features
 
+- **Monorepo Architecture:** Organized as a unified `pnpm` workspace with a web frontend and a companion backend.
 - **Modern UI:** Built with React 19, Tailwind CSS v4, and Shadcn UI.
 - **File-Based Routing:** Seamless navigation and code splitting via TanStack Router.
 - **Server-Side Rendering:** Enhanced performance and SEO with TanStack Start.
 - **State Management:** Fast, persistent global state using Zustand.
 - **AI Integration:** Powered by the AI SDK for advanced, intelligent resume building.
+- **Companion Backend:** A local Fastify daemon that handles asynchronous job crawler queues (via Playwright) with SQLite storage, enabling one-click import of job descriptions from URL.
 - **Analytics:** Integrated with PostHog for product analytics.
-- **Edge Deployment:** Optimized for Cloudflare Workers.
+- **Edge Deployment:** Frontend is optimized for Cloudflare Workers.
 
 ## 🛠 Tech Stack
 
+### Frontend (`apps/web`)
 - **Framework:** [TanStack Start](https://tanstack.com/start) (React 19)
 - **State Management:** [Zustand](https://zustand-demo.pmnd.rs/) (LocalStorage persistence)
 - **AI Integration:** [AI SDK](https://sdk.vercel.ai/docs) (`@ai-sdk/react`, OpenAI, Anthropic, Google) & TanStack AI
@@ -21,26 +24,40 @@ A modern, fast, and highly customizable resume builder application. Built with c
 - **Analytics:** [PostHog](https://posthog.com/)
 - **Tooling:** Biome (Linting/Formatting), Vitest (Testing), Wrangler (Cloudflare deployment)
 
+### Companion Backend (`apps/companion`)
+- **Framework:** Fastify 5
+- **Crawler:** Playwright (headless Chromium) for dynamic page retrieval
+- **Database:** SQLite via native Node.js `node:sqlite`
+- **Validation:** Zod 4
+- **API Spec:** OpenAPI 3.0 (verified with Redocly)
+- **Tooling:** tsx, tsup, Vitest
+
+---
+
 ## 📁 Project Structure
 
 ```text
-src/
-├── routes/        # File-based routing via TanStack Router
-├── lib/
-│   ├── resume-store.ts     # Core Zustand store for resume data
-│   ├── settings-store.ts   # Zustand store for app settings
-│   └── resume-schema.ts    # Zod schema for resume validation
-├── components/
-│   ├── editor/             # Complex form components for resume editing
-│   ├── dashboard/          # Components for managing saved resumes
-│   └── ui/                 # Shared Shadcn UI components
+apps/
+├── web/                    # TanStack Start frontend app
+│   └── src/
+│       ├── routes/         # File-based routing via TanStack Router
+│       ├── lib/            # Stores, schemas, AI helpers, and companion client
+│       └── components/     # Editor, dashboard, jobs, and shared UI
+└── companion/              # Local Node Fastify companion backend daemon
+    └── src/
+        ├── extract/        # Job page text extraction and cleaning helpers
+        ├── jobs/           # SQLite repository and background queue
+        ├── server.ts       # Fastify app factory and route registry
+        └── index.ts        # Companion daemon entrypoint
 ```
+
+---
 
 ## 💻 Getting Started
 
 ### Prerequisites
 
-Make sure you have [Node.js](https://nodejs.org/) installed along with [`pnpm`](https://pnpm.io/).
+Make sure you have [Node.js](https://nodejs.org/) (v22+) installed along with [`pnpm`](https://pnpm.io/).
 
 ### Installation
 
@@ -57,36 +74,114 @@ Make sure you have [Node.js](https://nodejs.org/) installed along with [`pnpm`](
 
 ### Development Workflow
 
-Start the Vite development server on `http://localhost:3000`:
+Start the web app and local companion together:
 ```bash
 pnpm dev
 ```
 
-### Build & Preview
+The web app runs on `http://localhost:3000`. The local companion runs on `http://127.0.0.1:47321`.
 
-Build the application for production:
+Run only the web app:
 ```bash
-pnpm build
+pnpm web:dev
 ```
 
-Preview the production build locally:
+Run only the local companion:
 ```bash
-pnpm preview
+pnpm companion:dev
 ```
 
-## 📜 Scripts
+---
+
+## 🔌 Local Companion
+
+Open Resume can use the local companion service to extract job details from pasted job URLs.
+
+Configure companion environment variables in `apps/companion/.env`. Start from the checked-in example:
+```bash
+cp apps/companion/.env.example apps/companion/.env
+```
+
+For verbose request and extraction logs, set:
+```env
+OPEN_RESUME_COMPANION_LOG_LEVEL=debug
+```
+
+Check that the companion is running:
+```bash
+curl http://127.0.0.1:47321/health
+```
+
+Expected response:
+```json
+{"ok":true,"service":"open-resume-companion"}
+```
+
+Open `http://localhost:3000/jobs`, create a job application, paste a job URL, and click **Fetch details**. If the companion is not running, the app keeps working with manual job description paste.
+
+### 👤 Candidate Profile & Resume Integration
+
+The Local Companion uses two files stored inside the `.open-resume-companion/` configuration folder to perform background AI evaluations and suitability scoring:
+
+1. **Candidate Profile (`profile.json`)**
+   - **Purpose**: Defines your job preferences, target roles/archetypes, exit stories, superpowers, compensation ranges, location flexibility, and visa status.
+   - **Management**: Edited dynamically through the **My Profile** GUI on the frontend (`/profile`). Saving the form pushes the update to the companion server via `PUT /profile`.
+   - **Scoring**: Used by the AI to assess role-narrative alignment, salary threshold matches, location compatibility, and timezone restrictions.
+
+2. **Synced Default Resume (`resume.json`)**
+   - **Purpose**: Holds your current professional resume (experience, summary, skills, and projects).
+   - **Management**: Automatically synced from the frontend to the companion daemon on mount, or manually triggered using the **Sync Resume** button on `/profile`.
+   - **Scoring**: Analyzed by the AI to calculate keyword alignment, evaluate experience matches, call out skill gaps, and identify relevant strengths.
+
+### Scraped Data Debugging
+
+To debug scraping quality, enable scraped-data logs in `apps/companion/.env`. This prints the raw text and structured data before normalization:
+```env
+OPEN_RESUME_COMPANION_LOG_LEVEL=debug
+OPEN_RESUME_COMPANION_LOG_SCRAPED_DATA=1
+```
+
+### OpenAPI Documentation & Testing
+
+The companion exposes OpenAPI docs for manual testing and client tooling:
+
+- `http://127.0.0.1:47321/openapi.json`: Machine-readable OpenAPI 3.0 document.
+- `http://127.0.0.1:47321/docs`: Swagger UI for browser-based endpoint testing.
+
+Generate the committed OpenAPI artifact for Bruno/Postman import:
+```bash
+pnpm companion:openapi
+```
+
+Validate the generated OpenAPI contract:
+```bash
+pnpm --filter @open-resume/companion openapi:lint
+```
+
+In Bruno, import `apps/companion/openapi.json` as an OpenAPI collection to generate requests for the companion endpoints.
+
+---
+
+## 📜 Workspace Scripts
 
 | Command | Description |
 |---|---|
-| `pnpm dev` | Starts the Vite development server. |
-| `pnpm build` | Builds the application for production. |
-| `pnpm preview` | Starts a local server to preview the production build. |
-| `pnpm test` | Runs tests using Vitest. |
+| `pnpm dev` | Starts the web app and local companion together. |
+| `pnpm web:dev` | Starts only the web app. |
+| `pnpm companion:dev` | Starts only the local companion. |
+| `pnpm build` | Builds workspace apps for production. |
+| `pnpm web:build` | Builds only the web app. |
+| `pnpm companion:build` | Builds only the local companion. |
+| `pnpm preview` | Starts a local server to preview the web production build. |
+| `pnpm test` | Runs workspace tests using Vitest. |
+| `pnpm typecheck` | Runs TypeScript checks across workspace apps. |
 | `pnpm format` | Formats code using Biome. |
 | `pnpm lint` | Lints code using Biome. |
 | `pnpm check` | Runs both lint and format checks via Biome. |
-| `pnpm cf-typegen`| Generates TypeScript types for Cloudflare Workers using Wrangler. |
+| `pnpm cf-typegen` | Generates TypeScript types for Cloudflare Workers using Wrangler. |
 | `pnpm deploy` | Builds the app and deploys it to Cloudflare Workers via Wrangler. |
+
+---
 
 ## 🌐 Deployment
 
@@ -98,4 +193,4 @@ To deploy to your Cloudflare account, run:
 pnpm deploy
 ```
 
-Ensure your `wrangler.jsonc` is properly configured and you are authenticated via the Wrangler CLI (`pnpm wrangler login`).
+Ensure `apps/web/wrangler.jsonc` is properly configured and you are authenticated via the Wrangler CLI (`pnpm --filter @open-resume/web wrangler login`).

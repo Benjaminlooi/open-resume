@@ -4,6 +4,7 @@ dist
 dist-ssr
 *.local
 .env
+apps/companion/.env
 .nitro
 .tanstack
 .wrangler
@@ -15,6 +16,7 @@ todos.json
 routeTree.gen.ts
 .worktrees/
 .superpowers/
+.omo/
 
 # Dependency directories
 .pnpm-store/
@@ -23,4 +25,5 @@ routeTree.gen.ts
 __pycache__/
 *.pyc
 
-.worktrees/
+# Local SQLite database
+apps/companion/.open-resume-companion/

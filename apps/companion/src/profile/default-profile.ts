@@ -1,0 +1,43 @@
+export const defaultProfile = {
+	candidate: {
+		fullName: "Benjamin Looi",
+		email: "hello@benjaminlooi.dev",
+		phone: "+60 12-4065-711",
+		location: "Kuala Lumpur, Malaysia",
+		linkedin: "linkedin.com/in/benjaminlooi",
+		portfolioUrl: "https://www.benjaminlooi.dev",
+		github: "github.com/benjaminlooi",
+		twitter: "",
+	},
+	targetRoles: {
+		primary: ["Senior Full Stack Engineer", "Senior Frontend Engineer"],
+		archetypes: [
+			{
+				name: "Full Stack Product Engineer",
+				level: "Senior",
+				fit: "primary" as const,
+			},
+		],
+	},
+	narrative: {
+		headline: "Product-minded Full Stack Engineer",
+		exitStory: "After 5+ years shipping web systems...",
+		superpowers: ["Modernizing legacy frontends"],
+		proofPoints: [],
+	},
+	compensation: {
+		targetRange: "Global remote",
+		currency: "USD",
+		minimum: "$50k",
+		preferred: "$60k+",
+		locationFlexibility: "Global remote-first",
+	},
+	location: {
+		country: "Malaysia",
+		city: "Kuala Lumpur",
+		timezone: "ICT / UTC+7",
+		visaStatus: "Unspecified",
+		onsiteAvailability: "Remote-first preferred",
+		remotePolicy: "Prioritize global remote",
+	},
+};
