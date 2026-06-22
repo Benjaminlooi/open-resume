@@ -8,8 +8,8 @@ import {
 	uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 
-export const jobs = sqliteTable(
-	"jobs",
+export const jobPostings = sqliteTable(
+	"job_postings",
 	{
 		id: text("id").primaryKey(),
 		sourceUrl: text("source_url").notNull(),
@@ -29,8 +29,8 @@ export const jobs = sqliteTable(
 		fitBriefJson: text("fit_brief_json"),
 	},
 	(table) => [
-		index("jobs_updated_at_idx").on(table.updatedAt),
-		index("jobs_runnable_idx").on(table.crawlStatus, table.createdAt),
+		index("job_postings_updated_at_idx").on(table.updatedAt),
+		index("job_postings_runnable_idx").on(table.crawlStatus, table.createdAt),
 	],
 );
 

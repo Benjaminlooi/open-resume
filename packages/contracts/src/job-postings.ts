@@ -49,7 +49,7 @@ export const crawlStatusSchema = z.enum([
 
 export type CrawlStatus = z.infer<typeof crawlStatusSchema>;
 
-export const createJobRequestSchema = z
+export const createJobPostingRequestSchema = z
 	.object({
 		sourceUrl: httpUrlSchema.describe(
 			"HTTP or HTTPS job posting URL to crawl.",
@@ -57,7 +57,7 @@ export const createJobRequestSchema = z
 	})
 	.strict();
 
-export type CreateJobRequest = z.infer<typeof createJobRequestSchema>;
+export type CreateJobPostingRequest = z.infer<typeof createJobPostingRequestSchema>;
 
 export const jobIdParamsSchema = z
 	.object({
@@ -67,7 +67,7 @@ export const jobIdParamsSchema = z
 
 export type JobIdParams = z.infer<typeof jobIdParamsSchema>;
 
-export const companionJobSchema = z
+export const jobPostingSchema = z
 	.object({
 		id: z.string().min(1),
 		sourceUrl: httpUrlSchema,
@@ -91,23 +91,23 @@ export const companionJobSchema = z
 	})
 	.strict();
 
-export type CompanionJob = z.infer<typeof companionJobSchema>;
+export type JobPosting = z.infer<typeof jobPostingSchema>;
 
-export const companionJobsResponseSchema = z
+export const jobPostingsResponseSchema = z
 	.object({
-		jobs: z.array(companionJobSchema),
+		jobPostings: z.array(jobPostingSchema),
 	})
 	.strict();
 
-export type CompanionJobsResponse = z.infer<typeof companionJobsResponseSchema>;
+export type JobPostingsResponse = z.infer<typeof jobPostingsResponseSchema>;
 
-export const deleteJobResponseSchema = z
+export const deleteJobPostingResponseSchema = z
 	.object({
 		deleted: z.boolean(),
 	})
 	.strict();
 
-export type DeleteJobResponse = z.infer<typeof deleteJobResponseSchema>;
+export type DeleteJobPostingResponse = z.infer<typeof deleteJobPostingResponseSchema>;
 
 export const jobFitBriefSchema = z
 	.object({

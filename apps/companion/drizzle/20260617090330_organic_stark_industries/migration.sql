@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS `job_applications` (
 );
 --> statement-breakpoint
 CREATE INDEX IF NOT EXISTS `job_applications_updated_at_idx` ON `job_applications` (`updated_at`);--> statement-breakpoint
-CREATE TABLE IF NOT EXISTS `jobs` (
+CREATE TABLE IF NOT EXISTS `job_postings` (
 	`id` text PRIMARY KEY NOT NULL,
 	`source_url` text NOT NULL,
 	`crawl_status` text NOT NULL,
@@ -37,8 +37,8 @@ CREATE TABLE IF NOT EXISTS `jobs` (
 	`fit_brief_json` text
 );
 --> statement-breakpoint
-CREATE INDEX IF NOT EXISTS `jobs_updated_at_idx` ON `jobs` (`updated_at`);--> statement-breakpoint
-CREATE INDEX IF NOT EXISTS `jobs_runnable_idx` ON `jobs` (`crawl_status`,`created_at`);--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS `job_postings_updated_at_idx` ON `job_postings` (`updated_at`);--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS `job_postings_runnable_idx` ON `job_postings` (`crawl_status`,`created_at`);--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS `resumes` (
 	`id` text PRIMARY KEY NOT NULL,
 	`name` text NOT NULL,

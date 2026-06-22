@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { httpUrlSchema } from "./common.js";
-import { jobFitBriefSchema } from "./jobs.js";
+import { jobFitBriefSchema } from "./job-postings.js";
 import { resumeContentSchema } from "./resumes.js";
 
 export const jobApplicationStatusSchema = z.enum([
