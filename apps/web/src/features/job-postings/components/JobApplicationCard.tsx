@@ -3,7 +3,7 @@ import { Calendar, MapPin, Trash2 } from "lucide-react";
 import type {
 	JobApplication,
 	JobApplicationStatus,
-} from "#/features/jobs/job-application-schema";
+} from "#/features/job-postings/job-application-schema";
 
 interface JobApplicationCardProps {
 	application: JobApplication;

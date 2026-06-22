@@ -7,8 +7,8 @@ import {
 	Sparkles,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { generateCoverLetter } from "#/features/jobs/job-ai";
-import { useJobApplicationStore } from "#/features/jobs/job-application-store";
+import { generateCoverLetter } from "#/features/job-postings/job-ai";
+import { useJobApplicationStore } from "#/features/job-postings/job-application-store";
 import { useResumeIndexStore } from "#/lib/resume-index-store";
 import { getResumeData } from "#/lib/resume-store";
 import { useSettingsStore } from "#/lib/settings-store";

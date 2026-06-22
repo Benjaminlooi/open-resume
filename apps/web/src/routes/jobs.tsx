@@ -2,19 +2,19 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import DashboardHeader from "#/components/dashboard/DashboardHeader";
-import { useCompanionJobStore } from "#/features/jobs/companion-job-store";
-import CompanionJobCard from "#/features/jobs/components/CompanionJobCard";
-import JobApplicationCard from "#/features/jobs/components/JobApplicationCard";
-import NewJobApplicationModal from "#/features/jobs/components/NewJobApplicationModal";
-import PipelineIntegrityPanel from "#/features/jobs/components/PipelineIntegrityPanel";
-import { useJobApplicationStore } from "#/features/jobs/job-application-store";
+import { useJobPostingStore } from "#/features/job-postings/job-posting-store";
+import JobPostingCard from "#/features/job-postings/components/JobPostingCard";
+import JobApplicationCard from "#/features/job-postings/components/JobApplicationCard";
+import NewJobApplicationModal from "#/features/job-postings/components/NewJobApplicationModal";
+import PipelineIntegrityPanel from "#/features/job-postings/components/PipelineIntegrityPanel";
+import { useJobApplicationStore } from "#/features/job-postings/job-application-store";
 
 export const Route = createFileRoute("/jobs")({
 	component: JobsDashboard,
 });
 
 function JobsDashboard() {
-	const { companionJobs, fetchJobs, error: loadError } = useCompanionJobStore();
+	const { jobPostings, fetchJobPostings, error: loadError } = useJobPostingStore();
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [isMounted, setIsMounted] = useState(false);
 
@@ -29,7 +29,7 @@ function JobsDashboard() {
 	const { jobApplications, deleteJobApplication, loadJobApplications } =
 		useJobApplicationStore();
 
-	const hasPendingJobs = companionJobs.some((job) =>
+	const hasPendingJobs = jobPostings.some((job) =>
 		["pending", "crawling", "analyzing"].includes(job.crawlStatus),
 	);
 
@@ -48,20 +48,20 @@ function JobsDashboard() {
 	useEffect(() => {
 		if (!isMounted) return;
 
-		fetchJobs();
+		fetchJobPostings();
 		const intervalDelay = hasPendingJobs ? 2000 : 10000;
-		const interval = setInterval(fetchJobs, intervalDelay);
+		const interval = setInterval(fetchJobPostings, intervalDelay);
 
 		return () => {
 			clearInterval(interval);
 		};
-	}, [isMounted, hasPendingJobs, fetchJobs]);
+	}, [isMounted, hasPendingJobs, fetchJobPostings]);
 
-	const pendingJobs = companionJobs.filter((job) =>
+	const pendingJobs = jobPostings.filter((job) =>
 		["pending", "crawling", "analyzing"].includes(job.crawlStatus),
 	);
-	const readyJobs = companionJobs.filter((job) => job.crawlStatus === "ready");
-	const failedJobs = companionJobs.filter(
+	const readyJobs = jobPostings.filter((job) => job.crawlStatus === "ready");
+	const failedJobs = jobPostings.filter(
 		(job) => job.crawlStatus === "failed",
 	);
 
@@ -160,7 +160,7 @@ function JobsDashboard() {
 										) : (
 											<div className="flex flex-col gap-4">
 												{pendingJobs.map((job) => (
-													<CompanionJobCard key={job.id} job={job} />
+													<JobPostingCard key={job.id} job={job} />
 												))}
 											</div>
 										)}
@@ -181,7 +181,7 @@ function JobsDashboard() {
 										) : (
 											<div className="flex flex-col gap-4">
 												{readyJobs.map((job) => (
-													<CompanionJobCard key={job.id} job={job} />
+													<JobPostingCard key={job.id} job={job} />
 												))}
 											</div>
 										)}
@@ -202,7 +202,7 @@ function JobsDashboard() {
 										) : (
 											<div className="flex flex-col gap-4">
 												{failedJobs.map((job) => (
-													<CompanionJobCard key={job.id} job={job} />
+													<JobPostingCard key={job.id} job={job} />
 												))}
 											</div>
 										)}
@@ -275,7 +275,7 @@ function JobsDashboard() {
 					<NewJobApplicationModal
 						onClose={() => setIsModalOpen(false)}
 						onCreated={async () => {
-							await fetchJobs();
+							await fetchJobPostings();
 						}}
 					/>
 				)}
