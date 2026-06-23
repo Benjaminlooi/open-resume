@@ -8,6 +8,7 @@ import JobApplicationCard from "#/features/job-postings/components/JobApplicatio
 import NewJobApplicationModal from "#/features/job-postings/components/NewJobApplicationModal";
 import PipelineIntegrityPanel from "#/features/job-postings/components/PipelineIntegrityPanel";
 import { useJobApplicationStore } from "#/features/job-postings/job-application-store";
+import { useResumeIndexStore } from "#/lib/resume-index-store";
 
 export const Route = createFileRoute("/jobs")({
 	component: JobsDashboard,
@@ -29,6 +30,10 @@ function JobsDashboard() {
 	const { jobApplications, deleteJobApplication, loadJobApplications } =
 		useJobApplicationStore();
 
+	// Resume index — needed so PipelineIntegrityPanel can resolve the default
+	// resume when checking whether each application has a source to fall back on.
+	const loadIndex = useResumeIndexStore((state) => state.loadIndex);
+
 	const hasPendingJobs = jobPostings.some((job) =>
 		["pending", "crawling", "analyzing"].includes(job.crawlStatus),
 	);
@@ -42,8 +47,11 @@ function JobsDashboard() {
 			loadJobApplications().catch((err) =>
 				console.error("Failed to load job applications", err),
 			);
+			loadIndex().catch((err) =>
+				console.error("Failed to load resume index", err),
+			);
 		}
-	}, [isMounted, loadJobApplications]);
+	}, [isMounted, loadJobApplications, loadIndex]);
 
 	useEffect(() => {
 		if (!isMounted) return;
