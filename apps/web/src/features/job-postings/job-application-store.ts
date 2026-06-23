@@ -262,6 +262,11 @@ export const useJobApplicationStore = create<JobApplicationState>()(
 
 			validatePipeline: () => {
 				const { jobApplications } = get();
+				// A default resume acts as the implicit source resume until the user
+				// explicitly snapshots one via "Start Tailoring". Only flag a missing
+				// source resume when there is truly no resume to fall back on.
+				const hasDefaultResume =
+					useResumeIndexStore.getState().defaultResumeId !== null;
 				const warnings: Record<string, string[]> = {};
 
 				for (const app of jobApplications) {
@@ -286,7 +291,7 @@ export const useJobApplicationStore = create<JobApplicationState>()(
 					if (!app.company || app.company.trim() === "") {
 						appWarnings.push("Company name is missing.");
 					}
-					if (app.sourceResumeId === null) {
+					if (app.sourceResumeId === null && !hasDefaultResume) {
 						appWarnings.push("No source resume has been associated yet.");
 					}
 

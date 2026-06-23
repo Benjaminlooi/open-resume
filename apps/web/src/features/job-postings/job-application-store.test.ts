@@ -627,6 +627,36 @@ describe("jobApplicationStore", () => {
 		expect(warnings[id1]).toBeUndefined(); // Warnings cleared because no pending proposals left
 	});
 
+	it("validatePipeline does NOT flag a missing source resume when a default resume is set", async () => {
+		// Regression: a freshly converted/created application has sourceResumeId null,
+		// but if a global default resume exists the app is not stuck (Start Tailoring
+		// will snapshot the default). The "No source resume" warning must not fire.
+		const resumeId = "resume-1";
+		useResumeIndexStore.setState({
+			resumes: [
+				{
+					id: resumeId,
+					name: "Core Resume",
+					templateId: "modern",
+					lastModified: Date.now(),
+				},
+			],
+			defaultResumeId: resumeId,
+		});
+
+		const id = await useJobApplicationStore
+			.getState()
+			.createJobApplication("Flex", "Founding Engineer", "Remote", "url", "desc");
+
+		const app = useJobApplicationStore
+			.getState()
+			.jobApplications.find((a: any) => a.id === id);
+		expect(app?.sourceResumeId).toBeNull(); // not yet snapshotted
+
+		const warnings = useJobApplicationStore.getState().validatePipeline();
+		expect(warnings[id]).toBeUndefined();
+	});
+
 	it("recovery actions work as expected and never mutate the original default resume", async () => {
 		const resumeId = "resume-1";
 		const mockResume = {
