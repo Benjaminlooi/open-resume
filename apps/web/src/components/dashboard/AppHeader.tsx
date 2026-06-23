@@ -1,9 +1,20 @@
 import { Link } from "@tanstack/react-router";
 import { GlobalSettingsModal } from "#/components/editor/GlobalSettingsModal";
 
-export default function DashboardHeader() {
+/**
+ * Shared app-wide header.
+ *
+ * Rendered once from the root layout (`__root.tsx`), so every route inherits
+ * consistent navigation (My Resumes / Jobs Tracker / My Profile) and the global
+ * AI-settings modal. The landing page (`/`) keeps its own marketing hero below
+ * this header; the resume editor adds a second `<EditorToolbar />` row.
+ *
+ * Uses `sticky top-0` so the header is in normal flow (reserves its own height,
+ * no magic padding-top offsets anywhere) while still pinning on scroll.
+ */
+export default function AppHeader() {
 	return (
-		<header className="fixed left-0 top-0 z-20 mx-auto flex h-[70px] w-full items-center border-b-4 border-border bg-secondary-background px-5 print:hidden">
+		<header className="sticky top-0 z-20 mx-auto flex h-[70px] w-full items-center border-b-4 border-border bg-secondary-background px-5 print:hidden">
 			<div className="mx-auto flex w-[1300px] text-foreground max-w-full items-center justify-between">
 				<div className="flex items-center gap-6 md:gap-10">
 					<Link

@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import CertificationsForm from "#/components/editor/CertificationsForm";
 import DemoTemplate from "#/components/editor/DemoTemplate";
-import EditorHeader from "#/components/editor/EditorHeader";
+import EditorToolbar from "#/components/editor/EditorToolbar";
 import EducationForm from "#/components/editor/EducationForm";
 import ExperienceForm from "#/components/editor/ExperienceForm";
 import LanguagesForm from "#/components/editor/LanguagesForm";
@@ -20,7 +20,7 @@ import {
 import { useResumeIndexStore } from "#/lib/resume-index-store";
 import { useResumeStore } from "#/lib/resume-store";
 
-export const Route = createFileRoute("/editor/$id")({
+export const Route = createFileRoute("/_app/editor/$id")({
 	component: RouteComponent,
 });
 
@@ -117,12 +117,10 @@ function RouteComponent() {
 	};
 
 	return (
-		<>
-			<div className="print:hidden">
-				<EditorHeader />
-			</div>
-			<main className="flex h-screen w-full flex-col overflow-hidden pt-[70px] print:hidden">
-				<div className="flex-1 overflow-hidden p-4 md:p-6 lg:p-8">
+		<div className="flex h-[calc(100vh-70px)] w-full flex-col overflow-hidden">
+			<EditorToolbar />
+			<main className="flex flex-1 min-h-0 w-full flex-col overflow-hidden print:hidden">
+				<div className="flex-1 min-h-0 overflow-hidden p-4 md:p-6 lg:p-8">
 					<ResizablePanelGroup
 						direction="horizontal"
 						className="h-full w-full rounded-base border-2 border-border bg-main text-main-foreground shadow-shadow"
@@ -171,6 +169,6 @@ function RouteComponent() {
 			<div className="hidden print:block w-[210mm] bg-white">
 				<DemoTemplate />
 			</div>
-		</>
+		</div>
 	);
 }

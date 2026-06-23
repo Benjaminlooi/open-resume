@@ -9,7 +9,7 @@ import { useJobApplicationStore } from "#/features/job-postings/job-application-
 import { useJobPostingStore } from "#/features/job-postings/job-posting-store";
 import { useResumeIndexStore } from "#/lib/resume-index-store";
 
-export const Route = createFileRoute("/jobs/")({
+export const Route = createFileRoute("/_app/jobs/")({
 	component: JobsDashboard,
 });
 
@@ -105,7 +105,7 @@ function JobsDashboard() {
 	];
 
 	return (
-		<main className="container mx-auto p-8 pt-[100px] text-[#082F49]">
+		<main className="mx-auto max-w-[1300px] p-8 text-[#082F49]">
 			<div className="mb-8 flex flex-wrap items-center justify-between gap-4">
 				<div>
 					<h1 className="text-4xl font-heading">Jobs Tracker</h1>

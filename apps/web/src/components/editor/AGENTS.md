@@ -15,7 +15,7 @@ editor/
 ├── CertificationsForm.tsx   # Certifications
 ├── LanguagesForm.tsx        # Languages
 ├── SectionList.tsx          # Section navigation sidebar
-├── EditorHeader.tsx         # Save, preview, settings toolbar
+├── EditorToolbar.tsx        # Resume-name, template, import/export/PDF toolbar (editor-only)
 ├── NewResumeModal.tsx       # Create resume dialog
 ├── GlobalSettingsModal.tsx  # Theme, templates, AI settings
 ├── InteractiveAIPromptModal.tsx  # AI-assisted editing modal

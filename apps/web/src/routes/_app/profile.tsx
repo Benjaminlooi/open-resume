@@ -15,7 +15,6 @@ import {
 	User,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import DashboardHeader from "#/components/dashboard/DashboardHeader";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
 import { Label } from "#/components/ui/label";
@@ -30,7 +29,7 @@ import {
 import { useResumeIndexStore } from "#/lib/resume-index-store";
 import { getResumeData } from "#/lib/resume-store";
 
-export const Route = createFileRoute("/profile")({
+export const Route = createFileRoute("/_app/profile")({
 	component: ProfileDashboard,
 });
 
@@ -324,10 +323,8 @@ function ProfileDashboard() {
 	];
 
 	return (
-		<>
-			<DashboardHeader />
-			<main className="container mx-auto p-8 pt-[100px] text-[#082F49] max-w-[1300px]">
-				{/* Top Hero Heading */}
+		<main className="container mx-auto p-8 text-[#082F49] max-w-[1300px]">
+			{/* Top Hero Heading */}
 				<div className="mb-8 flex flex-wrap items-center justify-between gap-4">
 					<div>
 						<h1 className="text-4xl font-heading">My Profile</h1>
@@ -1239,8 +1236,7 @@ function ProfileDashboard() {
 							</div>
 						</div>
 					</div>
-				)}
-			</main>
-		</>
+			)}
+		</main>
 	);
 }

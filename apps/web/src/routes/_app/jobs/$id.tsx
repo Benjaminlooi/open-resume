@@ -14,7 +14,7 @@ import ResumeTailoringStep from "#/features/job-postings/components/ResumeTailor
 import type { JobApplicationStatus } from "#/features/job-postings/job-application-schema";
 import { useJobApplicationStore } from "#/features/job-postings/job-application-store";
 
-export const Route = createFileRoute("/jobs/$id")({
+export const Route = createFileRoute("/_app/jobs/$id")({
 	component: JobWorkspace,
 });
 
@@ -80,7 +80,7 @@ function JobWorkspace() {
 
 	if (!application) {
 		return (
-			<main className="container mx-auto p-8 pt-[100px] text-[#082F49]">
+			<main className="mx-auto max-w-[1300px] p-8 text-[#082F49]">
 				<div className="bg-red-100 text-red-900 border-2 border-border rounded-base p-6 text-sm font-bold flex flex-col gap-4 max-w-xl mx-auto shadow-shadow">
 					<div className="flex gap-2 items-center text-lg font-heading">
 						<AlertCircle className="size-6 shrink-0" />
@@ -124,7 +124,7 @@ function JobWorkspace() {
 	const ActiveStepComponent = STEPS[activeStep].component;
 
 	return (
-		<main className="container mx-auto p-4 md:p-8 pt-[100px] text-[#082F49] flex flex-col gap-6 max-w-6xl">
+		<main className="mx-auto max-w-[1300px] p-4 md:p-8 text-[#082F49] flex flex-col gap-6">
 			{/* Back Link */}
 			<div>
 				<Link
