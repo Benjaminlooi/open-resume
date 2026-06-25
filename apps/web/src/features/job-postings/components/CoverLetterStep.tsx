@@ -7,11 +7,14 @@ import {
 	Sparkles,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { generateCoverLetter } from "#/features/job-postings/job-ai";
+import {
+	generateCoverLetter,
+	getProviderConfig,
+} from "#/features/job-postings/job-ai";
 import { useJobApplicationStore } from "#/features/job-postings/job-application-store";
 import { useResumeIndexStore } from "#/lib/resume-index-store";
 import { getResumeData } from "#/lib/resume-store";
-import { useSettingsStore } from "#/lib/settings-store";
+import StepShell from "./StepShell";
 
 interface CoverLetterStepProps {
 	applicationId: string;
@@ -40,10 +43,13 @@ export default function CoverLetterStep({
 	}, [coverLetterDraft]);
 
 	if (!application) {
+		// StepShell renders the "not found" state when the application is missing.
 		return (
-			<div className="bg-red-100 text-red-900 border-2 border-border rounded-base p-4 text-sm font-bold">
-				Job application not found.
-			</div>
+			<StepShell
+				applicationId={applicationId}
+				stepId="cover-letter"
+				title="Cover Letter"
+			/>
 		);
 	}
 
@@ -77,14 +83,7 @@ export default function CoverLetterStep({
 				);
 			}
 
-			const { defaultProvider, apiKeys, baseUrls, selectedModels } =
-				useSettingsStore.getState();
-			const providerConfig = {
-				provider: defaultProvider,
-				apiKey: apiKeys[defaultProvider],
-				baseUrl: baseUrls[defaultProvider],
-				modelName: selectedModels[defaultProvider],
-			};
+			const providerConfig = getProviderConfig();
 
 			const draft = await generateCoverLetter(
 				providerConfig,
@@ -93,9 +92,13 @@ export default function CoverLetterStep({
 				finalResume,
 			);
 			saveCoverLetterDraft(applicationId, draft);
-		} catch (err: any) {
+		} catch (err) {
 			console.error(err);
-			setError(err.message || "Failed to generate cover letter.");
+			setError(
+				err instanceof Error
+					? err.message
+					: "Failed to generate cover letter.",
+			);
 		} finally {
 			setIsGenerating(false);
 		}
@@ -122,18 +125,12 @@ export default function CoverLetterStep({
 	};
 
 	return (
-		<div className="bg-white border-2 border-border rounded-base p-6 shadow-shadow text-[#082F49] flex flex-col gap-6">
-			<div className="flex justify-between items-center border-b-2 border-border pb-4">
-				<div>
-					<h2 className="text-2xl font-heading">Cover Letter</h2>
-					<p className="text-sm text-muted-foreground mt-1">
-						Generate a tailored cover letter based on your experience and the
-						role fit analysis.
-					</p>
-				</div>
-				<p className="text-sm text-muted-foreground">Step 4 of 5</p>
-			</div>
-
+		<StepShell
+			applicationId={applicationId}
+			stepId="cover-letter"
+			title="Cover Letter"
+			subtitle="Generate a tailored cover letter based on your experience and the role fit analysis."
+		>
 			{error && (
 				<div className="bg-red-100 text-red-900 border-2 border-border rounded-base p-4 text-sm font-bold flex gap-2 items-center">
 					<AlertTriangle className="size-5 shrink-0" />
@@ -237,6 +234,6 @@ export default function CoverLetterStep({
 					</div>
 				</div>
 			)}
-		</div>
+		</StepShell>
 	);
 }

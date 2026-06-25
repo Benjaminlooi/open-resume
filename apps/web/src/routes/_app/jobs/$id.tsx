@@ -1,63 +1,47 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
 	AlertCircle,
 	ArrowLeft,
+	Check,
 	ChevronLeft,
 	ChevronRight,
+	Dot,
+	Lock,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import ApplicationTrackerStep from "#/features/job-postings/components/ApplicationTrackerStep";
-import CoverLetterStep from "#/features/job-postings/components/CoverLetterStep";
-import FitBriefStep from "#/features/job-postings/components/FitBriefStep";
-import JobDetailsStep from "#/features/job-postings/components/JobDetailsStep";
-import ResumeTailoringStep from "#/features/job-postings/components/ResumeTailoringStep";
-import type { JobApplicationStatus } from "#/features/job-postings/job-application-schema";
+import {
+	formatStatus,
+	getStatusBadgeStyle,
+} from "#/features/job-postings/job-application-status";
 import { useJobApplicationStore } from "#/features/job-postings/job-application-store";
+import { computePipelineProgress } from "#/features/job-postings/pipeline-progress";
+import {
+	DEFAULT_STEP_ID,
+	type PipelineStepId,
+	PIPELINE_STEPS,
+	normaliseStepId,
+	stepIdToIndex,
+	stepIndexToId,
+} from "#/features/job-postings/pipeline-steps";
+import { useResumeIndexStore } from "#/lib/resume-index-store";
 
 export const Route = createFileRoute("/_app/jobs/$id")({
+	validateSearch: (search: Record<string, unknown>): {
+		step?: PipelineStepId;
+	} => ({
+		step: normaliseStepId(search.step),
+	}),
 	component: JobWorkspace,
 });
 
-const STEPS = [
-	{ name: "Job Details", component: JobDetailsStep },
-	{ name: "Fit Analysis", component: FitBriefStep },
-	{ name: "Resume Tailoring", component: ResumeTailoringStep },
-	{ name: "Cover Letter", component: CoverLetterStep },
-	{ name: "Final Tracker", component: ApplicationTrackerStep },
-];
-
-const getStatusBadgeStyle = (status: JobApplicationStatus) => {
-	switch (status) {
-		case "saved":
-			return "bg-slate-100 text-slate-800 border-slate-300";
-		case "analyzing":
-			return "bg-purple-100 text-purple-800 border-purple-300";
-		case "tailoring":
-			return "bg-amber-100 text-amber-800 border-amber-300";
-		case "applied":
-			return "bg-blue-100 text-blue-800 border-blue-300";
-		case "interviewing":
-			return "bg-emerald-100 text-emerald-800 border-emerald-300";
-		case "offer":
-			return "bg-rose-100 text-rose-800 border-rose-300 font-bold";
-		case "rejected":
-			return "bg-red-100 text-red-800 border-red-300";
-		case "archived":
-			return "bg-zinc-100 text-zinc-800 border-zinc-300";
-		default:
-			return "bg-gray-100 text-gray-800 border-gray-300";
-	}
-};
-
-const formatStatus = (status: JobApplicationStatus) => {
-	return status.charAt(0).toUpperCase() + status.slice(1);
-};
-
 function JobWorkspace() {
 	const { id } = Route.useParams();
+	const { step } = Route.useSearch();
+	const navigate = useNavigate();
+
 	const { jobApplications, validatePipeline, loadJobApplications } =
 		useJobApplicationStore();
-	const [activeStep, setActiveStep] = useState(0);
+	const defaultResumeId = useResumeIndexStore((s) => s.defaultResumeId);
 	const [isMounted, setIsMounted] = useState(false);
 
 	useEffect(() => {
@@ -102,26 +86,27 @@ function JobWorkspace() {
 		);
 	}
 
-	const warnings = validatePipeline();
-	const jobWarnings = warnings[id] || [];
+	const activeStepId: PipelineStepId = step ?? DEFAULT_STEP_ID;
+	const activeStepIndex = stepIdToIndex(activeStepId);
+	const ActiveStepComponent = PIPELINE_STEPS[activeStepIndex].component;
 
-	const getNextActionMessage = () => {
-		if (!application.fitBrief) {
-			return "Next Action: Generate Fit Analysis (Step 2)";
-		}
-		if (!application.tailoredResume) {
-			return "Next Action: Start Tailoring (Step 3)";
-		}
-		if (application.resumeEditProposals.length === 0) {
-			return "Next Action: Generate Tailoring Proposals (Step 3)";
-		}
-		if (!application.coverLetterDraft) {
-			return "Next Action: Generate Cover Letter (Step 4)";
-		}
-		return "Next Action: Submit Application & Update Status (Step 5)";
+	const goToStep = (index: number) => {
+		navigate({
+			to: "/jobs/$id",
+			params: { id },
+			search: { step: stepIndexToId(index) },
+		});
 	};
 
-	const ActiveStepComponent = STEPS[activeStep].component;
+	// Single source of truth for progress: sidebar badges + next-action bar both
+	// read from this. Display only — does not write the persisted `status`.
+	const progress = computePipelineProgress(
+		application,
+		defaultResumeId !== null,
+	);
+
+	const warnings = validatePipeline();
+	const jobWarnings = warnings[id] || [];
 
 	return (
 		<main className="mx-auto max-w-[1300px] p-4 md:p-8 text-[#082F49] flex flex-col gap-6">
@@ -171,21 +156,25 @@ function JobWorkspace() {
 			<div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
 				{/* Navigation sidebar */}
 				<div className="lg:col-span-1 flex flex-col gap-2">
-					{STEPS.map((step, index) => {
-						const isActive = activeStep === index;
+					{PIPELINE_STEPS.map((pipelineStep, index) => {
+						const isActive = activeStepIndex === index;
+						const stepProgress = progress.steps[pipelineStep.id];
 						return (
 							<button
-								key={index}
+								key={pipelineStep.id}
 								type="button"
-								onClick={() => setActiveStep(index)}
-								className={`w-full text-left px-4 py-3 rounded-base border-2 font-bold text-sm transition-all cursor-pointer ${
+								onClick={() => goToStep(index)}
+								className={`w-full text-left px-4 py-3 rounded-base border-2 font-bold text-sm transition-all cursor-pointer flex items-center justify-between gap-2 ${
 									isActive
 										? "bg-[#38BDF8] text-[#082F49] border-border shadow-shadow"
 										: "bg-white text-muted-foreground border-border/60 hover:border-border hover:shadow-light"
 								}`}
 							>
-								<span className="mr-2 text-xs opacity-65">{index + 1}.</span>
-								{step.name}
+								<span className="flex items-center gap-1.5 min-w-0">
+									<span className="text-xs opacity-65">{index + 1}.</span>
+									<span className="truncate">{pipelineStep.name}</span>
+								</span>
+								<StepStatusGlyph status={stepProgress.status} />
 							</button>
 						);
 					})}
@@ -200,14 +189,14 @@ function JobWorkspace() {
 			{/* Bottom Bar Navigation */}
 			<div className="border-2 border-border rounded-base p-4 bg-white shadow-shadow flex flex-col sm:flex-row justify-between items-center gap-4">
 				<div className="text-sm font-bold text-[#082F49] bg-main/10 border-2 border-main/20 px-3 py-1.5 rounded-base">
-					{getNextActionMessage()}
+					Next Action: {progress.nextAction}
 				</div>
 
 				<div className="flex gap-3">
 					<button
 						type="button"
-						disabled={activeStep === 0}
-						onClick={() => setActiveStep((prev) => prev - 1)}
+						disabled={activeStepIndex === 0}
+						onClick={() => goToStep(activeStepIndex - 1)}
 						className="inline-flex h-10 items-center gap-1.5 border-2 border-border bg-white px-4 py-2 font-bold text-sm rounded-base shadow-light transition-all hover:translate-x-boxShadowX hover:translate-y-boxShadowY hover:shadow-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
 					>
 						<ChevronLeft className="size-4" />
@@ -216,8 +205,8 @@ function JobWorkspace() {
 
 					<button
 						type="button"
-						disabled={activeStep === STEPS.length - 1}
-						onClick={() => setActiveStep((prev) => prev + 1)}
+						disabled={activeStepIndex === PIPELINE_STEPS.length - 1}
+						onClick={() => goToStep(activeStepIndex + 1)}
 						className="inline-flex h-10 items-center gap-1.5 border-2 border-border bg-white px-4 py-2 font-bold text-sm rounded-base shadow-light transition-all hover:translate-x-boxShadowX hover:translate-y-boxShadowY hover:shadow-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
 					>
 						Next Step
@@ -227,4 +216,40 @@ function JobWorkspace() {
 			</div>
 		</main>
 	);
+}
+
+/**
+ * Compact progress indicator rendered at the trailing edge of each sidebar
+ * nav button. Conveys at a glance which steps are done, in-flight, or blocked.
+ */
+function StepStatusGlyph({
+	status,
+}: {
+	status: "pending" | "blocked" | "in-progress" | "complete";
+}) {
+	switch (status) {
+		case "complete":
+			return (
+				<Check
+					className="size-4 text-emerald-700 shrink-0"
+					title="Complete"
+				/>
+			);
+		case "in-progress":
+			return (
+				<Dot
+					className="size-5 text-amber-500 shrink-0"
+					title="In progress"
+				/>
+			);
+		case "blocked":
+			return (
+				<Lock
+					className="size-3.5 text-slate-400 shrink-0"
+					title="Blocked by a previous step"
+				/>
+			);
+		default:
+			return null;
+	}
 }

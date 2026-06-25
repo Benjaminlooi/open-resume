@@ -6,11 +6,14 @@ import {
 	Sparkles,
 } from "lucide-react";
 import { useState } from "react";
-import { generateJobFitBrief } from "#/features/job-postings/job-ai";
+import {
+	generateJobFitBrief,
+	getProviderConfig,
+} from "#/features/job-postings/job-ai";
 import { useJobApplicationStore } from "#/features/job-postings/job-application-store";
 import { useResumeIndexStore } from "#/lib/resume-index-store";
 import { getResumeData } from "#/lib/resume-store";
-import { useSettingsStore } from "#/lib/settings-store";
+import StepShell from "./StepShell";
 
 interface FitBriefStepProps {
 	applicationId: string;
@@ -24,10 +27,13 @@ export default function FitBriefStep({ applicationId }: FitBriefStepProps) {
 	const [error, setError] = useState<string | null>(null);
 
 	if (!application) {
+		// StepShell renders the "not found" state when the application is missing.
 		return (
-			<div className="bg-red-100 text-red-900 border-2 border-border rounded-base p-4 text-sm font-bold">
-				Job application not found.
-			</div>
+			<StepShell
+				applicationId={applicationId}
+				stepId="fit"
+				title="Fit Analysis"
+			/>
 		);
 	}
 
@@ -50,15 +56,7 @@ export default function FitBriefStep({ applicationId }: FitBriefStepProps) {
 				);
 			}
 
-			// Get active provider config from settings store
-			const { defaultProvider, apiKeys, baseUrls, selectedModels } =
-				useSettingsStore.getState();
-			const providerConfig = {
-				provider: defaultProvider,
-				apiKey: apiKeys[defaultProvider],
-				baseUrl: baseUrls[defaultProvider],
-				modelName: selectedModels[defaultProvider],
-			};
+			const providerConfig = getProviderConfig();
 
 			const fitBrief = await generateJobFitBrief(
 				providerConfig,
@@ -67,9 +65,13 @@ export default function FitBriefStep({ applicationId }: FitBriefStepProps) {
 			);
 			saveFitBrief(applicationId, fitBrief);
 			setStatus(applicationId, "analyzing");
-		} catch (err: any) {
+		} catch (err) {
 			console.error(err);
-			setError(err.message || "Failed to generate fit analysis.");
+			setError(
+				err instanceof Error
+					? err.message
+					: "Failed to generate fit analysis.",
+			);
 		} finally {
 			setIsGenerating(false);
 		}
@@ -78,18 +80,12 @@ export default function FitBriefStep({ applicationId }: FitBriefStepProps) {
 	const { fitBrief } = application;
 
 	return (
-		<div className="bg-white border-2 border-border rounded-base p-6 shadow-shadow text-[#082F49] flex flex-col gap-6">
-			<div className="flex justify-between items-center border-b-2 border-border pb-4">
-				<div>
-					<h2 className="text-2xl font-heading">Fit Analysis</h2>
-					<p className="text-sm text-muted-foreground mt-1">
-						Analyze how well your default resume aligns with the job
-						description.
-					</p>
-				</div>
-				<p className="text-sm text-muted-foreground">Step 2 of 5</p>
-			</div>
-
+		<StepShell
+			applicationId={applicationId}
+			stepId="fit"
+			title="Fit Analysis"
+			subtitle="Analyze how well your default resume aligns with the job description."
+		>
 			{error && (
 				<div className="bg-red-100 text-red-900 border-2 border-border rounded-base p-4 text-sm font-bold flex gap-2 items-center">
 					<AlertTriangle className="size-5 shrink-0" />
@@ -277,10 +273,10 @@ export default function FitBriefStep({ applicationId }: FitBriefStepProps) {
 									Regenerate Analysis
 								</>
 							)}
-						</button>
-					</div>
+					</button>
 				</div>
-			)}
-		</div>
+			</div>
+		)}
+		</StepShell>
 	);
 }
