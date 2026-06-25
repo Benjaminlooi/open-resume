@@ -3,6 +3,7 @@ import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createOpenAI } from "@ai-sdk/openai";
 import { generateText } from "ai";
 import type { Resume } from "#/lib/resume-schema";
+import { useSettingsStore } from "#/lib/settings-store";
 import type { AIProvider } from "#/lib/settings-store";
 import {
 	type CoverLetterDraft,
@@ -19,6 +20,25 @@ export interface ProviderConfig {
 	apiKey?: string;
 	baseUrl?: string;
 	modelName?: string;
+}
+
+/**
+ * Build the active AI provider config from the settings store.
+ *
+ * Reads via `getState()` rather than a hook subscription so it can be called
+ * from event handlers (where the three pipeline steps previously duplicated
+ * this block) and stays compatible with the test mock that treats
+ * `useSettingsStore` as a plain object exposing `getState()`.
+ */
+export function getProviderConfig(): ProviderConfig {
+	const { defaultProvider, apiKeys, baseUrls, selectedModels } =
+		useSettingsStore.getState();
+	return {
+		provider: defaultProvider,
+		apiKey: apiKeys[defaultProvider],
+		baseUrl: baseUrls[defaultProvider],
+		modelName: selectedModels[defaultProvider],
+	};
 }
 
 /**

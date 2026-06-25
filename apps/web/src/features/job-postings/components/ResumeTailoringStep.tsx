@@ -8,7 +8,10 @@ import {
 	X,
 } from "lucide-react";
 import { useState } from "react";
-import { generateResumeTailoring } from "#/features/job-postings/job-ai";
+import {
+	generateResumeTailoring,
+	getProviderConfig,
+} from "#/features/job-postings/job-ai";
 import {
 	downloadFile,
 	exportApplicationPacketToJson,
@@ -19,7 +22,7 @@ import type { ResumeEditTarget } from "#/features/job-postings/job-application-s
 import { useJobApplicationStore } from "#/features/job-postings/job-application-store";
 import { useResumeIndexStore } from "#/lib/resume-index-store";
 import type { Resume } from "#/lib/resume-schema";
-import { useSettingsStore } from "#/lib/settings-store";
+import StepShell from "./StepShell";
 import TailoredResumePreview from "./TailoredResumePreview";
 
 interface ResumeTailoringStepProps {
@@ -51,10 +54,13 @@ export default function ResumeTailoringStep({
 	);
 
 	if (!application) {
+		// StepShell renders the "not found" state when the application is missing.
 		return (
-			<div className="bg-red-100 text-red-900 border-2 border-border rounded-base p-4 text-sm font-bold">
-				Job application not found.
-			</div>
+			<StepShell
+				applicationId={applicationId}
+				stepId="tailoring"
+				title="Resume Tailoring"
+			/>
 		);
 	}
 
@@ -94,14 +100,7 @@ export default function ResumeTailoringStep({
 		setError(null);
 
 		try {
-			const { defaultProvider, apiKeys, baseUrls, selectedModels } =
-				useSettingsStore.getState();
-			const providerConfig = {
-				provider: defaultProvider,
-				apiKey: apiKeys[defaultProvider],
-				baseUrl: baseUrls[defaultProvider],
-				modelName: selectedModels[defaultProvider],
-			};
+			const providerConfig = getProviderConfig();
 
 			const proposals = await generateResumeTailoring(
 				providerConfig,
@@ -186,17 +185,12 @@ export default function ResumeTailoringStep({
 	};
 
 	return (
-		<div className="bg-white border-2 border-border rounded-base p-6 shadow-shadow text-[#082F49] flex flex-col gap-6">
-			<div className="flex justify-between items-center border-b-2 border-border pb-4">
-				<div>
-					<h2 className="text-2xl font-heading">Resume Tailoring</h2>
-					<p className="text-sm text-muted-foreground mt-1">
-						Create a tailored version of your resume by reviewing and approving
-						specific AI proposals.
-					</p>
-				</div>
-				<p className="text-sm text-muted-foreground">Step 3 of 5</p>
-			</div>
+		<StepShell
+			applicationId={applicationId}
+			stepId="tailoring"
+			title="Resume Tailoring"
+			subtitle="Create a tailored version of your resume by reviewing and approving specific AI proposals."
+		>
 
 			{error && (
 				<div className="bg-red-100 text-red-900 border-2 border-border rounded-base p-4 text-sm font-bold flex gap-2 items-center">
@@ -509,6 +503,6 @@ export default function ResumeTailoringStep({
 					)}
 				</div>
 			)}
-		</div>
+		</StepShell>
 	);
 }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { JobApplicationStatus } from "#/features/job-postings/job-application-schema";
 import { useJobApplicationStore } from "#/features/job-postings/job-application-store";
+import StepShell from "./StepShell";
 
 interface ApplicationTrackerStepProps {
 	applicationId: string;
@@ -55,10 +56,13 @@ export default function ApplicationTrackerStep({
 	}, [application]);
 
 	if (!application) {
+		// StepShell renders the "not found" state when the application is missing.
 		return (
-			<div className="bg-red-100 text-red-900 border-2 border-border rounded-base p-4 text-sm font-bold">
-				Job application not found.
-			</div>
+			<StepShell
+				applicationId={applicationId}
+				stepId="tracker"
+				title="Application Tracker"
+			/>
 		);
 	}
 
@@ -88,18 +92,12 @@ export default function ApplicationTrackerStep({
 	};
 
 	return (
-		<div className="bg-white border-2 border-border rounded-base p-6 shadow-shadow text-[#082F49] flex flex-col gap-6">
-			<div className="flex justify-between items-center border-b-2 border-border pb-4">
-				<div>
-					<h2 className="text-2xl font-heading">Application Tracker</h2>
-					<p className="text-sm text-muted-foreground mt-1">
-						Update the tracking status, follow-up reminders, and general
-						interview notes.
-					</p>
-				</div>
-				<p className="text-sm text-muted-foreground">Step 5 of 5</p>
-			</div>
-
+		<StepShell
+			applicationId={applicationId}
+			stepId="tracker"
+			title="Application Tracker"
+			subtitle="Update the tracking status, follow-up reminders, and general interview notes."
+		>
 			{isSaved && (
 				<div className="bg-green-100 text-green-900 border-2 border-border rounded-base p-3 text-sm font-bold">
 					Tracker changes saved successfully!
@@ -164,6 +162,6 @@ export default function ApplicationTrackerStep({
 					</button>
 				</div>
 			</form>
-		</div>
+		</StepShell>
 	);
 }

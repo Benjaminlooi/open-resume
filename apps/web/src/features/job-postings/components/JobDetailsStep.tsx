@@ -1,5 +1,6 @@
 import { type FormEvent, useEffect, useState } from "react";
 import { useJobApplicationStore } from "#/features/job-postings/job-application-store";
+import StepShell from "./StepShell";
 
 interface JobDetailsStepProps {
 	applicationId: string;
@@ -29,14 +30,6 @@ export default function JobDetailsStep({ applicationId }: JobDetailsStepProps) {
 		}
 	}, [application]);
 
-	if (!application) {
-		return (
-			<div className="bg-red-100 text-red-900 border-2 border-border rounded-base p-4 text-sm font-bold">
-				Job application not found.
-			</div>
-		);
-	}
-
 	const handleSubmit = (e: FormEvent) => {
 		e.preventDefault();
 		setError("");
@@ -65,12 +58,11 @@ export default function JobDetailsStep({ applicationId }: JobDetailsStepProps) {
 	};
 
 	return (
-		<div className="bg-white border-2 border-border rounded-base p-6 shadow-shadow text-[#082F49] flex flex-col gap-4">
-			<div className="flex justify-between items-center border-b-2 border-border pb-4">
-				<h2 className="text-2xl font-heading">Job Details</h2>
-				<p className="text-sm text-muted-foreground">Step 1 of 5</p>
-			</div>
-
+		<StepShell
+			applicationId={applicationId}
+			stepId="details"
+			title="Job Details"
+		>
 			{error && (
 				<div className="bg-red-100 text-red-900 border-2 border-border rounded-base p-3 text-sm font-bold">
 					{error}
@@ -157,6 +149,6 @@ export default function JobDetailsStep({ applicationId }: JobDetailsStepProps) {
 					</button>
 				</div>
 			</form>
-		</div>
+		</StepShell>
 	);
 }
