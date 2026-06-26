@@ -17,12 +17,14 @@ vi.mock("@tanstack/react-router", () => ({
 	useNavigate: () => mockNavigate,
 }));
 
-vi.mock("#/features/job-postings/job-application-store", () => ({
-	useJobApplicationStore: (selector?: (state: any) => any) => {
+vi.mock("#/lib/root-store", () => ({
+	useRootStore: (selector: (state: any) => any) => {
 		const state = {
-			createJobApplication: mockCreateJobApplication,
+			jobApplication: {
+				createJobApplication: mockCreateJobApplication,
+			},
 		};
-		return selector ? selector(state) : state;
+		return selector(state);
 	},
 }));
 

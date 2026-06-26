@@ -29,81 +29,83 @@ const mockApplication: JobApplication = {
 	updatedAt: 2000,
 };
 
-let currentApp = { ...mockApplication };
+let mockCurrentApp = { ...mockApplication };
 
-vi.mock("#/features/job-postings/job-application-store", () => ({
-	useJobApplicationStore: (selector?: (state: any) => any) => {
+vi.mock("#/lib/root-store", () => {
+	const getJobApplicationState = () => ({
+		jobApplications: [mockCurrentApp],
+		updateJobApplication: vi.fn((_id, updates) => {
+			mockCurrentApp = { ...mockCurrentApp, ...updates };
+		}),
+		setStatus: vi.fn((_id, status) => {
+			mockCurrentApp = { ...mockCurrentApp, status };
+		}),
+		saveFitBrief: vi.fn((_id, fitBrief) => {
+			mockCurrentApp = { ...mockCurrentApp, fitBrief };
+		}),
+		ensureTailoredResume: vi.fn((_id) => {
+			mockCurrentApp = {
+				...mockCurrentApp,
+				tailoredResume: {
+					summary: "Tailored summary",
+					experience: [],
+					education: [],
+					skills: [],
+					projects: [],
+					certifications: [],
+					languages: [],
+				} as any,
+			};
+		}),
+		saveResumeEditProposals: vi.fn((_id, proposals) => {
+			mockCurrentApp = { ...mockCurrentApp, resumeEditProposals: proposals };
+		}),
+		applyResumeEditProposal: vi.fn(),
+		rejectResumeEditProposal: vi.fn(),
+		saveCoverLetterDraft: vi.fn((_id, draft) => {
+			mockCurrentApp = { ...mockCurrentApp, coverLetterDraft: draft };
+		}),
+	});
+
+	const useRootStoreMock = (selector: (state: any) => any) => {
 		const state = {
-			jobApplications: [currentApp],
-			updateJobApplication: vi.fn((_id, updates) => {
-				currentApp = { ...currentApp, ...updates };
-			}),
-			setStatus: vi.fn((_id, status) => {
-				currentApp = { ...currentApp, status };
-			}),
-			saveFitBrief: vi.fn((_id, fitBrief) => {
-				currentApp = { ...currentApp, fitBrief };
-			}),
-			ensureTailoredResume: vi.fn((_id) => {
-				currentApp = {
-					...currentApp,
-					tailoredResume: {
-						summary: "Tailored summary",
-						experience: [],
-						education: [],
-						skills: [],
-						projects: [],
-						certifications: [],
-						languages: [],
-					} as any,
-				};
-			}),
-			saveResumeEditProposals: vi.fn((_id, proposals) => {
-				currentApp = { ...currentApp, resumeEditProposals: proposals };
-			}),
-			applyResumeEditProposal: vi.fn(),
-			rejectResumeEditProposal: vi.fn(),
-			saveCoverLetterDraft: vi.fn((_id, draft) => {
-				currentApp = { ...currentApp, coverLetterDraft: draft };
-			}),
+			resumeIndex: {
+				defaultResumeId: "res-1",
+				resumes: [{ id: "res-1", name: "My Default Resume" }],
+			},
+			jobApplication: getJobApplicationState(),
 		};
-		return selector ? selector(state) : state;
-	},
-}));
+		return selector(state);
+	};
 
-vi.mock("#/lib/resume-index-store", () => ({
-	useResumeIndexStore: (selector?: (state: any) => any) => {
-		const state = {
+	useRootStoreMock.getState = () => ({
+		resumeIndex: {
 			defaultResumeId: "res-1",
 			resumes: [{ id: "res-1", name: "My Default Resume" }],
-		};
-		return selector ? selector(state) : state;
-	},
-}));
-
-vi.mock("#/lib/settings-store", () => ({
-	useSettingsStore: {
-		getState: () => ({
+		},
+		jobApplication: getJobApplicationState(),
+		settings: {
 			defaultProvider: "openai",
 			apiKeys: { openai: "mock-key" },
 			baseUrls: {},
 			selectedModels: {},
-		}),
-	},
-}));
+		},
+	});
 
-vi.mock("#/lib/resume-store", () => ({
-	getResumeData: () =>
-		Promise.resolve({
-			id: "res-1",
-			name: "My Default Resume",
-			summary: "Default summary",
-			experience: [],
-			education: [],
-			skills: [],
-			projects: [],
-		}),
-}));
+	return {
+		getResumeData: () =>
+			Promise.resolve({
+				id: "res-1",
+				name: "My Default Resume",
+				summary: "Default summary",
+				experience: [],
+				education: [],
+				skills: [],
+				projects: [],
+			}),
+		useRootStore: useRootStoreMock,
+	};
+});
 
 vi.mock("#/features/job-postings/job-ai", () => ({
 	generateJobFitBrief: vi.fn(),
@@ -113,7 +115,7 @@ vi.mock("#/features/job-postings/job-ai", () => ({
 
 describe("Guided Workspace Step Components", () => {
 	beforeEach(() => {
-		currentApp = { ...mockApplication };
+		mockCurrentApp = { ...mockApplication };
 	});
 
 	describe("JobDetailsStep", () => {
@@ -141,7 +143,7 @@ describe("Guided Workspace Step Components", () => {
 		});
 
 		it("renders analysis data when fitBrief is present", () => {
-			currentApp.fitBrief = {
+			mockCurrentApp.fitBrief = {
 				roleSummary: "This is a great engineering role.",
 				requirements: ["5 years React", "TypeScript expertise"],
 				keywords: ["React", "TypeScript", "Tailwind"],
@@ -180,7 +182,7 @@ describe("Guided Workspace Step Components", () => {
 		});
 
 		it("renders empty proposals state when tailoredResume is set but no proposals exist", () => {
-			currentApp.tailoredResume = {
+			mockCurrentApp.tailoredResume = {
 				summary: "Default summary",
 				experience: [],
 				education: [],
@@ -196,14 +198,14 @@ describe("Guided Workspace Step Components", () => {
 		});
 
 		it("renders proposals list when proposals exist", () => {
-			currentApp.tailoredResume = {
+			mockCurrentApp.tailoredResume = {
 				summary: "Default summary",
 				experience: [],
 				education: [],
 				skills: [],
 				projects: [],
 			} as any;
-			currentApp.resumeEditProposals = [
+			mockCurrentApp.resumeEditProposals = [
 				{
 					id: "prop-1",
 					target: { section: "summary" },
@@ -238,7 +240,7 @@ describe("Guided Workspace Step Components", () => {
 		});
 
 		it("renders editor when coverLetterDraft is present", () => {
-			currentApp.coverLetterDraft = {
+			mockCurrentApp.coverLetterDraft = {
 				content: "Dear Hiring Manager, I am excited...",
 				generatedAt: 1000,
 				updatedAt: 1000,
