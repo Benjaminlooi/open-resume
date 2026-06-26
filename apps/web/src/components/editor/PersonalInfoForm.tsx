@@ -2,16 +2,20 @@ import { Plus, Trash2 } from "lucide-react";
 
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
-import { useResumeStore } from "#/lib/resume-store";
+import { useRootStore } from "#/lib/root-store";
 
 export default function PersonalInfoForm() {
-	const {
-		personalInfo,
-		updatePersonalInfo,
-		addContactLink,
-		updateContactLink,
-		deleteContactLink,
-	} = useResumeStore();
+	const personalInfo = useRootStore((state) => state.resume.personalInfo);
+	const updatePersonalInfo = useRootStore(
+		(state) => state.resume.updatePersonalInfo,
+	);
+	const addContactLink = useRootStore((state) => state.resume.addContactLink);
+	const updateContactLink = useRootStore(
+		(state) => state.resume.updateContactLink,
+	);
+	const deleteContactLink = useRootStore(
+		(state) => state.resume.deleteContactLink,
+	);
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const { name, value } = e.target;
 		updatePersonalInfo(

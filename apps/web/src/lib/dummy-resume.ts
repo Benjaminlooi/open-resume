@@ -1,5 +1,4 @@
-import type { Resume } from "./resume-schema";
-import type { EditorState } from "./resume-store";
+import type { EditorState, Resume } from "./resume-schema";
 
 export const dummyResumeData: Omit<
 	Resume,

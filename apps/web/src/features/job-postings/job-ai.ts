@@ -2,9 +2,8 @@ import { createAnthropic } from "@ai-sdk/anthropic";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createOpenAI } from "@ai-sdk/openai";
 import { generateText } from "ai";
+import { type AIProvider, useRootStore } from "#/lib/root-store";
 import type { Resume } from "#/lib/resume-schema";
-import { useSettingsStore } from "#/lib/settings-store";
-import type { AIProvider } from "#/lib/settings-store";
 import {
 	type CoverLetterDraft,
 	coverLetterDraftSchema,
@@ -23,16 +22,16 @@ export interface ProviderConfig {
 }
 
 /**
- * Build the active AI provider config from the settings store.
+ * Build the active AI provider config from the settings slice.
  *
  * Reads via `getState()` rather than a hook subscription so it can be called
  * from event handlers (where the three pipeline steps previously duplicated
- * this block) and stays compatible with the test mock that treats
- * `useSettingsStore` as a plain object exposing `getState()`.
+ * this block) and stays compatible with test mocks that treat the store as a
+ * plain object exposing `getState()`.
  */
 export function getProviderConfig(): ProviderConfig {
 	const { defaultProvider, apiKeys, baseUrls, selectedModels } =
-		useSettingsStore.getState();
+		useRootStore.getState().settings;
 	return {
 		provider: defaultProvider,
 		apiKey: apiKeys[defaultProvider],

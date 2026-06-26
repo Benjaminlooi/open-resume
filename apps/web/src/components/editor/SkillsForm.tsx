@@ -20,13 +20,14 @@ import { useState } from "react";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
 import { Textarea } from "#/components/ui/textarea";
-import { useResumeStore } from "#/lib/resume-store";
+import { useRootStore } from "#/lib/root-store";
 
 function SkillItem({ id }: { id: string }) {
 	const [isExpanded, setIsExpanded] = useState(false);
-	const { updateSkillGroup, deleteSkillGroup } = useResumeStore();
-	const skill = useResumeStore((state) =>
-		state.skills.find((s) => s.id === id),
+	const updateSkillGroup = useRootStore((state) => state.resume.updateSkillGroup);
+	const deleteSkillGroup = useRootStore((state) => state.resume.deleteSkillGroup);
+	const skill = useRootStore((state) =>
+		state.resume.skills.find((s) => s.id === id),
 	);
 
 	const { attributes, listeners, setNodeRef, transform, transition } =
@@ -121,7 +122,9 @@ function SkillItem({ id }: { id: string }) {
 }
 
 export default function SkillsForm() {
-	const { skills, reorderSkills, addSkillGroup } = useResumeStore();
+	const skills = useRootStore((state) => state.resume.skills);
+	const reorderSkills = useRootStore((state) => state.resume.reorderSkills);
+	const addSkillGroup = useRootStore((state) => state.resume.addSkillGroup);
 	const sensors = useSensors(
 		useSensor(PointerSensor, {
 			activationConstraint: {

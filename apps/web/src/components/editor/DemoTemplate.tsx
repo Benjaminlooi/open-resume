@@ -1,17 +1,18 @@
-import { type EditorState, useResumeStore } from "#/lib/resume-store";
+import type { EditorState } from "#/lib/resume-schema";
+import { useRootStore } from "#/lib/root-store";
 
 export default function DemoTemplate({ resume }: { resume?: EditorState }) {
-	const globalPersonalInfo = useResumeStore((state) => state.personalInfo);
-	const globalSummary = useResumeStore((state) => state.summary);
-	const globalSections = useResumeStore((state) => state.sections);
-	const globalExperience = useResumeStore((state) => state.experience);
-	const globalEducation = useResumeStore((state) => state.education);
-	const globalSkills = useResumeStore((state) => state.skills);
-	const globalProjects = useResumeStore((state) => state.projects || []);
-	const globalCertifications = useResumeStore(
-		(state) => state.certifications || [],
+	const globalPersonalInfo = useRootStore((state) => state.resume.personalInfo);
+	const globalSummary = useRootStore((state) => state.resume.summary);
+	const globalSections = useRootStore((state) => state.resume.sections);
+	const globalExperience = useRootStore((state) => state.resume.experience);
+	const globalEducation = useRootStore((state) => state.resume.education);
+	const globalSkills = useRootStore((state) => state.resume.skills);
+	const globalProjects = useRootStore((state) => state.resume.projects || []);
+	const globalCertifications = useRootStore(
+		(state) => state.resume.certifications || [],
 	);
-	const globalLanguages = useResumeStore((state) => state.languages || []);
+	const globalLanguages = useRootStore((state) => state.resume.languages || []);
 
 	const personalInfo = resume ? resume.personalInfo : globalPersonalInfo;
 	const summary = resume ? resume.summary : globalSummary;

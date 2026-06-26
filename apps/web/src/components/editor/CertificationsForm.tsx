@@ -19,18 +19,18 @@ import type React from "react";
 import { useState } from "react";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
-import { useResumeStore } from "#/lib/resume-store";
+import { useRootStore } from "#/lib/root-store";
 
 function CertificationItem({ id }: { id: string }) {
 	const [isExpanded, setIsExpanded] = useState(false);
-	const cert = useResumeStore((state) =>
-		(state.certifications || []).find((c) => c.id === id),
+	const cert = useRootStore((state) =>
+		(state.resume.certifications || []).find((c) => c.id === id),
 	);
-	const updateCertification = useResumeStore(
-		(state) => state.updateCertification,
+	const updateCertification = useRootStore(
+		(state) => state.resume.updateCertification,
 	);
-	const deleteCertification = useResumeStore(
-		(state) => state.deleteCertification,
+	const deleteCertification = useRootStore(
+		(state) => state.resume.deleteCertification,
 	);
 
 	const { attributes, listeners, setNodeRef, transform, transition } =
@@ -131,11 +131,11 @@ function CertificationItem({ id }: { id: string }) {
 }
 
 export default function CertificationsForm() {
-	const certifications = useResumeStore((state) => state.certifications || []);
-	const reorderCertifications = useResumeStore(
-		(state) => state.reorderCertifications,
+	const certifications = useRootStore((state) => state.resume.certifications || []);
+	const reorderCertifications = useRootStore(
+		(state) => state.resume.reorderCertifications,
 	);
-	const addCertification = useResumeStore((state) => state.addCertification);
+	const addCertification = useRootStore((state) => state.resume.addCertification);
 
 	const sensors = useSensors(
 		useSensor(PointerSensor, {

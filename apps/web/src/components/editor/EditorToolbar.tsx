@@ -4,7 +4,7 @@ import {
 	exportResumeToMarkdown,
 	parseResumeMarkdown,
 } from "#/lib/resume-markdown";
-import { AVAILABLE_TEMPLATES, useResumeStore } from "#/lib/resume-store";
+import { AVAILABLE_TEMPLATES, useRootStore } from "#/lib/root-store";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 
@@ -12,22 +12,22 @@ import { Input } from "../ui/input";
  * Document-action toolbar for the resume editor.
  *
  * Sits in a slim second row beneath the shared `<AppHeader />` on the editor
- * route only. Holds the controls that depend on `useResumeStore` — which only
- * carries real data while editing a specific resume on `/editor/$id` — so it
- * must not be rendered on other routes. The resume-name field, template
- * picker, and import/export/PDF actions all live here.
+ * route only. Holds the controls that depend on `useRootStore`'s resume slice
+ * — which only carries real data while editing a specific resume on
+ * `/editor/$id` — so it must not be rendered on other routes. The resume-name
+ * field, template picker, and import/export/PDF actions all live here.
  *
  * `print:hidden` so PDF export (which prints a separate `<DemoTemplate />`
  * node) is not cluttered by the toolbar.
  */
 export default function EditorToolbar() {
 	const fileInputRef = useRef<HTMLInputElement>(null);
-	const resumeName = useResumeStore((state) => state.name);
-	const templateId = useResumeStore((state) => state.templateId);
-	const setTemplateId = useResumeStore((state) => state.setTemplateId);
-	const updateResumeName = useResumeStore((state) => state.updateResumeName);
-	const replaceResumeContent = useResumeStore(
-		(state) => state.replaceResumeContent,
+	const resumeName = useRootStore((state) => state.resume.name);
+	const templateId = useRootStore((state) => state.resume.templateId);
+	const setTemplateId = useRootStore((state) => state.resume.setTemplateId);
+	const updateResumeName = useRootStore((state) => state.resume.updateResumeName);
+	const replaceResumeContent = useRootStore(
+		(state) => state.resume.replaceResumeContent,
 	);
 
 	const handleDownloadPdf = () => {
@@ -35,7 +35,7 @@ export default function EditorToolbar() {
 	};
 
 	const handleExportMarkdown = () => {
-		const state = useResumeStore.getState();
+		const state = useRootStore.getState().resume;
 		const resumeContent = {
 			personalInfo: state.personalInfo,
 			summary: state.summary,

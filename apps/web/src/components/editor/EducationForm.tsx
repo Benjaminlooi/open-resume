@@ -20,7 +20,7 @@ import { useState } from "react";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
 import { RichTextEditor } from "#/components/ui/rich-text-editor";
-import { useResumeStore } from "#/lib/resume-store";
+import { useRootStore } from "#/lib/root-store";
 import { InteractiveAIPromptModal } from "./InteractiveAIPromptModal";
 
 function EducationFields({
@@ -30,10 +30,10 @@ function EducationFields({
 	id: string;
 	hideAITrigger?: boolean;
 }) {
-	const edu = useResumeStore((state) =>
-		state.education.find((e) => e.id === id),
+	const edu = useRootStore((state) =>
+		state.resume.education.find((e) => e.id === id),
 	);
-	const updateEducation = useResumeStore((state) => state.updateEducation);
+	const updateEducation = useRootStore((state) => state.resume.updateEducation);
 
 	if (!edu) return null;
 
@@ -173,10 +173,10 @@ function EducationFields({
 
 function EducationItem({ id }: { id: string }) {
 	const [isExpanded, setIsExpanded] = useState(false);
-	const edu = useResumeStore((state) =>
-		state.education.find((e) => e.id === id),
+	const edu = useRootStore((state) =>
+		state.resume.education.find((e) => e.id === id),
 	);
-	const deleteEducation = useResumeStore((state) => state.deleteEducation);
+	const deleteEducation = useRootStore((state) => state.resume.deleteEducation);
 
 	const { attributes, listeners, setNodeRef, transform, transition } =
 		useSortable({ id });
@@ -243,9 +243,9 @@ function EducationItem({ id }: { id: string }) {
 }
 
 export default function EducationForm() {
-	const education = useResumeStore((state) => state.education);
-	const reorderEducation = useResumeStore((state) => state.reorderEducation);
-	const addEducation = useResumeStore((state) => state.addEducation);
+	const education = useRootStore((state) => state.resume.education);
+	const reorderEducation = useRootStore((state) => state.resume.reorderEducation);
+	const addEducation = useRootStore((state) => state.resume.addEducation);
 
 	const sensors = useSensors(
 		useSensor(PointerSensor, {

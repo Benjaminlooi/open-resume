@@ -15,7 +15,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Eye, EyeOff, GripVertical, Trash2, User } from "lucide-react";
-import { AVAILABLE_SECTIONS, useResumeStore } from "#/lib/resume-store";
+import { AVAILABLE_SECTIONS, useRootStore } from "#/lib/root-store";
 import { cn } from "#/lib/utils";
 
 function SortableItem(props: {
@@ -24,8 +24,11 @@ function SortableItem(props: {
 	visible: boolean;
 	isActive: boolean;
 }) {
-	const { setActiveSection, toggleSectionVisibility, removeSection } =
-		useResumeStore();
+	const setActiveSection = useRootStore((state) => state.resume.setActiveSection);
+	const toggleSectionVisibility = useRootStore(
+		(state) => state.resume.toggleSectionVisibility,
+	);
+	const removeSection = useRootStore((state) => state.resume.removeSection);
 	const { attributes, listeners, setNodeRef, transform, transition } =
 		useSortable({ id: props.id });
 
@@ -85,13 +88,11 @@ function SortableItem(props: {
 }
 
 export default function SectionList() {
-	const {
-		sections,
-		activeSection,
-		reorderSections,
-		addSection,
-		setActiveSection,
-	} = useResumeStore();
+	const sections = useRootStore((state) => state.resume.sections);
+	const activeSection = useRootStore((state) => state.resume.activeSection);
+	const reorderSections = useRootStore((state) => state.resume.reorderSections);
+	const addSection = useRootStore((state) => state.resume.addSection);
+	const setActiveSection = useRootStore((state) => state.resume.setActiveSection);
 
 	const sensors = useSensors(
 		useSensor(PointerSensor, {

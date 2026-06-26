@@ -26,8 +26,8 @@ import {
 	type TargetRoleArchetype,
 	updateProfile,
 } from "#/lib/local-companion-client";
-import { useResumeIndexStore } from "#/lib/resume-index-store";
-import { getResumeData } from "#/lib/resume-store";
+import { useRootStore } from "#/lib/root-store";
+import { getResumeData } from "#/lib/root-store";
 
 export const Route = createFileRoute("/_app/profile")({
 	component: ProfileDashboard,
@@ -91,8 +91,8 @@ function ProfileDashboard() {
 	const [activeTab, setActiveTab] = useState<TabId>("contact");
 
 	// Default resume info
-	const defaultResumeId = useResumeIndexStore((state) => state.defaultResumeId);
-	const resumes = useResumeIndexStore((state) => state.resumes);
+	const defaultResumeId = useRootStore((state) => state.resumeIndex.defaultResumeId);
+	const resumes = useRootStore((state) => state.resumeIndex.resumes);
 	const defaultResume = resumes.find((r) => r.id === defaultResumeId);
 
 	// Temp state for list editors

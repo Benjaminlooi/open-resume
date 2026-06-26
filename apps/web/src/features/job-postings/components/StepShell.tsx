@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { useJobApplicationStore } from "../job-application-store";
+import { useRootStore } from "#/lib/root-store";
 import type { PipelineStepId } from "../pipeline-steps";
 import {
 	PIPELINE_STEPS,
@@ -37,8 +37,8 @@ export default function StepShell({
 	subtitle,
 	children,
 }: StepShellProps) {
-	const application = useJobApplicationStore((state) =>
-		state.jobApplications.find((app) => app.id === applicationId),
+	const application = useRootStore((state) =>
+		state.jobApplication.jobApplications.find((app) => app.id === applicationId),
 	);
 
 	if (!application) {

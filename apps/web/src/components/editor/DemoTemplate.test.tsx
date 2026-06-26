@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { dummyResumeData } from "#/lib/dummy-resume";
-import type { EditorState } from "#/lib/resume-store";
+import type { EditorState } from "#/lib/resume-schema";
 import DemoTemplate from "./DemoTemplate";
 
 const resume: EditorState = {

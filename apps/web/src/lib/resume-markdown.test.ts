@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { dummyResumeData } from "./dummy-resume";
 import { exportResumeToMarkdown, parseResumeMarkdown } from "./resume-markdown";
-import type { EditorState } from "./resume-store";
+import type { EditorState } from "./resume-schema";
 
 const editorResume: EditorState = {
 	id: "resume-1",

@@ -6,14 +6,16 @@ import {
 	listResumes,
 	setDefaultResume,
 } from "./local-companion-client";
-import { useResumeIndexStore } from "./resume-index-store";
+import { useRootStore } from "./root-store";
 
 vi.mock("./local-companion-client", () => ({
 	clearDefaultResume: vi.fn(),
 	createResume: vi.fn(),
 	deleteResume: vi.fn(),
+	getResume: vi.fn(),
 	listResumes: vi.fn(),
 	setDefaultResume: vi.fn(),
+	updateResume: vi.fn(),
 }));
 
 const listResumesMock = vi.mocked(listResumes);
@@ -22,17 +24,27 @@ const deleteResumeMock = vi.mocked(deleteResume);
 const setDefaultResumeMock = vi.mocked(setDefaultResume);
 const clearDefaultResumeMock = vi.mocked(clearDefaultResume);
 
-describe("resumeIndexStore", () => {
+/**
+ * These tests exercise the `resumeIndex` slice of the root store. State lives
+ * at `state.resumeIndex`. To reset between tests we spread a clone of the
+ * empty data over the live slice, preserving its action functions.
+ */
+const getIndexState = () => useRootStore.getState().resumeIndex;
+
+const resetIndex = () => {
+	useRootStore.setState((prev) => ({
+		resumeIndex: { ...prev.resumeIndex, resumes: [], defaultResumeId: null },
+	}));
+};
+
+describe("resumeIndex slice", () => {
 	beforeEach(() => {
-		useResumeIndexStore.setState({
-			resumes: [],
-			defaultResumeId: null,
-		});
+		resetIndex();
 		vi.clearAllMocks();
 	});
 
 	it("initializes with empty resumes and null defaultResumeId by default", () => {
-		const state = useResumeIndexStore.getState();
+		const state = getIndexState();
 		expect(state.resumes).toEqual([]);
 		expect(state.defaultResumeId).toBeNull();
 	});
@@ -55,10 +67,10 @@ describe("resumeIndexStore", () => {
 			},
 		]);
 
-		await useResumeIndexStore.getState().loadIndex();
+		await getIndexState().loadIndex();
 
 		expect(listResumesMock).toHaveBeenCalledOnce();
-		expect(useResumeIndexStore.getState()).toMatchObject({
+		expect(getIndexState()).toMatchObject({
 			resumes: [
 				{
 					id: "resume-1",
@@ -75,9 +87,7 @@ describe("resumeIndexStore", () => {
 			],
 			defaultResumeId: "resume-2",
 		});
-		expect(useResumeIndexStore.getState().resumes[0]).not.toHaveProperty(
-			"isDefault",
-		);
+		expect(getIndexState().resumes[0]).not.toHaveProperty("isDefault");
 	});
 
 	it("creates a companion resume with blank content and stores the returned summary", async () => {
@@ -90,9 +100,7 @@ describe("resumeIndexStore", () => {
 			content: {},
 		});
 
-		await useResumeIndexStore
-			.getState()
-			.createResumeIndexEntry("resume-1", "My Resume", "modern");
+		await getIndexState().createResumeIndexEntry("resume-1", "My Resume", "modern");
 
 		expect(createResumeMock).toHaveBeenCalledWith(
 			"resume-1",
@@ -103,7 +111,7 @@ describe("resumeIndexStore", () => {
 				sections: expect.any(Array),
 			}),
 		);
-		expect(useResumeIndexStore.getState().resumes).toEqual([
+		expect(getIndexState().resumes).toEqual([
 			{
 				id: "resume-1",
 				name: "My Resume",
@@ -123,11 +131,9 @@ describe("resumeIndexStore", () => {
 			content: {},
 		});
 
-		void useResumeIndexStore
-			.getState()
-			.createResumeIndexEntry("resume-1", "My Resume", "modern");
+		void getIndexState().createResumeIndexEntry("resume-1", "My Resume", "modern");
 
-		expect(useResumeIndexStore.getState().resumes).toEqual([
+		expect(getIndexState().resumes).toEqual([
 			expect.objectContaining({
 				id: "resume-1",
 				name: "My Resume",
@@ -163,14 +169,12 @@ describe("resumeIndexStore", () => {
 			content,
 		});
 
-		await useResumeIndexStore
-			.getState()
-			.createResumeIndexEntry(
-				"resume-import",
-				"Imported Person",
-				"demo",
-				content,
-			);
+		await getIndexState().createResumeIndexEntry(
+			"resume-import",
+			"Imported Person",
+			"demo",
+			content,
+		);
 
 		expect(createResumeMock).toHaveBeenCalledWith(
 			"resume-import",
@@ -228,14 +232,12 @@ describe("resumeIndexStore", () => {
 			},
 		});
 
-		await useResumeIndexStore
-			.getState()
-			.createResumeIndexEntry(
-				"resume-1",
-				"Test Person",
-				"demo",
-				contentWithMetadata as any,
-			);
+		await getIndexState().createResumeIndexEntry(
+			"resume-1",
+			"Test Person",
+			"demo",
+			contentWithMetadata as any,
+		);
 
 		expect(createResumeMock).toHaveBeenCalledOnce();
 		const callArgs = createResumeMock.mock.calls[0];
@@ -257,45 +259,46 @@ describe("resumeIndexStore", () => {
 		});
 		clearDefaultResumeMock.mockResolvedValue({ ok: true });
 
-		await useResumeIndexStore.getState().setDefaultResumeId("resume-1");
+		await getIndexState().setDefaultResumeId("resume-1");
 		expect(setDefaultResumeMock).toHaveBeenCalledWith("resume-1");
-		expect(useResumeIndexStore.getState().defaultResumeId).toBe("resume-1");
+		expect(getIndexState().defaultResumeId).toBe("resume-1");
 
-		await useResumeIndexStore.getState().setDefaultResumeId(null);
+		await getIndexState().setDefaultResumeId(null);
 		expect(clearDefaultResumeMock).toHaveBeenCalledOnce();
-		expect(useResumeIndexStore.getState().defaultResumeId).toBeNull();
+		expect(getIndexState().defaultResumeId).toBeNull();
 	});
 
 	it("deletes a companion resume and clears the default when needed", async () => {
 		deleteResumeMock.mockResolvedValue({ deleted: true });
-		useResumeIndexStore.setState({
-			resumes: [
-				{
-					id: "resume-1",
-					name: "Resume 1",
-					templateId: "modern",
-					lastModified: 100,
-				},
-				{
-					id: "resume-2",
-					name: "Resume 2",
-					templateId: "demo",
-					lastModified: 200,
-				},
-			],
-			defaultResumeId: "resume-1",
-		});
+		useRootStore.setState((prev) => ({
+			resumeIndex: {
+				...prev.resumeIndex,
+				resumes: [
+					{
+						id: "resume-1",
+						name: "Resume 1",
+						templateId: "modern",
+						lastModified: 100,
+					},
+					{
+						id: "resume-2",
+						name: "Resume 2",
+						templateId: "demo",
+						lastModified: 200,
+					},
+				],
+				defaultResumeId: "resume-1",
+			},
+		}));
 
-		await useResumeIndexStore.getState().deleteResumeIndexEntry("resume-2");
+		await getIndexState().deleteResumeIndexEntry("resume-2");
 		expect(deleteResumeMock).toHaveBeenCalledWith("resume-2");
-		expect(useResumeIndexStore.getState().defaultResumeId).toBe("resume-1");
-		expect(useResumeIndexStore.getState().resumes.map((r) => r.id)).toEqual([
-			"resume-1",
-		]);
+		expect(getIndexState().defaultResumeId).toBe("resume-1");
+		expect(getIndexState().resumes.map((r) => r.id)).toEqual(["resume-1"]);
 
-		await useResumeIndexStore.getState().deleteResumeIndexEntry("resume-1");
+		await getIndexState().deleteResumeIndexEntry("resume-1");
 		expect(deleteResumeMock).toHaveBeenCalledWith("resume-1");
-		expect(useResumeIndexStore.getState().defaultResumeId).toBeNull();
-		expect(useResumeIndexStore.getState().resumes).toEqual([]);
+		expect(getIndexState().defaultResumeId).toBeNull();
+		expect(getIndexState().resumes).toEqual([]);
 	});
 });

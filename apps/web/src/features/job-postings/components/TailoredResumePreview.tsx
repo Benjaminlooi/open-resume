@@ -9,7 +9,7 @@ import {
 	SelectValue,
 } from "#/components/ui/select";
 import type { Resume } from "#/lib/resume-schema";
-import type { EditorState } from "#/lib/resume-store";
+import type { EditorState } from "#/lib/resume-schema";
 
 interface TailoredResumePreviewProps {
 	tailoredResume: Resume;

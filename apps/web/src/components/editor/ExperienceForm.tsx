@@ -20,7 +20,7 @@ import { useState } from "react";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
 import { RichTextEditor } from "#/components/ui/rich-text-editor";
-import { useResumeStore } from "#/lib/resume-store";
+import { useRootStore } from "#/lib/root-store";
 import { InteractiveAIPromptModal } from "./InteractiveAIPromptModal";
 
 function ExperienceFields({
@@ -30,10 +30,10 @@ function ExperienceFields({
 	id: string;
 	hideAITrigger?: boolean;
 }) {
-	const exp = useResumeStore((state) =>
-		state.experience.find((e) => e.id === id),
+	const exp = useRootStore((state) =>
+		state.resume.experience.find((e) => e.id === id),
 	);
-	const updateExperience = useResumeStore((state) => state.updateExperience);
+	const updateExperience = useRootStore((state) => state.resume.updateExperience);
 
 	if (!exp) return null;
 
@@ -149,10 +149,10 @@ function ExperienceFields({
 
 function ExperienceItem({ id }: { id: string }) {
 	const [isExpanded, setIsExpanded] = useState(false);
-	const exp = useResumeStore((state) =>
-		state.experience.find((e) => e.id === id),
+	const exp = useRootStore((state) =>
+		state.resume.experience.find((e) => e.id === id),
 	);
-	const deleteExperience = useResumeStore((state) => state.deleteExperience);
+	const deleteExperience = useRootStore((state) => state.resume.deleteExperience);
 
 	const { attributes, listeners, setNodeRef, transform, transition } =
 		useSortable({ id });
@@ -219,9 +219,9 @@ function ExperienceItem({ id }: { id: string }) {
 }
 
 export default function ExperienceForm() {
-	const experience = useResumeStore((state) => state.experience);
-	const reorderExperience = useResumeStore((state) => state.reorderExperience);
-	const addExperience = useResumeStore((state) => state.addExperience);
+	const experience = useRootStore((state) => state.resume.experience);
+	const reorderExperience = useRootStore((state) => state.resume.reorderExperience);
+	const addExperience = useRootStore((state) => state.resume.addExperience);
 
 	const sensors = useSensors(
 		useSensor(PointerSensor, {

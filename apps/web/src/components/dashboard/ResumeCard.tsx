@@ -3,8 +3,8 @@ import { Star } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { getResume } from "#/lib/local-companion-client";
-import { useResumeIndexStore } from "#/lib/resume-index-store";
-import type { EditorState } from "#/lib/resume-store";
+import { useRootStore } from "#/lib/root-store";
+import type { EditorState } from "#/lib/resume-schema";
 import { cn } from "#/lib/utils";
 import ResumeThumbnail from "./ResumeThumbnail";
 
@@ -23,9 +23,9 @@ export default function ResumeCard({ resumeIndex, onDelete }: ResumeCardProps) {
 	const [isHovering, setIsHovering] = useState(false);
 	const popoverRef = useRef<HTMLDivElement>(null);
 
-	const defaultResumeId = useResumeIndexStore((state) => state.defaultResumeId);
-	const setDefaultResumeId = useResumeIndexStore(
-		(state) => state.setDefaultResumeId,
+	const defaultResumeId = useRootStore((state) => state.resumeIndex.defaultResumeId);
+	const setDefaultResumeId = useRootStore(
+		(state) => state.resumeIndex.setDefaultResumeId,
 	);
 	const isDefault = defaultResumeId === resumeIndex.id;
 

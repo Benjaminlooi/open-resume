@@ -1,38 +1,47 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { useSettingsStore } from "./settings-store";
+import { useRootStore } from "./root-store";
 
-describe("settingsStore", () => {
-	beforeEach(() => {
-		// Reset store before each test
-		useSettingsStore.setState({
+/**
+ * These tests exercise the `settings` slice of the root store. State lives at
+ * `state.settings`. To reset between tests we spread a clone of the default
+ * data over the live slice, preserving its action functions.
+ */
+const getSettingsState = () => useRootStore.getState().settings;
+
+const resetSettings = () => {
+	useRootStore.setState((prev) => ({
+		settings: {
+			...prev.settings,
 			apiKeys: {},
 			defaultProvider: "openai",
 			baseUrls: {},
 			selectedModels: {},
-		});
+		},
+	}));
+};
+
+describe("settings slice", () => {
+	beforeEach(() => {
+		resetSettings();
 	});
 
 	it("updates API key and default provider", () => {
-		useSettingsStore.getState().updateAPIKey("openai", "sk-test");
-		expect(useSettingsStore.getState().apiKeys.openai).toBe("sk-test");
+		getSettingsState().updateAPIKey("openai", "sk-test");
+		expect(getSettingsState().apiKeys.openai).toBe("sk-test");
 
-		useSettingsStore.getState().setDefaultProvider("anthropic");
-		expect(useSettingsStore.getState().defaultProvider).toBe("anthropic");
+		getSettingsState().setDefaultProvider("anthropic");
+		expect(getSettingsState().defaultProvider).toBe("anthropic");
 	});
 
 	it("updates base URL for a provider", () => {
-		useSettingsStore
-			.getState()
-			.updateBaseUrl("ollama", "http://localhost:11434/v1");
-		expect(useSettingsStore.getState().baseUrls.ollama).toBe(
+		getSettingsState().updateBaseUrl("ollama", "http://localhost:11434/v1");
+		expect(getSettingsState().baseUrls.ollama).toBe(
 			"http://localhost:11434/v1",
 		);
 	});
 
 	it("updates selected model for a provider", () => {
-		useSettingsStore.getState().updateSelectedModel("lmstudio", "mistral-7b");
-		expect(useSettingsStore.getState().selectedModels.lmstudio).toBe(
-			"mistral-7b",
-		);
+		getSettingsState().updateSelectedModel("lmstudio", "mistral-7b");
+		expect(getSettingsState().selectedModels.lmstudio).toBe("mistral-7b");
 	});
 });

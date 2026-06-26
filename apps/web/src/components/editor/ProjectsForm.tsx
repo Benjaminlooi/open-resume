@@ -19,13 +19,14 @@ import { useState } from "react";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
 import { RichTextEditor } from "#/components/ui/rich-text-editor";
-import { useResumeStore } from "#/lib/resume-store";
+import { useRootStore } from "#/lib/root-store";
 
 function ProjectItem({ id }: { id: string }) {
 	const [isExpanded, setIsExpanded] = useState(false);
-	const { updateProject, deleteProject } = useResumeStore();
-	const project = useResumeStore((state) =>
-		(state.projects || []).find((p) => p.id === id),
+	const updateProject = useRootStore((state) => state.resume.updateProject);
+	const deleteProject = useRootStore((state) => state.resume.deleteProject);
+	const project = useRootStore((state) =>
+		(state.resume.projects || []).find((p) => p.id === id),
 	);
 	const { attributes, listeners, setNodeRef, transform, transition } =
 		useSortable({ id });
@@ -134,11 +135,9 @@ function ProjectItem({ id }: { id: string }) {
 }
 
 export default function ProjectsForm() {
-	const {
-		projects: rawProjects,
-		addProject,
-		reorderProjects,
-	} = useResumeStore();
+	const rawProjects = useRootStore((state) => state.resume.projects);
+	const addProject = useRootStore((state) => state.resume.addProject);
+	const reorderProjects = useRootStore((state) => state.resume.reorderProjects);
 	const projects = rawProjects || [];
 
 	const sensors = useSensors(

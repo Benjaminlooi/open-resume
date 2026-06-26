@@ -18,13 +18,14 @@ import { ChevronDown, ChevronUp, GripVertical, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
-import { useResumeStore } from "#/lib/resume-store";
+import { useRootStore } from "#/lib/root-store";
 
 function LanguageItem({ id }: { id: string }) {
 	const [isExpanded, setIsExpanded] = useState(false);
-	const { updateLanguage, deleteLanguage } = useResumeStore();
-	const lang = useResumeStore((state) =>
-		(state.languages || []).find((l) => l.id === id),
+	const updateLanguage = useRootStore((state) => state.resume.updateLanguage);
+	const deleteLanguage = useRootStore((state) => state.resume.deleteLanguage);
+	const lang = useRootStore((state) =>
+		(state.resume.languages || []).find((l) => l.id === id),
 	);
 	const { attributes, listeners, setNodeRef, transform, transition } =
 		useSortable({ id });
@@ -119,7 +120,9 @@ function LanguageItem({ id }: { id: string }) {
 }
 
 export default function LanguagesForm() {
-	const { languages, addLanguage, reorderLanguages } = useResumeStore();
+	const languages = useRootStore((state) => state.resume.languages);
+	const addLanguage = useRootStore((state) => state.resume.addLanguage);
+	const reorderLanguages = useRootStore((state) => state.resume.reorderLanguages);
 	const langItems = languages || [];
 
 	const sensors = useSensors(

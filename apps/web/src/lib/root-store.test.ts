@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { getResume, updateResume } from "./local-companion-client";
-import { useResumeStore } from "./resume-store";
+import { useRootStore } from "./root-store";
 
 vi.mock("./local-companion-client", () => ({
 	getResume: vi.fn(),
@@ -10,13 +10,32 @@ vi.mock("./local-companion-client", () => ({
 const getResumeMock = vi.mocked(getResume);
 const updateResumeMock = vi.mocked(updateResume);
 
-// Deep clone the initial state so we can reset the singleton between tests
-const initialState = JSON.parse(JSON.stringify(useResumeStore.getState()));
+/**
+ * These tests exercise the `resume` slice of the root store. State lives at
+ * `state.resume`; actions are the same functions the old standalone store had.
+ *
+ * The root store nests the slice under `resume`, so to reset between tests we
+ * capture the slice's data (JSON clone drops the action functions) and spread
+ * it back over the live slice — preserving the actions while resetting data.
+ */
+const initialResumeData = JSON.parse(
+	JSON.stringify(useRootStore.getState().resume),
+);
 
-describe("resumeStore", () => {
+// Helper: read the resume slice.
+const getResumeState = () => useRootStore.getState().resume;
+
+// Helper: reset the resume slice's data while keeping its action functions.
+const resetResume = () => {
+	useRootStore.setState((prev) => ({
+		resume: { ...prev.resume, ...JSON.parse(JSON.stringify(initialResumeData)) },
+	}));
+};
+
+describe("resume slice", () => {
 	beforeEach(() => {
 		vi.useFakeTimers();
-		useResumeStore.setState(JSON.parse(JSON.stringify(initialState)));
+		resetResume();
 		vi.clearAllMocks();
 		vi.clearAllTimers();
 		updateResumeMock.mockResolvedValue({
@@ -35,7 +54,7 @@ describe("resumeStore", () => {
 	});
 
 	it("initializes with the correct dummy data", () => {
-		const state = useResumeStore.getState();
+		const state = getResumeState();
 
 		expect(state.activeSection).toBe("personalInfo");
 		expect(state.personalInfo.fullName).toBe("Benjamin Looi");
@@ -44,59 +63,58 @@ describe("resumeStore", () => {
 	});
 
 	it("updates personal info correctly", () => {
-		useResumeStore.getState().updatePersonalInfo("fullName", "Pickle Rick");
-		useResumeStore.getState().updatePersonalInfo("email", "rick@citadel.com");
+		getResumeState().updatePersonalInfo("fullName", "Pickle Rick");
+		getResumeState().updatePersonalInfo("email", "rick@citadel.com");
 
-		const state = useResumeStore.getState();
+		const state = getResumeState();
 		expect(state.personalInfo.fullName).toBe("Pickle Rick");
 		expect(state.personalInfo.email).toBe("rick@citadel.com");
 		// Ensure other state is intact
-		expect(state.personalInfo.phone).toBe(initialState.personalInfo.phone);
+		expect(state.personalInfo.phone).toBe(initialResumeData.personalInfo.phone);
 	});
 
 	it("updates summary correctly", () => {
-		useResumeStore.getState().updateSummary("<p>Focused product engineer.</p>");
+		getResumeState().updateSummary("<p>Focused product engineer.</p>");
 
-		const state = useResumeStore.getState();
+		const state = getResumeState();
 		expect(state.summary).toBe("<p>Focused product engineer.</p>");
 	});
 
 	it("sets active section correctly", () => {
-		useResumeStore.getState().setActiveSection("education");
+		getResumeState().setActiveSection("education");
 
-		const state = useResumeStore.getState();
+		const state = getResumeState();
 		expect(state.activeSection).toBe("education");
 	});
 
 	it("toggles section visibility correctly", () => {
-		const experienceSection = useResumeStore
-			.getState()
-			.sections.find((s) => s.id === "experience");
+		const experienceSection = getResumeState().sections.find(
+			(s) => s.id === "experience",
+		);
 		expect(experienceSection?.visible).toBe(true);
 
-		useResumeStore.getState().toggleSectionVisibility("experience");
+		getResumeState().toggleSectionVisibility("experience");
 
-		const state = useResumeStore.getState();
+		const state = getResumeState();
 		const toggledSection = state.sections.find((s) => s.id === "experience");
 		expect(toggledSection?.visible).toBe(false);
 
 		// Toggle back
-		useResumeStore.getState().toggleSectionVisibility("experience");
+		getResumeState().toggleSectionVisibility("experience");
 		expect(
-			useResumeStore.getState().sections.find((s) => s.id === "experience")
-				?.visible,
+			getResumeState().sections.find((s) => s.id === "experience")?.visible,
 		).toBe(true);
 	});
 
 	it("initializes a new resume without dirty state", () => {
 		// Simulate editing an existing resume
-		useResumeStore.getState().updatePersonalInfo("fullName", "Dirty Name");
-		useResumeStore.getState().setTemplateId("dirty-template");
+		getResumeState().updatePersonalInfo("fullName", "Dirty Name");
+		getResumeState().setTemplateId("dirty-template");
 
 		// Now initialize a new one
-		useResumeStore.getState().initNewResume("new-id", "New Name", "modern");
+		getResumeState().initNewResume("new-id", "New Name", "modern");
 
-		const state = useResumeStore.getState();
+		const state = getResumeState();
 		expect(state.id).toBe("new-id");
 		expect(state.name).toBe("New Name");
 		expect(state.templateId).toBe("modern");
@@ -105,10 +123,8 @@ describe("resumeStore", () => {
 	});
 
 	it("replaces resume content without replacing editor metadata", () => {
-		useResumeStore
-			.getState()
-			.initNewResume("current-id", "Current Name", "modern");
-		useResumeStore.getState().replaceResumeContent({
+		getResumeState().initNewResume("current-id", "Current Name", "modern");
+		getResumeState().replaceResumeContent({
 			personalInfo: {
 				fullName: "Imported Person",
 				email: "imported@example.com",
@@ -134,7 +150,7 @@ describe("resumeStore", () => {
 			languages: [],
 		});
 
-		const state = useResumeStore.getState();
+		const state = getResumeState();
 
 		expect(state.id).toBe("current-id");
 		expect(state.name).toBe("Current Name");
@@ -153,19 +169,19 @@ describe("resumeStore", () => {
 			lastModified: 123,
 			isDefault: false,
 			content: {
-				...initialState,
+				...initialResumeData,
 				personalInfo: {
-					...initialState.personalInfo,
+					...initialResumeData.personalInfo,
 					fullName: "Backend Person",
 				},
 			},
 		});
 
-		const loaded = await useResumeStore.getState().loadResume("resume-1");
+		const loaded = await getResumeState().loadResume("resume-1");
 
 		expect(loaded).toBe(true);
 		expect(getResumeMock).toHaveBeenCalledWith("resume-1");
-		expect(useResumeStore.getState()).toMatchObject({
+		expect(getResumeState()).toMatchObject({
 			id: "resume-1",
 			name: "Backend Resume",
 			templateId: "modern",
@@ -182,10 +198,10 @@ describe("resumeStore", () => {
 			.spyOn(console, "error")
 			.mockImplementation(() => {});
 
-		const loaded = await useResumeStore.getState().loadResume("missing");
+		const loaded = await getResumeState().loadResume("missing");
 
 		expect(loaded).toBe(false);
-		expect(useResumeStore.getState().id).toBe("default");
+		expect(getResumeState().id).toBe("default");
 		expect(consoleErrorSpy).toHaveBeenCalledWith(
 			"Failed to load resume",
 			expect.any(Error),
@@ -194,12 +210,12 @@ describe("resumeStore", () => {
 	});
 
 	it("updates the resume name and debounces companion saves", async () => {
-		useResumeStore.getState().initNewResume("resume-1", "Old Name", "demo");
+		getResumeState().initNewResume("resume-1", "Old Name", "demo");
 		vi.clearAllMocks();
 		vi.clearAllTimers();
 
-		useResumeStore.getState().updateResumeName("New Name");
-		expect(useResumeStore.getState().name).toBe("New Name");
+		getResumeState().updateResumeName("New Name");
+		expect(getResumeState().name).toBe("New Name");
 		expect(updateResumeMock).not.toHaveBeenCalled();
 
 		await vi.advanceTimersByTimeAsync(500);
@@ -219,30 +235,28 @@ describe("resumeStore", () => {
 	});
 
 	it("adds, updates, and deletes personal contact links", () => {
-		useResumeStore.getState().addContactLink();
+		getResumeState().addContactLink();
 
-		const addedLink = useResumeStore
-			.getState()
-			.personalInfo.contactLinks.at(-1);
+		const addedLink = getResumeState().personalInfo.contactLinks.at(-1);
 		expect(addedLink).toMatchObject({ label: "Website", url: "" });
 
-		useResumeStore.getState().updateContactLink(addedLink?.id ?? "", {
+		getResumeState().updateContactLink(addedLink?.id ?? "", {
 			label: "GitHub",
 			url: "github.com/rick",
 		});
 
 		expect(
-			useResumeStore
-				.getState()
-				.personalInfo.contactLinks.find((link) => link.id === addedLink?.id),
+			getResumeState().personalInfo.contactLinks.find(
+				(link) => link.id === addedLink?.id,
+			),
 		).toMatchObject({ label: "GitHub", url: "github.com/rick" });
 
-		useResumeStore.getState().deleteContactLink(addedLink?.id ?? "");
+		getResumeState().deleteContactLink(addedLink?.id ?? "");
 
 		expect(
-			useResumeStore
-				.getState()
-				.personalInfo.contactLinks.find((link) => link.id === addedLink?.id),
+			getResumeState().personalInfo.contactLinks.find(
+				(link) => link.id === addedLink?.id,
+			),
 		).toBeUndefined();
 	});
 
@@ -257,35 +271,33 @@ describe("resumeStore", () => {
 				location: "Remote",
 				description: "did stuff",
 			};
-			useResumeStore.getState().addExperience(newItem);
-			const state = useResumeStore.getState();
+			getResumeState().addExperience(newItem);
+			const state = getResumeState();
 			expect(state.experience[state.experience.length - 1]).toEqual(newItem);
 		});
 
 		it("updates an experience", () => {
-			const idToUpdate = useResumeStore.getState().experience[0].id;
-			useResumeStore.getState().updateExperience(idToUpdate, { role: "CTO" });
-			const state = useResumeStore.getState();
+			const idToUpdate = getResumeState().experience[0].id;
+			getResumeState().updateExperience(idToUpdate, { role: "CTO" });
+			const state = getResumeState();
 			expect(state.experience.find((e) => e.id === idToUpdate)?.role).toBe(
 				"CTO",
 			);
 		});
 
 		it("deletes an experience", () => {
-			const idToDelete = useResumeStore.getState().experience[0].id;
-			const initialLength = useResumeStore.getState().experience.length;
-			useResumeStore.getState().deleteExperience(idToDelete);
-			const state = useResumeStore.getState();
+			const idToDelete = getResumeState().experience[0].id;
+			const initialLength = getResumeState().experience.length;
+			getResumeState().deleteExperience(idToDelete);
+			const state = getResumeState();
 			expect(state.experience.length).toBe(initialLength - 1);
 			expect(state.experience.find((e) => e.id === idToDelete)).toBeUndefined();
 		});
 
 		it("reorders experience", () => {
-			const initialOrder = useResumeStore
-				.getState()
-				.experience.map((e) => e.id);
-			useResumeStore.getState().reorderExperience(0, 1);
-			const state = useResumeStore.getState();
+			const initialOrder = getResumeState().experience.map((e) => e.id);
+			getResumeState().reorderExperience(0, 1);
+			const state = getResumeState();
 			expect(state.experience[0].id).toBe(initialOrder[1]);
 			expect(state.experience[1].id).toBe(initialOrder[0]);
 		});
@@ -303,31 +315,31 @@ describe("resumeStore", () => {
 				description: "learned",
 				gpa: "4.0",
 			};
-			useResumeStore.getState().addEducation(newItem);
-			const state = useResumeStore.getState();
+			getResumeState().addEducation(newItem);
+			const state = getResumeState();
 			expect(state.education[state.education.length - 1]).toEqual(newItem);
 		});
 
 		it("updates an education", () => {
-			const idToUpdate = useResumeStore.getState().education[0].id;
-			useResumeStore.getState().updateEducation(idToUpdate, { degree: "PhD" });
-			const state = useResumeStore.getState();
+			const idToUpdate = getResumeState().education[0].id;
+			getResumeState().updateEducation(idToUpdate, { degree: "PhD" });
+			const state = getResumeState();
 			expect(state.education.find((e) => e.id === idToUpdate)?.degree).toBe(
 				"PhD",
 			);
 		});
 
 		it("deletes an education", () => {
-			const idToDelete = useResumeStore.getState().education[0].id;
-			const initialLength = useResumeStore.getState().education.length;
-			useResumeStore.getState().deleteEducation(idToDelete);
-			const state = useResumeStore.getState();
+			const idToDelete = getResumeState().education[0].id;
+			const initialLength = getResumeState().education.length;
+			getResumeState().deleteEducation(idToDelete);
+			const state = getResumeState();
 			expect(state.education.length).toBe(initialLength - 1);
 			expect(state.education.find((e) => e.id === idToDelete)).toBeUndefined();
 		});
 
 		it("reorders education", () => {
-			useResumeStore.getState().addEducation({
+			getResumeState().addEducation({
 				id: "reorder-edu",
 				institution: "Second School",
 				degree: "Certificate",
@@ -336,9 +348,9 @@ describe("resumeStore", () => {
 				location: "Remote",
 				description: "",
 			});
-			const initialOrder = useResumeStore.getState().education.map((e) => e.id);
-			useResumeStore.getState().reorderEducation(0, 1);
-			const state = useResumeStore.getState();
+			const initialOrder = getResumeState().education.map((e) => e.id);
+			getResumeState().reorderEducation(0, 1);
+			const state = getResumeState();
 			expect(state.education[0].id).toBe(initialOrder[1]);
 			expect(state.education[1].id).toBe(initialOrder[0]);
 		});
@@ -351,35 +363,35 @@ describe("resumeStore", () => {
 				category: "Soft Skills",
 				items: "Communication",
 			};
-			useResumeStore.getState().addSkillGroup(newItem);
-			const state = useResumeStore.getState();
+			getResumeState().addSkillGroup(newItem);
+			const state = getResumeState();
 			expect(state.skills[state.skills.length - 1]).toEqual(newItem);
 		});
 
 		it("updates a skill group", () => {
-			const idToUpdate = useResumeStore.getState().skills[0].id;
-			useResumeStore
-				.getState()
-				.updateSkillGroup(idToUpdate, { category: "Updated Category" });
-			const state = useResumeStore.getState();
+			const idToUpdate = getResumeState().skills[0].id;
+			getResumeState().updateSkillGroup(idToUpdate, {
+				category: "Updated Category",
+			});
+			const state = getResumeState();
 			expect(state.skills.find((e) => e.id === idToUpdate)?.category).toBe(
 				"Updated Category",
 			);
 		});
 
 		it("deletes a skill group", () => {
-			const idToDelete = useResumeStore.getState().skills[0].id;
-			const initialLength = useResumeStore.getState().skills.length;
-			useResumeStore.getState().deleteSkillGroup(idToDelete);
-			const state = useResumeStore.getState();
+			const idToDelete = getResumeState().skills[0].id;
+			const initialLength = getResumeState().skills.length;
+			getResumeState().deleteSkillGroup(idToDelete);
+			const state = getResumeState();
 			expect(state.skills.length).toBe(initialLength - 1);
 			expect(state.skills.find((e) => e.id === idToDelete)).toBeUndefined();
 		});
 
 		it("reorders skills", () => {
-			const initialOrder = useResumeStore.getState().skills.map((e) => e.id);
-			useResumeStore.getState().reorderSkills(0, 1);
-			const state = useResumeStore.getState();
+			const initialOrder = getResumeState().skills.map((e) => e.id);
+			getResumeState().reorderSkills(0, 1);
+			const state = getResumeState();
 			expect(state.skills[0].id).toBe(initialOrder[1]);
 			expect(state.skills[1].id).toBe(initialOrder[0]);
 		});
@@ -394,35 +406,35 @@ describe("resumeStore", () => {
 				url: "github.com/me/ai",
 				description: "Built an AI",
 			};
-			useResumeStore.getState().addProject(newItem);
-			const state = useResumeStore.getState();
+			getResumeState().addProject(newItem);
+			const state = getResumeState();
 			expect(state.projects?.[state.projects?.length - 1]).toEqual(newItem);
 		});
 
 		it("updates a project", () => {
-			const idToUpdate = useResumeStore.getState().projects?.[0].id;
-			useResumeStore
-				.getState()
-				.updateProject(idToUpdate, { name: "Updated Project" });
-			const state = useResumeStore.getState();
+			const idToUpdate = getResumeState().projects?.[0].id;
+			getResumeState().updateProject(idToUpdate, { name: "Updated Project" });
+			const state = getResumeState();
 			expect(state.projects?.find((e) => e.id === idToUpdate)?.name).toBe(
 				"Updated Project",
 			);
 		});
 
 		it("deletes a project", () => {
-			const idToDelete = useResumeStore.getState().projects?.[0].id;
-			const initialLength = useResumeStore.getState().projects?.length;
-			useResumeStore.getState().deleteProject(idToDelete);
-			const state = useResumeStore.getState();
+			const idToDelete = getResumeState().projects?.[0].id;
+			const initialLength = getResumeState().projects?.length;
+			getResumeState().deleteProject(idToDelete);
+			const state = getResumeState();
 			expect(state.projects?.length).toBe(initialLength - 1);
-			expect(state.projects?.find((e) => e.id === idToDelete)).toBeUndefined();
+			expect(
+				state.projects?.find((e) => e.id === idToDelete),
+			).toBeUndefined();
 		});
 
 		it("reorders projects", () => {
-			const initialOrder = useResumeStore.getState().projects?.map((e) => e.id);
-			useResumeStore.getState().reorderProjects(0, 1);
-			const state = useResumeStore.getState();
+			const initialOrder = getResumeState().projects?.map((e) => e.id);
+			getResumeState().reorderProjects(0, 1);
+			const state = getResumeState();
 			expect(state.projects?.[0].id).toBe(initialOrder[1]);
 			expect(state.projects?.[1].id).toBe(initialOrder[0]);
 		});
@@ -436,41 +448,39 @@ describe("resumeStore", () => {
 				issuer: "Acme",
 				date: "2024",
 			};
-			useResumeStore.getState().addCertification(newItem);
-			const state = useResumeStore.getState();
-			expect(state.certifications?.[state.certifications?.length - 1]).toEqual(
-				newItem,
-			);
+			getResumeState().addCertification(newItem);
+			const state = getResumeState();
+			expect(
+				state.certifications?.[state.certifications?.length - 1],
+			).toEqual(newItem);
 		});
 
 		it("updates a certification", () => {
-			useResumeStore.getState().addCertification({
+			getResumeState().addCertification({
 				id: "cert-to-update",
 				name: "Certified Developer",
 				issuer: "Acme",
 				date: "2024",
 			});
-			const idToUpdate = useResumeStore.getState().certifications?.[0].id;
-			useResumeStore
-				.getState()
-				.updateCertification(idToUpdate, { name: "Updated Cert" });
-			const state = useResumeStore.getState();
-			expect(state.certifications?.find((e) => e.id === idToUpdate)?.name).toBe(
-				"Updated Cert",
-			);
+			const idToUpdate = getResumeState().certifications?.[0].id;
+			getResumeState().updateCertification(idToUpdate, { name: "Updated Cert" });
+			const state = getResumeState();
+			expect(
+				state.certifications?.find((e) => e.id === idToUpdate)?.name,
+			).toBe("Updated Cert");
 		});
 
 		it("deletes a certification", () => {
-			useResumeStore.getState().addCertification({
+			getResumeState().addCertification({
 				id: "cert-to-delete",
 				name: "Certified Developer",
 				issuer: "Acme",
 				date: "2024",
 			});
-			const idToDelete = useResumeStore.getState().certifications?.[0].id;
-			const initialLength = useResumeStore.getState().certifications?.length;
-			useResumeStore.getState().deleteCertification(idToDelete);
-			const state = useResumeStore.getState();
+			const idToDelete = getResumeState().certifications?.[0].id;
+			const initialLength = getResumeState().certifications?.length;
+			getResumeState().deleteCertification(idToDelete);
+			const state = getResumeState();
 			expect(state.certifications?.length).toBe(initialLength - 1);
 			expect(
 				state.certifications?.find((e) => e.id === idToDelete),
@@ -478,23 +488,21 @@ describe("resumeStore", () => {
 		});
 
 		it("reorders certifications", () => {
-			useResumeStore.getState().addCertification({
+			getResumeState().addCertification({
 				id: "cert-first",
 				name: "First Cert",
 				issuer: "Acme",
 				date: "2023",
 			});
-			useResumeStore.getState().addCertification({
+			getResumeState().addCertification({
 				id: "cert-second",
 				name: "Second Cert",
 				issuer: "Acme",
 				date: "2024",
 			});
-			const initialOrder = useResumeStore
-				.getState()
-				.certifications?.map((e) => e.id);
-			useResumeStore.getState().reorderCertifications(0, 1);
-			const state = useResumeStore.getState();
+			const initialOrder = getResumeState().certifications?.map((e) => e.id);
+			getResumeState().reorderCertifications(0, 1);
+			const state = getResumeState();
 			expect(state.certifications?.[0].id).toBe(initialOrder[1]);
 			expect(state.certifications?.[1].id).toBe(initialOrder[0]);
 		});
@@ -507,57 +515,53 @@ describe("resumeStore", () => {
 				language: "German",
 				proficiency: "Beginner",
 			};
-			useResumeStore.getState().addLanguage(newItem);
-			const state = useResumeStore.getState();
+			getResumeState().addLanguage(newItem);
+			const state = getResumeState();
 			expect(state.languages?.[state.languages?.length - 1]).toEqual(newItem);
 		});
 
 		it("updates a language", () => {
-			useResumeStore.getState().addLanguage({
+			getResumeState().addLanguage({
 				id: "lang-to-update",
 				language: "German",
 				proficiency: "Beginner",
 			});
-			const idToUpdate = useResumeStore.getState().languages?.[0].id;
-			useResumeStore
-				.getState()
-				.updateLanguage(idToUpdate, { language: "Updated Lang" });
-			const state = useResumeStore.getState();
-			expect(state.languages?.find((e) => e.id === idToUpdate)?.language).toBe(
-				"Updated Lang",
-			);
+			const idToUpdate = getResumeState().languages?.[0].id;
+			getResumeState().updateLanguage(idToUpdate, { language: "Updated Lang" });
+			const state = getResumeState();
+			expect(
+				state.languages?.find((e) => e.id === idToUpdate)?.language,
+			).toBe("Updated Lang");
 		});
 
 		it("deletes a language", () => {
-			useResumeStore.getState().addLanguage({
+			getResumeState().addLanguage({
 				id: "lang-to-delete",
 				language: "German",
 				proficiency: "Beginner",
 			});
-			const idToDelete = useResumeStore.getState().languages?.[0].id;
-			const initialLength = useResumeStore.getState().languages?.length;
-			useResumeStore.getState().deleteLanguage(idToDelete);
-			const state = useResumeStore.getState();
+			const idToDelete = getResumeState().languages?.[0].id;
+			const initialLength = getResumeState().languages?.length;
+			getResumeState().deleteLanguage(idToDelete);
+			const state = getResumeState();
 			expect(state.languages?.length).toBe(initialLength - 1);
 			expect(state.languages?.find((e) => e.id === idToDelete)).toBeUndefined();
 		});
 
 		it("reorders languages", () => {
-			useResumeStore.getState().addLanguage({
+			getResumeState().addLanguage({
 				id: "lang-first",
 				language: "German",
 				proficiency: "Beginner",
 			});
-			useResumeStore.getState().addLanguage({
+			getResumeState().addLanguage({
 				id: "lang-second",
 				language: "French",
 				proficiency: "Beginner",
 			});
-			const initialOrder = useResumeStore
-				.getState()
-				.languages?.map((e) => e.id);
-			useResumeStore.getState().reorderLanguages(0, 1);
-			const state = useResumeStore.getState();
+			const initialOrder = getResumeState().languages?.map((e) => e.id);
+			getResumeState().reorderLanguages(0, 1);
+			const state = getResumeState();
 			expect(state.languages?.[0].id).toBe(initialOrder[1]);
 			expect(state.languages?.[1].id).toBe(initialOrder[0]);
 		});

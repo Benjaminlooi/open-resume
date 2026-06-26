@@ -100,3 +100,12 @@ export const resumeSchema = z.object({
 });
 
 export type Resume = z.infer<typeof resumeSchema>;
+
+// Editor-only UI state: a Resume plus the fields the editor manages locally
+// (which document is open, its name/template, and the active section tab).
+export type EditorState = Resume & {
+	id: string;
+	name: string;
+	activeSection: string;
+	templateId: string;
+};
