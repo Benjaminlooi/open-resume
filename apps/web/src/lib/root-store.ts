@@ -367,8 +367,8 @@ const normalizeEditorState = (
 	return migrateResume(parsed);
 };
 
-const toResumeContent = (state: EditorState): ResumeContent =>
-	resumeSchema.parse(state) as unknown as ResumeContent;
+const toResumeContent = (content: Resume): ResumeContent =>
+	resumeSchema.parse(content) as unknown as ResumeContent;
 
 // Module-private auto-save state. These live here (not in the store) because
 // they are coordination flags, not app state.
@@ -752,9 +752,6 @@ const createResumeSlice: StateCreator<RootState, [], [], ResumeSlice> = (
 // Resume index slice factory.
 // ---------------------------------------------------------------------------
 
-const resumeToContent = (content: Resume): ResumeContent =>
-	resumeSchema.parse(content) as unknown as ResumeContent;
-
 const createResumeIndexSlice: StateCreator<
 	RootState,
 	[],
@@ -804,7 +801,7 @@ const createResumeIndexSlice: StateCreator<
 				id,
 				name,
 				templateId,
-				resumeToContent(content ?? blankResumeState),
+				toResumeContent(content ?? blankResumeState),
 			);
 			set((state) => ({
 				resumeIndex: {
@@ -1453,27 +1450,27 @@ export const useRootStore = create<RootState>()(
 );
 
 // Debounced auto-save of the active resume to the companion. Registered
-// unconditionally (matching the original resume-store behaviour): during SSR
-// nothing mutates the resume slice, so the subscriber is inert until the user
-// edits in the browser.
-useRootStore.subscribe((state) => {
-	const resume = state.resume;
-	if (!resume.id || isLoadingResume) return;
+// conditionally inside a window guard to prevent execution during SSR.
+if (typeof window !== "undefined") {
+	useRootStore.subscribe((state) => {
+		const resume = state.resume;
+		if (!resume.id || isLoadingResume) return;
 
-	if (saveTimer) {
-		clearTimeout(saveTimer);
-	}
+		if (saveTimer) {
+			clearTimeout(saveTimer);
+		}
 
-	saveTimer = setTimeout(() => {
-		updateResume(resume.id, {
-			name: resume.name,
-			templateId: resume.templateId,
-			content: toResumeContent(resume),
-		}).catch((error) => {
-			console.error("Failed to save resume", error);
-		});
-	}, 500);
-});
+		saveTimer = setTimeout(() => {
+			updateResume(resume.id, {
+				name: resume.name,
+				templateId: resume.templateId,
+				content: toResumeContent(resume),
+			}).catch((error) => {
+				console.error("Failed to save resume", error);
+			});
+		}, 500);
+	});
+}
 
 // Persist settings to localStorage whenever the settings slice changes.
 // Window-guarded (SSR on Cloudflare Workers has no localStorage).
