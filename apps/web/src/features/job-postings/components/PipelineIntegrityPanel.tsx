@@ -16,6 +16,7 @@ export default function PipelineIntegrityPanel() {
 	);
 
 	const resumes = useRootStore((state) => state.resumeIndex.resumes);
+	useRootStore((state) => state.resumeIndex.defaultResumeId);
 	const [selectedResumes, setSelectedResumes] = useState<
 		Record<string, string>
 	>({});

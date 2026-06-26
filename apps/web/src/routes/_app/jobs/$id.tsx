@@ -44,6 +44,7 @@ function JobWorkspace() {
 	const loadJobApplications = useRootStore(
 		(s) => s.jobApplication.loadJobApplications,
 	);
+	const loadIndex = useRootStore((s) => s.resumeIndex.loadIndex);
 	const defaultResumeId = useRootStore((s) => s.resumeIndex.defaultResumeId);
 	const [isMounted, setIsMounted] = useState(false);
 
@@ -56,8 +57,11 @@ function JobWorkspace() {
 			loadJobApplications().catch((err) =>
 				console.error("Failed to load job applications", err),
 			);
+			loadIndex().catch((err) =>
+				console.error("Failed to load resumes index", err),
+			);
 		}
-	}, [isMounted, loadJobApplications]);
+	}, [isMounted, loadJobApplications, loadIndex]);
 
 	const application = jobApplications.find((app) => app.id === id);
 
