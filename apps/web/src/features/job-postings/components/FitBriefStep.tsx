@@ -10,9 +10,7 @@ import {
 	generateJobFitBrief,
 	getProviderConfig,
 } from "#/features/job-postings/job-ai";
-import { useJobApplicationStore } from "#/features/job-postings/job-application-store";
-import { useResumeIndexStore } from "#/lib/resume-index-store";
-import { getResumeData } from "#/lib/resume-store";
+import { getResumeData, useRootStore } from "#/lib/root-store";
 import StepShell from "./StepShell";
 
 interface FitBriefStepProps {
@@ -20,7 +18,9 @@ interface FitBriefStepProps {
 }
 
 export default function FitBriefStep({ applicationId }: FitBriefStepProps) {
-	const { jobApplications, saveFitBrief, setStatus } = useJobApplicationStore();
+	const jobApplications = useRootStore((s) => s.jobApplication.jobApplications);
+	const saveFitBrief = useRootStore((s) => s.jobApplication.saveFitBrief);
+	const setStatus = useRootStore((s) => s.jobApplication.setStatus);
 	const application = jobApplications.find((app) => app.id === applicationId);
 
 	const [isGenerating, setIsGenerating] = useState(false);
@@ -42,7 +42,7 @@ export default function FitBriefStep({ applicationId }: FitBriefStepProps) {
 		setError(null);
 
 		try {
-			const defaultResumeId = useResumeIndexStore.getState().defaultResumeId;
+			const defaultResumeId = useRootStore.getState().resumeIndex.defaultResumeId;
 			if (!defaultResumeId) {
 				throw new Error(
 					"No default resume selected. Please select a default resume first on the Resumes page.",

@@ -19,8 +19,7 @@ import {
 	exportTailoredResumeToMarkdown,
 } from "#/features/job-postings/job-application-export";
 import type { ResumeEditTarget } from "#/features/job-postings/job-application-schema";
-import { useJobApplicationStore } from "#/features/job-postings/job-application-store";
-import { useResumeIndexStore } from "#/lib/resume-index-store";
+import { useRootStore } from "#/lib/root-store";
 import type { Resume } from "#/lib/resume-schema";
 import StepShell from "./StepShell";
 import TailoredResumePreview from "./TailoredResumePreview";
@@ -32,18 +31,24 @@ interface ResumeTailoringStepProps {
 export default function ResumeTailoringStep({
 	applicationId,
 }: ResumeTailoringStepProps) {
-	const {
-		jobApplications,
-		ensureTailoredResume,
-		saveResumeEditProposals,
-		applyResumeEditProposal,
-		rejectResumeEditProposal,
-	} = useJobApplicationStore();
+	const jobApplications = useRootStore((s) => s.jobApplication.jobApplications);
+	const ensureTailoredResume = useRootStore(
+		(s) => s.jobApplication.ensureTailoredResume,
+	);
+	const saveResumeEditProposals = useRootStore(
+		(s) => s.jobApplication.saveResumeEditProposals,
+	);
+	const applyResumeEditProposal = useRootStore(
+		(s) => s.jobApplication.applyResumeEditProposal,
+	);
+	const rejectResumeEditProposal = useRootStore(
+		(s) => s.jobApplication.rejectResumeEditProposal,
+	);
 
 	const application = jobApplications.find((app) => app.id === applicationId);
 
-	const defaultResumeId = useResumeIndexStore((s) => s.defaultResumeId);
-	const resumesList = useResumeIndexStore((s) => s.resumes);
+	const defaultResumeId = useRootStore((s) => s.resumeIndex.defaultResumeId);
+	const resumesList = useRootStore((s) => s.resumeIndex.resumes);
 	const defaultResumeEntry = resumesList.find((r) => r.id === defaultResumeId);
 	const defaultResumeName = defaultResumeEntry?.name || "Default Resume";
 
