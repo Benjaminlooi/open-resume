@@ -1,18 +1,18 @@
-import type { EditorState } from "#/lib/resume-store";
-import { useResumeStore } from "#/lib/resume-store";
+import type { EditorState } from "#/lib/resume-schema";
+import { useRootStore } from "#/lib/root-store";
 
 export default function ModernTemplate({ resume }: { resume?: EditorState }) {
-	const {
-		personalInfo: globalPersonalInfo,
-		summary: globalSummary,
-		sections: globalSections,
-		experience: globalExperience,
-		education: globalEducation,
-		skills: globalSkills,
-		projects: globalProjectsRaw,
-		certifications: globalCertificationsRaw,
-		languages: globalLanguagesRaw,
-	} = useResumeStore();
+	const globalPersonalInfo = useRootStore((state) => state.resume.personalInfo);
+	const globalSummary = useRootStore((state) => state.resume.summary);
+	const globalSections = useRootStore((state) => state.resume.sections);
+	const globalExperience = useRootStore((state) => state.resume.experience);
+	const globalEducation = useRootStore((state) => state.resume.education);
+	const globalSkills = useRootStore((state) => state.resume.skills);
+	const globalProjectsRaw = useRootStore((state) => state.resume.projects);
+	const globalCertificationsRaw = useRootStore(
+		(state) => state.resume.certifications,
+	);
+	const globalLanguagesRaw = useRootStore((state) => state.resume.languages);
 
 	const globalProjects = globalProjectsRaw || [];
 	const globalCertifications = globalCertificationsRaw || [];

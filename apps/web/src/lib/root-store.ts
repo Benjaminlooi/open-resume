@@ -1,0 +1,138 @@
+import { create } from "zustand";
+import { devtools } from "zustand/middleware";
+import { getResume, updateResume } from "./local-companion-client";
+import type { EditorState } from "./resume-schema";
+import {
+	createResumeSlice,
+	getIsLoadingResume,
+	getSaveTimer,
+	setSaveTimer,
+	toResumeContent,
+	normalizeEditorState,
+	type ResumeSlice,
+} from "./resume-slice";
+import {
+	createResumeIndexSlice,
+	type ResumeIndexSlice,
+} from "./resume-index-slice";
+import {
+	createSettingsSlice,
+	SETTINGS_STORAGE_KEY,
+	type SettingsSlice,
+} from "./settings-slice";
+import {
+	createJobApplicationSlice,
+	type JobApplicationSlice,
+} from "./job-application-slice";
+import {
+	createJobPostingSlice,
+	type JobPostingSlice,
+} from "./job-posting-slice";
+import { createAISlice, type AISlice } from "./ai-slice";
+
+/**
+ * Root store.
+ *
+ * All app state lives in ONE Zustand store so that Redux DevTools shows a
+ * single instance with a unified action timeline. Each domain is authored as
+ * a slice (a `StateCreator` operating on the root state) in its own dedicated
+ * file. Components select narrowly (e.g. `useRootStore((s) => s.resume.experience)`)
+ * so updates to one slice never re-render components that only read another.
+ */
+
+export interface RootState {
+	resume: ResumeSlice;
+	resumeIndex: ResumeIndexSlice;
+	settings: SettingsSlice;
+	jobApplication: JobApplicationSlice;
+	jobPosting: JobPostingSlice;
+	ai: AISlice;
+}
+
+// Re-export slice interfaces and types for external consumers.
+export type { ResumeSlice } from "./resume-slice";
+export { AVAILABLE_SECTIONS, AVAILABLE_TEMPLATES } from "./resume-slice";
+export type { ResumeIndexSlice, ResumeIndexEntry } from "./resume-index-slice";
+export type { SettingsSlice, AIProvider } from "./settings-slice";
+export type { JobApplicationSlice } from "./job-application-slice";
+export type { JobPostingSlice } from "./job-posting-slice";
+export type { AISlice, Message } from "./ai-slice";
+
+export const useRootStore = create<RootState>()(
+	devtools(
+		(...a) => ({
+			resume: createResumeSlice(...a),
+			resumeIndex: createResumeIndexSlice(...a),
+			settings: createSettingsSlice(...a),
+			jobApplication: createJobApplicationSlice(...a),
+			jobPosting: createJobPostingSlice(...a),
+			ai: createAISlice(...a),
+		}),
+		{ name: "resume-builder" },
+	),
+);
+
+// ---------------------------------------------------------------------------
+// Helper: fetch a resume's EditorState, returning the in-memory slice if it is
+// already the active document.
+// ---------------------------------------------------------------------------
+export const getResumeData = async (
+	id: string,
+): Promise<EditorState | null> => {
+	const state = useRootStore.getState();
+	if (state.resume.id === id) {
+		return state.resume;
+	}
+	try {
+		const resume = await getResume(id);
+		return normalizeEditorState(
+			resume.id,
+			resume.name,
+			resume.templateId,
+			resume.content,
+		);
+	} catch (e) {
+		console.error("Failed to fetch resume data", e);
+		return null;
+	}
+};
+
+// Debounced auto-save of the active resume to the companion. Registered
+// conditionally inside a window guard to prevent execution during SSR.
+if (typeof window !== "undefined") {
+	useRootStore.subscribe((state) => {
+		const resume = state.resume;
+		if (!resume.id || getIsLoadingResume()) return;
+
+		const saveTimer = getSaveTimer();
+		if (saveTimer) {
+			clearTimeout(saveTimer);
+		}
+
+		const newTimer = setTimeout(() => {
+			updateResume(resume.id, {
+				name: resume.name,
+				templateId: resume.templateId,
+				content: toResumeContent(resume),
+			}).catch((error) => {
+				console.error("Failed to save resume", error);
+			});
+		}, 500);
+		setSaveTimer(newTimer);
+	});
+}
+
+// Persist settings to localStorage whenever the settings slice changes.
+// Window-guarded (SSR on Cloudflare Workers has no localStorage).
+if (typeof window !== "undefined") {
+	useRootStore.subscribe((state) => {
+		const {
+			updateAPIKey: _u1,
+			setDefaultProvider: _u2,
+			updateBaseUrl: _u3,
+			updateSelectedModel: _u4,
+			...data
+		} = state.settings;
+		localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(data));
+	});
+}

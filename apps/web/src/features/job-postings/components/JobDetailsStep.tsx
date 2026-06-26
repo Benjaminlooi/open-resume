@@ -1,5 +1,5 @@
 import { type FormEvent, useEffect, useState } from "react";
-import { useJobApplicationStore } from "#/features/job-postings/job-application-store";
+import { useRootStore } from "#/lib/root-store";
 import StepShell from "./StepShell";
 
 interface JobDetailsStepProps {
@@ -7,7 +7,10 @@ interface JobDetailsStepProps {
 }
 
 export default function JobDetailsStep({ applicationId }: JobDetailsStepProps) {
-	const { jobApplications, updateJobApplication } = useJobApplicationStore();
+	const jobApplications = useRootStore((s) => s.jobApplication.jobApplications);
+	const updateJobApplication = useRootStore(
+		(s) => s.jobApplication.updateJobApplication,
+	);
 	const application = jobApplications.find((app) => app.id === applicationId);
 
 	const [company, setCompany] = useState(application?.company || "");

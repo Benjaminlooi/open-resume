@@ -1,9 +1,9 @@
 import { RichTextEditor } from "#/components/ui/rich-text-editor";
-import { useResumeStore } from "#/lib/resume-store";
+import { useRootStore } from "#/lib/root-store";
 
 export default function SummaryForm() {
-	const summary = useResumeStore((state) => state.summary);
-	const updateSummary = useResumeStore((state) => state.updateSummary);
+	const summary = useRootStore((state) => state.resume.summary);
+	const updateSummary = useRootStore((state) => state.resume.updateSummary);
 
 	return (
 		<div className="space-y-4">

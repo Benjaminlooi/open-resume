@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useResumeStore } from "#/lib/resume-store";
+import { useRootStore } from "#/lib/root-store";
 import DemoTemplate from "./DemoTemplate";
 import ModernTemplate from "./ModernTemplate";
 
@@ -9,7 +9,7 @@ export default function ResumePreview() {
 	const [scale, setScale] = useState(1);
 	const [unscaledHeight, setUnscaledHeight] = useState<number | "auto">("auto");
 	const [pageBreaks, setPageBreaks] = useState<number[]>([]);
-	const templateId = useResumeStore((state) => state.templateId);
+	const templateId = useRootStore((state) => state.resume.templateId);
 
 	const TemplateComponent =
 		templateId === "modern" ? ModernTemplate : DemoTemplate;

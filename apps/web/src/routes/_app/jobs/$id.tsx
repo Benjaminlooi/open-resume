@@ -13,7 +13,7 @@ import {
 	formatStatus,
 	getStatusBadgeStyle,
 } from "#/features/job-postings/job-application-status";
-import { useJobApplicationStore } from "#/features/job-postings/job-application-store";
+import { useRootStore } from "#/lib/root-store";
 import { computePipelineProgress } from "#/features/job-postings/pipeline-progress";
 import {
 	DEFAULT_STEP_ID,
@@ -23,7 +23,7 @@ import {
 	stepIdToIndex,
 	stepIndexToId,
 } from "#/features/job-postings/pipeline-steps";
-import { useResumeIndexStore } from "#/lib/resume-index-store";
+
 
 export const Route = createFileRoute("/_app/jobs/$id")({
 	validateSearch: (search: Record<string, unknown>): {
@@ -39,9 +39,12 @@ function JobWorkspace() {
 	const { step } = Route.useSearch();
 	const navigate = useNavigate();
 
-	const { jobApplications, validatePipeline, loadJobApplications } =
-		useJobApplicationStore();
-	const defaultResumeId = useResumeIndexStore((s) => s.defaultResumeId);
+	const jobApplications = useRootStore((s) => s.jobApplication.jobApplications);
+	const validatePipeline = useRootStore((s) => s.jobApplication.validatePipeline);
+	const loadJobApplications = useRootStore(
+		(s) => s.jobApplication.loadJobApplications,
+	);
+	const defaultResumeId = useRootStore((s) => s.resumeIndex.defaultResumeId);
 	const [isMounted, setIsMounted] = useState(false);
 
 	useEffect(() => {

@@ -1,18 +1,21 @@
 import { AlertTriangle, ShieldCheck } from "lucide-react";
 import { useState } from "react";
-import { useJobApplicationStore } from "#/features/job-postings/job-application-store";
-import { useResumeIndexStore } from "#/lib/resume-index-store";
+import { useRootStore } from "#/lib/root-store";
 
 export default function PipelineIntegrityPanel() {
-	const {
-		jobApplications,
-		validatePipeline,
-		archiveIncompleteJob,
-		associateSourceResume,
-		clearStaleProposal,
-	} = useJobApplicationStore();
+	const jobApplications = useRootStore((s) => s.jobApplication.jobApplications);
+	const validatePipeline = useRootStore((s) => s.jobApplication.validatePipeline);
+	const archiveIncompleteJob = useRootStore(
+		(s) => s.jobApplication.archiveIncompleteJob,
+	);
+	const associateSourceResume = useRootStore(
+		(s) => s.jobApplication.associateSourceResume,
+	);
+	const clearStaleProposal = useRootStore(
+		(s) => s.jobApplication.clearStaleProposal,
+	);
 
-	const resumes = useResumeIndexStore((state) => state.resumes);
+	const resumes = useRootStore((state) => state.resumeIndex.resumes);
 	const [selectedResumes, setSelectedResumes] = useState<
 		Record<string, string>
 	>({});

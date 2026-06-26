@@ -42,16 +42,21 @@ vi.mock("lucide-react", () => ({
 	ExternalLink: () => <span data-testid="external-link">ExternalLink</span>,
 }));
 
-const convertJobToApplicationMock = vi.fn();
-const retryJobCrawlMock = vi.fn();
-const retryJobAnalyzeMock = vi.fn();
+const mockConvertJobToApplication = vi.fn();
+const mockRetryJobCrawl = vi.fn();
+const mockRetryJobAnalyze = vi.fn();
 
-vi.mock("#/features/job-postings/job-posting-store", () => ({
-	useJobPostingStore: () => ({
-		convertJobToApplication: convertJobToApplicationMock,
-		retryJobCrawl: retryJobCrawlMock,
-		retryJobAnalyze: retryJobAnalyzeMock,
-	}),
+vi.mock("#/lib/root-store", () => ({
+	useRootStore: (selector: (state: any) => any) => {
+		const state = {
+			jobPosting: {
+				convertJobToApplication: mockConvertJobToApplication,
+				retryJobCrawl: mockRetryJobCrawl,
+				retryJobAnalyze: mockRetryJobAnalyze,
+			},
+		};
+		return selector(state);
+	},
 }));
 
 const mockNavigate = vi.fn();
@@ -146,7 +151,7 @@ describe("JobPostingDetailsDialog", () => {
 	});
 
 	it("calls convertJobToApplication and navigates when Convert to Application button is clicked", async () => {
-		convertJobToApplicationMock.mockResolvedValue("app-123");
+		mockConvertJobToApplication.mockResolvedValue("app-123");
 		const { container, root } = await renderDialog({});
 
 		const convertBtn = Array.from(container.querySelectorAll("button")).find(
@@ -158,7 +163,7 @@ describe("JobPostingDetailsDialog", () => {
 			convertBtn?.click();
 		});
 
-		expect(convertJobToApplicationMock).toHaveBeenCalledWith(mockJob);
+		expect(mockConvertJobToApplication).toHaveBeenCalledWith(mockJob);
 		expect(mockNavigate).toHaveBeenCalledWith({
 			to: "/jobs/$id",
 			params: { id: "app-123" },
@@ -202,13 +207,13 @@ describe("JobPostingDetailsDialog", () => {
 		await act(async () => {
 			retryScrapeBtn?.click();
 		});
-		expect(retryJobCrawlMock).toHaveBeenCalledWith("job-1");
+		expect(mockRetryJobCrawl).toHaveBeenCalledWith("job-1");
 		expect(onClose).toHaveBeenCalled();
 
 		await act(async () => {
 			retryAnalyzeBtn?.click();
 		});
-		expect(retryJobAnalyzeMock).toHaveBeenCalledWith("job-1");
+		expect(mockRetryJobAnalyze).toHaveBeenCalledWith("job-1");
 
 		await act(async () => {
 			root.unmount();

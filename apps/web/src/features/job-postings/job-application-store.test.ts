@@ -17,15 +17,15 @@ vi.mock("#/lib/local-companion-client", () => {
 			if (!contentStr) {
 				throw new Error(`Resume not found in mock storage: ${id}`);
 			}
-			const { useResumeIndexStore } = await import("#/lib/resume-index-store");
-			const state = useResumeIndexStore.getState();
-			const entry = state.resumes.find((r: any) => r.id === id);
+			const { useRootStore } = await import("#/lib/root-store");
+			const indexState = useRootStore.getState().resumeIndex;
+			const entry = indexState.resumes.find((r: any) => r.id === id);
 			return {
 				id,
 				name: entry?.name || "Core Resume",
 				templateId: entry?.templateId || "modern",
 				lastModified: entry?.lastModified || Date.now(),
-				isDefault: state.defaultResumeId === id,
+				isDefault: indexState.defaultResumeId === id,
 				content: JSON.parse(contentStr),
 			};
 		}),
@@ -64,13 +64,11 @@ vi.mock("#/lib/local-companion-client", () => {
 			},
 		),
 		updateJobApplication: vi.fn(async (id, data) => {
-			const { useJobApplicationStore } = await import(
-				"./job-application-store"
-			);
+			const { useRootStore } = await import("#/lib/root-store");
 			const existing =
-				useJobApplicationStore
+				useRootStore
 					.getState()
-					.jobApplications.find((app) => app.id === id) || {};
+					.jobApplication.jobApplications.find((app) => app.id === id) || {};
 			return {
 				...existing,
 				...data,
@@ -81,10 +79,8 @@ vi.mock("#/lib/local-companion-client", () => {
 			return { deleted: true };
 		}),
 		listJobApplications: vi.fn(async () => {
-			const { useJobApplicationStore } = await import(
-				"./job-application-store"
-			);
-			return useJobApplicationStore.getState().jobApplications;
+			const { useRootStore } = await import("#/lib/root-store");
+			return useRootStore.getState().jobApplication.jobApplications;
 		}),
 	};
 });
@@ -93,7 +89,15 @@ describe("jobApplicationStore", () => {
 	let originalWindow: any;
 	let originalLocalStorage: any;
 	let useJobApplicationStore: any;
-	let useResumeIndexStore: any;
+	let useRootStore: any;
+
+	// Set the resumeIndex slice's data (merging over the live slice so its
+	// action functions are preserved).
+	const setIndex = (data: { resumes: any[]; defaultResumeId: string | null }) => {
+		useRootStore.setState((prev: any) => ({
+			resumeIndex: { ...prev.resumeIndex, ...data },
+		}));
+	};
 
 	beforeAll(async () => {
 		originalWindow = globalThis.window;
@@ -122,13 +126,17 @@ describe("jobApplicationStore", () => {
 		(globalThis as any).localStorage = storageMock;
 
 		// Dynamically import AFTER global mocks are set up, so ESM hoisting doesn't bypass them
-		const indexStoreModule = await import("#/lib/resume-index-store");
-		useResumeIndexStore = indexStoreModule.useResumeIndexStore;
+		const rootStoreModule = await import("#/lib/root-store");
+		useRootStore = rootStoreModule.useRootStore;
 
-		await import("#/lib/resume-store");
-
-		const jobStoreModule = await import("./job-application-store");
-		useJobApplicationStore = jobStoreModule.useJobApplicationStore;
+		useJobApplicationStore = {
+			getState: () => useRootStore.getState().jobApplication,
+			setState: (data: any) => {
+				useRootStore.setState((prev: any) => ({
+					jobApplication: { ...prev.jobApplication, ...data },
+				}));
+			},
+		};
 	});
 
 	beforeEach(() => {
@@ -137,11 +145,14 @@ describe("jobApplicationStore", () => {
 			delete mockStorage[key];
 		}
 
-		// Reset singleton stores state manually
-		useResumeIndexStore.setState({
-			resumes: [],
-			defaultResumeId: null,
-		});
+		// Reset the resumeIndex slice data (preserve actions) and jobApplications.
+		useRootStore.setState((prev: any) => ({
+			resumeIndex: {
+				...prev.resumeIndex,
+				resumes: [],
+				defaultResumeId: null,
+			},
+		}));
 
 		useJobApplicationStore.setState({
 			jobApplications: [],
@@ -247,7 +258,7 @@ describe("jobApplicationStore", () => {
 		};
 
 		// 1. Setup default resume in index store and localStorage
-		useResumeIndexStore.setState({
+		setIndex({
 			resumes: [
 				{
 					id: resumeId,
@@ -344,7 +355,7 @@ describe("jobApplicationStore", () => {
 			languages: [],
 		};
 
-		useResumeIndexStore.setState({
+		setIndex({
 			resumes: [
 				{
 					id: resumeId,
@@ -544,7 +555,7 @@ describe("jobApplicationStore", () => {
 			skills: [],
 			projects: [],
 		};
-		useResumeIndexStore.setState({
+		setIndex({
 			resumes: [
 				{
 					id: resumeId,
@@ -632,7 +643,7 @@ describe("jobApplicationStore", () => {
 		// but if a global default resume exists the app is not stuck (Start Tailoring
 		// will snapshot the default). The "No source resume" warning must not fire.
 		const resumeId = "resume-1";
-		useResumeIndexStore.setState({
+		setIndex({
 			resumes: [
 				{
 					id: resumeId,
@@ -683,7 +694,7 @@ describe("jobApplicationStore", () => {
 			projects: [],
 		};
 
-		useResumeIndexStore.setState({
+		setIndex({
 			resumes: [
 				{
 					id: resumeId,

@@ -1,6 +1,6 @@
 import { useNavigate } from "@tanstack/react-router";
 import { type FormEvent, useState } from "react";
-import { useJobApplicationStore } from "#/features/job-postings/job-application-store";
+import { useRootStore } from "#/lib/root-store";
 import { createJobPosting } from "#/lib/local-companion-client";
 
 interface NewJobApplicationModalProps {
@@ -22,8 +22,8 @@ export default function NewJobApplicationModal({
 	onCreated,
 }: NewJobApplicationModalProps) {
 	const navigate = useNavigate();
-	const createJobApplication = useJobApplicationStore(
-		(state) => state.createJobApplication,
+	const createJobApplication = useRootStore(
+		(state) => state.jobApplication.createJobApplication,
 	);
 
 	const [activeTab, setActiveTab] = useState<"crawl" | "manual">("crawl");

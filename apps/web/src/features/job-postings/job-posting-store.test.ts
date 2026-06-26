@@ -7,8 +7,25 @@ import {
 	retryJobPostingAnalyze,
 	retryJobPostingCrawl,
 } from "#/lib/local-companion-client";
-import { useJobPostingStore } from "./job-posting-store";
-import { useJobApplicationStore } from "./job-application-store";
+import { useRootStore } from "#/lib/root-store";
+
+const useJobPostingStore = {
+	getState: () => useRootStore.getState().jobPosting,
+	setState: (data: any) => {
+		useRootStore.setState((prev: any) => ({
+			jobPosting: { ...prev.jobPosting, ...data },
+		}));
+	},
+};
+
+const useJobApplicationStore = {
+	getState: () => useRootStore.getState().jobApplication,
+	setState: (data: any) => {
+		useRootStore.setState((prev: any) => ({
+			jobApplication: { ...prev.jobApplication, ...data },
+		}));
+	},
+};
 
 vi.mock("#/lib/local-companion-client", () => ({
 	listJobPostings: vi.fn(),

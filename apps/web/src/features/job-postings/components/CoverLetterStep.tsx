@@ -11,9 +11,7 @@ import {
 	generateCoverLetter,
 	getProviderConfig,
 } from "#/features/job-postings/job-ai";
-import { useJobApplicationStore } from "#/features/job-postings/job-application-store";
-import { useResumeIndexStore } from "#/lib/resume-index-store";
-import { getResumeData } from "#/lib/resume-store";
+import { getResumeData, useRootStore } from "#/lib/root-store";
 import StepShell from "./StepShell";
 
 interface CoverLetterStepProps {
@@ -23,7 +21,10 @@ interface CoverLetterStepProps {
 export default function CoverLetterStep({
 	applicationId,
 }: CoverLetterStepProps) {
-	const { jobApplications, saveCoverLetterDraft } = useJobApplicationStore();
+	const jobApplications = useRootStore((s) => s.jobApplication.jobApplications);
+	const saveCoverLetterDraft = useRootStore(
+		(s) => s.jobApplication.saveCoverLetterDraft,
+	);
 	const application = jobApplications.find((app) => app.id === applicationId);
 
 	const coverLetterDraft = application?.coverLetterDraft;
@@ -71,7 +72,7 @@ export default function CoverLetterStep({
 			let finalResume = resumeToUse;
 
 			if (!finalResume) {
-				const defaultResumeId = useResumeIndexStore.getState().defaultResumeId;
+				const defaultResumeId = useRootStore.getState().resumeIndex.defaultResumeId;
 				if (defaultResumeId) {
 					finalResume = await getResumeData(defaultResumeId);
 				}

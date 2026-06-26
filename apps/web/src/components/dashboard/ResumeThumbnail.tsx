@@ -1,6 +1,6 @@
 import DemoTemplate from "#/components/editor/DemoTemplate";
 import ModernTemplate from "#/components/editor/ModernTemplate";
-import type { EditorState } from "#/lib/resume-store";
+import type { EditorState } from "#/lib/resume-schema";
 
 interface ResumeThumbnailProps {
 	templateId: string;

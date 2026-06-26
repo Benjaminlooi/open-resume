@@ -17,8 +17,7 @@ import {
 	ResizablePanel,
 	ResizablePanelGroup,
 } from "#/components/ui/resizable";
-import { useResumeIndexStore } from "#/lib/resume-index-store";
-import { useResumeStore } from "#/lib/resume-store";
+import { useRootStore } from "#/lib/root-store";
 
 export const Route = createFileRoute("/_app/editor/$id")({
 	component: RouteComponent,
@@ -26,7 +25,8 @@ export const Route = createFileRoute("/_app/editor/$id")({
 
 function RouteComponent() {
 	const { id } = Route.useParams();
-	const { activeSection, loadResume } = useResumeStore();
+	const activeSection = useRootStore((state) => state.resume.activeSection);
+	const loadResume = useRootStore((state) => state.resume.loadResume);
 	const [isLoading, setIsLoading] = useState(true);
 
 	useEffect(() => {
@@ -38,12 +38,12 @@ function RouteComponent() {
 			if (!isActive) return;
 			if (!success) {
 				// Initialize new resume state from the index if available
-				const indexEntry = useResumeIndexStore
+				const indexEntry = useRootStore
 					.getState()
-					.resumes.find((r) => r.id === id);
-				useResumeStore
+					.resumeIndex.resumes.find((r) => r.id === id);
+				useRootStore
 					.getState()
-					.initNewResume(
+					.resume.initNewResume(
 						id,
 						indexEntry?.name || "My Resume",
 						indexEntry?.templateId || "demo",

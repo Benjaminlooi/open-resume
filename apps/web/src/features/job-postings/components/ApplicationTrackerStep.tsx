@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { JobApplicationStatus } from "#/features/job-postings/job-application-schema";
-import { useJobApplicationStore } from "#/features/job-postings/job-application-store";
+import { useRootStore } from "#/lib/root-store";
 import StepShell from "./StepShell";
 
 interface ApplicationTrackerStepProps {
@@ -21,8 +21,11 @@ const STATUS_OPTIONS: { value: JobApplicationStatus; label: string }[] = [
 export default function ApplicationTrackerStep({
 	applicationId,
 }: ApplicationTrackerStepProps) {
-	const { jobApplications, setStatus, updateJobApplication } =
-		useJobApplicationStore();
+	const jobApplications = useRootStore((s) => s.jobApplication.jobApplications);
+	const setStatus = useRootStore((s) => s.jobApplication.setStatus);
+	const updateJobApplication = useRootStore(
+		(s) => s.jobApplication.updateJobApplication,
+	);
 	const application = jobApplications.find((app) => app.id === applicationId);
 
 	const getInitialFollowUpDate = () => {

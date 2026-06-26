@@ -3,7 +3,7 @@ import { FileUp } from "lucide-react";
 import { type ChangeEvent, useEffect, useRef, useState } from "react";
 import ResumeCard from "#/components/dashboard/ResumeCard";
 import NewResumeModal from "#/components/editor/NewResumeModal";
-import { useResumeIndexStore } from "#/lib/resume-index-store";
+import { useRootStore } from "#/lib/root-store";
 import { parseResumeMarkdown } from "#/lib/resume-markdown";
 
 export const Route = createFileRoute("/_app/resumes")({
@@ -13,8 +13,14 @@ export const Route = createFileRoute("/_app/resumes")({
 function ResumesDashboard() {
 	const navigate = useNavigate();
 	const importInputRef = useRef<HTMLInputElement>(null);
-	const { resumes, loadIndex, createResumeIndexEntry, deleteResumeIndexEntry } =
-		useResumeIndexStore();
+	const resumes = useRootStore((state) => state.resumeIndex.resumes);
+	const loadIndex = useRootStore((state) => state.resumeIndex.loadIndex);
+	const createResumeIndexEntry = useRootStore(
+		(state) => state.resumeIndex.createResumeIndexEntry,
+	);
+	const deleteResumeIndexEntry = useRootStore(
+		(state) => state.resumeIndex.deleteResumeIndexEntry,
+	);
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [isMounted, setIsMounted] = useState(false);
 

@@ -18,7 +18,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "#/components/ui/select";
-import { type AIProvider, useSettingsStore } from "#/lib/settings-store";
+import { type AIProvider, useRootStore } from "#/lib/root-store";
 
 const PROVIDERS: {
 	id: AIProvider;
@@ -46,16 +46,16 @@ const PROVIDERS: {
 ];
 
 export function GlobalSettingsModal() {
-	const {
-		apiKeys,
-		defaultProvider,
-		baseUrls,
-		selectedModels,
-		updateAPIKey,
-		setDefaultProvider,
-		updateBaseUrl,
-		updateSelectedModel,
-	} = useSettingsStore();
+	const apiKeys = useRootStore((s) => s.settings.apiKeys);
+	const defaultProvider = useRootStore((s) => s.settings.defaultProvider);
+	const baseUrls = useRootStore((s) => s.settings.baseUrls);
+	const selectedModels = useRootStore((s) => s.settings.selectedModels);
+	const updateAPIKey = useRootStore((s) => s.settings.updateAPIKey);
+	const setDefaultProvider = useRootStore((s) => s.settings.setDefaultProvider);
+	const updateBaseUrl = useRootStore((s) => s.settings.updateBaseUrl);
+	const updateSelectedModel = useRootStore(
+		(s) => s.settings.updateSelectedModel,
+	);
 
 	const [isFetching, setIsFetching] = useState(false);
 	const [fetchError, setFetchError] = useState<string | null>(null);

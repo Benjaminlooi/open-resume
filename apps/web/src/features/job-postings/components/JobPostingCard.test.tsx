@@ -50,13 +50,18 @@ const retryJobCrawlMock = vi.fn();
 const retryJobAnalyzeMock = vi.fn();
 const deleteJobMock = vi.fn();
 
-vi.mock("#/features/job-postings/job-posting-store", () => ({
-	useJobPostingStore: () => ({
-		convertJobToApplication: convertJobToApplicationMock,
-		retryJobCrawl: retryJobCrawlMock,
-		retryJobAnalyze: retryJobAnalyzeMock,
-		deleteJob: deleteJobMock,
-	}),
+vi.mock("#/lib/root-store", () => ({
+	useRootStore: (selector: (state: any) => any) => {
+		const state = {
+			jobPosting: {
+				convertJobToApplication: convertJobToApplicationMock,
+				retryJobCrawl: retryJobCrawlMock,
+				retryJobAnalyze: retryJobAnalyzeMock,
+				deleteJob: deleteJobMock,
+			},
+		};
+		return selector(state);
+	},
 }));
 
 const mockNavigate = vi.fn();
