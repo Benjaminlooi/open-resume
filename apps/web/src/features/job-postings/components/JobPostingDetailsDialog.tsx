@@ -14,7 +14,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "#/components/ui/dialog";
-import { useJobPostingStore } from "#/features/job-postings/job-posting-store";
+import { useRootStore } from "#/lib/root-store";
 import type { LocalJobPosting } from "#/lib/local-companion-client";
 import { companionBaseUrl } from "#/lib/local-companion-client";
 
@@ -39,8 +39,11 @@ export default function JobPostingDetailsDialog({
 	isOpen,
 	onClose,
 }: JobPostingDetailsDialogProps) {
-	const { convertJobToApplication, retryJobCrawl, retryJobAnalyze } =
-		useJobPostingStore();
+	const convertJobToApplication = useRootStore(
+		(s) => s.jobPosting.convertJobToApplication,
+	);
+	const retryJobCrawl = useRootStore((s) => s.jobPosting.retryJobCrawl);
+	const retryJobAnalyze = useRootStore((s) => s.jobPosting.retryJobAnalyze);
 	const navigate = useNavigate();
 	const [activeTab, setActiveTab] = useState<"ai" | "scraped" | "screenshot">(
 		"ai",

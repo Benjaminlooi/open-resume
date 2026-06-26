@@ -1,7 +1,7 @@
 import { useNavigate } from "@tanstack/react-router";
 import { Eye, RotateCcw, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { useJobPostingStore } from "#/features/job-postings/job-posting-store";
+import { useRootStore } from "#/lib/root-store";
 import type { LocalJobPosting } from "#/lib/local-companion-client";
 import JobPostingDetailsDialog from "./JobPostingDetailsDialog";
 
@@ -22,8 +22,12 @@ function getPreview(text: string) {
 }
 
 export default function JobPostingCard({ job }: JobPostingCardProps) {
-	const { convertJobToApplication, retryJobCrawl, retryJobAnalyze, deleteJob } =
-		useJobPostingStore();
+	const convertJobToApplication = useRootStore(
+		(s) => s.jobPosting.convertJobToApplication,
+	);
+	const retryJobCrawl = useRootStore((s) => s.jobPosting.retryJobCrawl);
+	const retryJobAnalyze = useRootStore((s) => s.jobPosting.retryJobAnalyze);
+	const deleteJob = useRootStore((s) => s.jobPosting.deleteJob);
 	const navigate = useNavigate();
 	const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 	const hostname = getHostname(job.sourceUrl);

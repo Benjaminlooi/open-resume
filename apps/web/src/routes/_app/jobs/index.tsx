@@ -6,19 +6,15 @@ import JobPostingCard from "#/features/job-postings/components/JobPostingCard";
 import NewJobApplicationModal from "#/features/job-postings/components/NewJobApplicationModal";
 import PipelineIntegrityPanel from "#/features/job-postings/components/PipelineIntegrityPanel";
 import { useRootStore } from "#/lib/root-store";
-import { useJobPostingStore } from "#/features/job-postings/job-posting-store";
-
 
 export const Route = createFileRoute("/_app/jobs/")({
 	component: JobsDashboard,
 });
 
 function JobsDashboard() {
-	const {
-		jobPostings,
-		fetchJobPostings,
-		error: loadError,
-	} = useJobPostingStore();
+	const jobPostings = useRootStore((s) => s.jobPosting.jobPostings);
+	const fetchJobPostings = useRootStore((s) => s.jobPosting.fetchJobPostings);
+	const loadError = useRootStore((s) => s.jobPosting.error);
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [isMounted, setIsMounted] = useState(false);
 
