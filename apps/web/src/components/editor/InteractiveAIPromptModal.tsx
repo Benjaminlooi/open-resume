@@ -23,8 +23,8 @@ import {
 	SelectValue,
 } from "#/components/ui/select";
 import { Textarea } from "#/components/ui/textarea";
-import { type Message, useAIStore } from "#/lib/ai-store";
-import { type AIProvider, useSettingsStore } from "#/lib/settings-store";
+import { useShallow } from "zustand/react/shallow";
+import { type AIProvider, type Message, useRootStore } from "#/lib/root-store";
 import { cn } from "#/lib/utils";
 
 interface Props {
@@ -73,10 +73,12 @@ export function InteractiveAIPromptModal({
 		setSelectedProvider,
 		abortController,
 		setAbortController,
-	} = useAIStore();
+	} = useRootStore(useShallow((s) => s.ai));
 
-	const { defaultProvider, apiKeys, baseUrls, selectedModels } =
-		useSettingsStore();
+	const defaultProvider = useRootStore((s) => s.settings.defaultProvider);
+	const apiKeys = useRootStore((s) => s.settings.apiKeys);
+	const baseUrls = useRootStore((s) => s.settings.baseUrls);
+	const selectedModels = useRootStore((s) => s.settings.selectedModels);
 
 	const currentProvider = selectedProvider || defaultProvider;
 
