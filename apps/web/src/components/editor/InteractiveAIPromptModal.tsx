@@ -1,12 +1,7 @@
-import { createAnthropic } from "@ai-sdk/anthropic";
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
-import { createOpenAI } from "@ai-sdk/openai";
-import { streamText } from "ai";
 import DOMPurify from "isomorphic-dompurify";
 import { Check, Loader2, Send, Sparkles, Square } from "lucide-react";
 import { marked } from "marked";
 import { useEffect, useRef } from "react";
-import { z } from "zod";
 import { Button } from "#/components/ui/button";
 import {
 	Dialog,
@@ -15,17 +10,11 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "#/components/ui/dialog";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "#/components/ui/select";
 import { Textarea } from "#/components/ui/textarea";
 import { useShallow } from "zustand/react/shallow";
-import { type AIProvider, type Message, useRootStore } from "#/lib/root-store";
+import { type Message, useRootStore } from "#/lib/root-store";
 import { cn } from "#/lib/utils";
+import { companionBaseUrl } from "#/lib/local-companion-client";
 
 interface Props {
 	context: Record<string, unknown>;
@@ -69,24 +58,9 @@ export function InteractiveAIPromptModal({
 		setIsLoading,
 		error,
 		setError,
-		selectedProvider,
-		setSelectedProvider,
 		abortController,
 		setAbortController,
 	} = useRootStore(useShallow((s) => s.ai));
-
-	const defaultProvider = useRootStore((s) => s.settings.defaultProvider);
-	const apiKeys = useRootStore((s) => s.settings.apiKeys);
-	const baseUrls = useRootStore((s) => s.settings.baseUrls);
-	const selectedModels = useRootStore((s) => s.settings.selectedModels);
-
-	const currentProvider = selectedProvider || defaultProvider;
-
-	const isLocal =
-		currentProvider === "ollama" || currentProvider === "lmstudio";
-	const apiKey = isLocal ? "dummy" : apiKeys[currentProvider];
-	const baseUrl = baseUrls[currentProvider];
-	const modelName = selectedModels[currentProvider];
 
 	const chatEndRef = useRef<HTMLDivElement>(null);
 	// biome-ignore lint/correctness/useExhaustiveDependencies: We want to scroll whenever messages change
@@ -113,52 +87,6 @@ export function InteractiveAIPromptModal({
 
 		const controller = new AbortController();
 		setAbortController(controller);
-
-		let model: any;
-		switch (currentProvider) {
-			case "openai":
-				model = createOpenAI({ apiKey })("gpt-4o-mini");
-				break;
-			case "anthropic":
-				model = createAnthropic({ apiKey })("claude-3-5-haiku-latest");
-				break;
-			case "google":
-				model = createGoogleGenerativeAI({ apiKey })("gemini-1.5-flash");
-				break;
-			case "deepseek":
-				model = createOpenAI({
-					apiKey,
-					baseURL: "https://api.deepseek.com/v1",
-				})("deepseek-chat");
-				break;
-			case "groq":
-				model = createOpenAI({
-					apiKey,
-					baseURL: "https://api.groq.com/openai/v1",
-				})("llama3-8b-8192");
-				break;
-			case "ollama":
-			case "lmstudio":
-				if (!baseUrl || !modelName) {
-					setError("Base URL and Model required.");
-					setIsLoading(false);
-					return;
-				}
-				model = createOpenAI({ apiKey: "dummy-key", baseURL: baseUrl })(
-					modelName,
-				);
-				break;
-			default:
-				setError("Unsupported provider");
-				setIsLoading(false);
-				return;
-		}
-
-		if (!apiKey && !isLocal) {
-			setError("No API key configured.");
-			setIsLoading(false);
-			return;
-		}
 
 		try {
 			// Map our internal messages format to Vercel AI SDK CoreMessage format
@@ -203,67 +131,74 @@ export function InteractiveAIPromptModal({
 				return m as any;
 			});
 
-			const systemPrompt = `You are an expert resume coach and reviewer.
-The user is updating their resume for the following context:
-${JSON.stringify(context, null, 2)}
-
-YOUR WORKFLOW:
-1. Discuss, critique, and provide *draft* bullet points in plain markdown text. 
-2. Ask for the user's feedback on your drafts.
-3. Iterate based on their feedback.
-4. **CRITICAL:** Wait for the user to explicitly confirm they are satisfied with a final set of bullet points (e.g., "Yes, that looks good", "Let's apply those").
-5. **ONLY** after receiving explicit confirmation, use the \`propose_resume_update\` tool to finalize the changes.
-
-DO NOT use the \`propose_resume_update\` tool during the drafting or brainstorming phase. ONLY use it when the user asks to apply or finalize the agreed-upon bullets.`;
-
-			const result = streamText({
-				model,
-				system: systemPrompt,
-				messages: [...coreMessages, { role: "user", content: messageContent }],
-				abortSignal: controller.signal,
-				tools: {
-					propose_resume_update: {
-						description: "Propose a new set of resume bullet points.",
-						inputSchema: z.object({
-							bullets: z
-								.array(z.string())
-								.describe(
-									"An array of proposed resume bullet points. Each string should be a single bullet point. Do not include HTML tags.",
-								),
-						}),
-						execute: async ({ bullets }: { bullets: string[] }) => {
-							return { bullets };
-						},
-					},
+			const response = await fetch(`${companionBaseUrl}/ai/chat`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
 				},
+				body: JSON.stringify({
+					messages: [...coreMessages, { role: "user", content: messageContent }],
+					context,
+				}),
+				signal: controller.signal,
 			});
 
-			let fullText = "";
+			if (!response.ok) {
+				const errText = await response.text();
+				throw new Error(errText || "Chat generation failed");
+			}
+
+			const reader = response.body?.getReader();
+			if (!reader) {
+				throw new Error("Failed to get stream reader");
+			}
+
+			const decoder = new TextDecoder();
+			let buffer = "";
+
 			const assistantMessageIndex = messages.length + 1; // +1 for the new user message
 			setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
 
-			for await (const chunk of result.textStream) {
-				fullText += chunk;
-				setMessages((prev) => {
-					const newMessages = [...prev];
-					newMessages[assistantMessageIndex] = {
-						role: "assistant",
-						content: fullText,
-					};
-					return newMessages;
-				});
-			}
+			while (true) {
+				const { done, value } = await reader.read();
+				if (done) break;
 
-			const calls = await result.toolCalls;
-			if (calls && calls.length > 0) {
-				setMessages((prev) => {
-					const newMessages = [...prev];
-					newMessages[assistantMessageIndex] = {
-						...newMessages[assistantMessageIndex],
-						_toolCalls: calls,
-					};
-					return newMessages;
-				});
+				buffer += decoder.decode(value, { stream: true });
+				const lines = buffer.split("\n\n");
+				// Keep the last partial line in the buffer
+				buffer = lines.pop() || "";
+
+				for (const line of lines) {
+					if (!line.startsWith("data: ")) continue;
+					const jsonStr = line.slice(6);
+					try {
+						const part = JSON.parse(jsonStr);
+						if (part.type === "text-delta" && part.textDelta) {
+							setMessages((prev) => {
+								const newMessages = [...prev];
+								const current = newMessages[assistantMessageIndex];
+								newMessages[assistantMessageIndex] = {
+									...current,
+									content: (current.content as string) + part.textDelta,
+								};
+								return newMessages;
+							});
+						} else if (part.type === "tool-call" && part.toolName === "propose_resume_update") {
+							setMessages((prev) => {
+								const newMessages = [...prev];
+								const current = newMessages[assistantMessageIndex];
+								const existingCalls = current._toolCalls || [];
+								newMessages[assistantMessageIndex] = {
+									...current,
+									_toolCalls: [...existingCalls, part],
+								};
+								return newMessages;
+							});
+						}
+					} catch (e) {
+						console.error("Failed to parse SSE line", e);
+					}
+				}
 			}
 		} catch (err: any) {
 			if (err.name === "AbortError") {
@@ -287,26 +222,6 @@ DO NOT use the \`propose_resume_update\` tool during the drafting or brainstormi
 			<DialogContent className="w-7xl max-w-7xl h-[80vh] flex flex-col p-0 overflow-hidden">
 				<DialogHeader className="px-6 py-4 border-b shrink-0">
 					<DialogTitle>Improve with AI</DialogTitle>
-					<div className="flex items-center gap-2 mt-2">
-						<span className="text-sm font-medium">Provider:</span>
-						<Select
-							value={currentProvider}
-							onValueChange={(val) => setSelectedProvider(val as AIProvider)}
-						>
-							<SelectTrigger className="w-[180px] h-8">
-								<SelectValue />
-							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value="openai">OpenAI</SelectItem>
-								<SelectItem value="anthropic">Anthropic</SelectItem>
-								<SelectItem value="google">Google</SelectItem>
-								<SelectItem value="deepseek">DeepSeek</SelectItem>
-								<SelectItem value="groq">Groq</SelectItem>
-								<SelectItem value="ollama">Ollama</SelectItem>
-								<SelectItem value="lmstudio">LM Studio</SelectItem>
-							</SelectContent>
-						</Select>
-					</div>
 				</DialogHeader>
 
 				<div className="flex flex-1 overflow-hidden">
