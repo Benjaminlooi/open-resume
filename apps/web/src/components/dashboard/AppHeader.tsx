@@ -1,5 +1,4 @@
 import { Link } from "@tanstack/react-router";
-import { GlobalSettingsModal } from "#/components/editor/GlobalSettingsModal";
 
 /**
  * Shared app-wide header.
@@ -66,7 +65,6 @@ export default function AppHeader() {
 					</nav>
 				</div>
 				<div className="flex items-center gap-4">
-					<GlobalSettingsModal />
 				</div>
 			</div>
 		</header>
