@@ -1,13 +1,9 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
-import { getResume, updateResume } from "./local-companion-client";
+import { getResume } from "./local-companion-client";
 import type { EditorState } from "./resume-schema";
 import {
 	createResumeSlice,
-	getIsLoadingResume,
-	getSaveTimer,
-	setSaveTimer,
-	toResumeContent,
 	normalizeEditorState,
 	type ResumeSlice,
 } from "./resume-slice";
@@ -97,30 +93,6 @@ export const getResumeData = async (
 	}
 };
 
-// Debounced auto-save of the active resume to the companion. Registered
-// conditionally inside a window guard to prevent execution during SSR.
-if (typeof window !== "undefined") {
-	useRootStore.subscribe((state) => {
-		const resume = state.resume;
-		if (!resume.id || getIsLoadingResume()) return;
-
-		const saveTimer = getSaveTimer();
-		if (saveTimer) {
-			clearTimeout(saveTimer);
-		}
-
-		const newTimer = setTimeout(() => {
-			updateResume(resume.id, {
-				name: resume.name,
-				templateId: resume.templateId,
-				content: toResumeContent(resume),
-			}).catch((error) => {
-				console.error("Failed to save resume", error);
-			});
-		}, 500);
-		setSaveTimer(newTimer);
-	});
-}
 
 // Persist settings to localStorage whenever the settings slice changes.
 // Window-guarded (SSR on Cloudflare Workers has no localStorage).

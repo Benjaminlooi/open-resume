@@ -18,6 +18,7 @@ import {
 	ResizablePanelGroup,
 } from "#/components/ui/resizable";
 import { useRootStore } from "#/lib/root-store";
+import { useResumeAutoSave } from "#/lib/use-resume-auto-save";
 
 export const Route = createFileRoute("/_app/editor/$id")({
 	component: RouteComponent,
@@ -28,6 +29,8 @@ function RouteComponent() {
 	const activeSection = useRootStore((state) => state.resume.activeSection);
 	const loadResume = useRootStore((state) => state.resume.loadResume);
 	const [isLoading, setIsLoading] = useState(true);
+
+	useResumeAutoSave();
 
 	useEffect(() => {
 		let isActive = true;

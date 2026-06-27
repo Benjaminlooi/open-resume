@@ -211,31 +211,6 @@ describe("resume slice", () => {
 		consoleErrorSpy.mockRestore();
 	});
 
-	it("updates the resume name and debounces companion saves", async () => {
-		getResumeState().initNewResume("resume-1", "Old Name", "demo");
-		vi.clearAllMocks();
-		vi.clearAllTimers();
-
-		getResumeState().updateResumeName("New Name");
-		expect(getResumeState().name).toBe("New Name");
-		expect(updateResumeMock).not.toHaveBeenCalled();
-
-		await vi.advanceTimersByTimeAsync(500);
-
-		expect(updateResumeMock).toHaveBeenCalledOnce();
-		expect(updateResumeMock).toHaveBeenCalledWith(
-			"resume-1",
-			expect.objectContaining({
-				name: "New Name",
-				templateId: "demo",
-				content: expect.objectContaining({
-					personalInfo: expect.any(Object),
-					sections: expect.any(Array),
-				}),
-			}),
-		);
-	});
-
 	it("adds, updates, and deletes personal contact links", () => {
 		getResumeState().addContactLink();
 
