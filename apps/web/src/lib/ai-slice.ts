@@ -1,6 +1,13 @@
 import type { StateCreator } from "zustand";
 import type { RootState } from "./root-store";
-import type { AIProvider } from "./settings-slice";
+export type AIProvider =
+	| "openai"
+	| "anthropic"
+	| "google"
+	| "deepseek"
+	| "groq"
+	| "ollama"
+	| "lmstudio";
 
 export interface Message {
 	role: "user" | "assistant" | "system" | "tool";

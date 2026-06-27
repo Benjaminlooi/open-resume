@@ -12,11 +12,6 @@ import {
 	type ResumeIndexSlice,
 } from "./resume-index-slice";
 import {
-	createSettingsSlice,
-	SETTINGS_STORAGE_KEY,
-	type SettingsSlice,
-} from "./settings-slice";
-import {
 	createJobApplicationSlice,
 	type JobApplicationSlice,
 } from "./job-application-slice";
@@ -39,7 +34,6 @@ import { createAISlice, type AISlice } from "./ai-slice";
 export interface RootState {
 	resume: ResumeSlice;
 	resumeIndex: ResumeIndexSlice;
-	settings: SettingsSlice;
 	jobApplication: JobApplicationSlice;
 	jobPosting: JobPostingSlice;
 	ai: AISlice;
@@ -49,7 +43,6 @@ export interface RootState {
 export type { ResumeSlice } from "./resume-slice";
 export { AVAILABLE_SECTIONS, AVAILABLE_TEMPLATES } from "./resume-slice";
 export type { ResumeIndexSlice, ResumeIndexEntry } from "./resume-index-slice";
-export type { SettingsSlice, AIProvider } from "./settings-slice";
 export type { JobApplicationSlice } from "./job-application-slice";
 export type { JobPostingSlice } from "./job-posting-slice";
 export type { AISlice, Message } from "./ai-slice";
@@ -59,7 +52,6 @@ export const useRootStore = create<RootState>()(
 		(...a) => ({
 			resume: createResumeSlice(...a),
 			resumeIndex: createResumeIndexSlice(...a),
-			settings: createSettingsSlice(...a),
 			jobApplication: createJobApplicationSlice(...a),
 			jobPosting: createJobPostingSlice(...a),
 			ai: createAISlice(...a),
@@ -94,17 +86,3 @@ export const getResumeData = async (
 };
 
 
-// Persist settings to localStorage whenever the settings slice changes.
-// Window-guarded (SSR on Cloudflare Workers has no localStorage).
-if (typeof window !== "undefined") {
-	useRootStore.subscribe((state) => {
-		const {
-			updateAPIKey: _u1,
-			setDefaultProvider: _u2,
-			updateBaseUrl: _u3,
-			updateSelectedModel: _u4,
-			...data
-		} = state.settings;
-		localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(data));
-	});
-}
