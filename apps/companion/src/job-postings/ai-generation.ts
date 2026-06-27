@@ -1,7 +1,7 @@
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createOpenAI } from "@ai-sdk/openai";
-import { generateText } from "ai";
+import { generateText, type LanguageModel } from "ai";
 import type { AIConfig } from "../config.js";
 import {
 	type CoverLetterDraft,
@@ -13,7 +13,7 @@ import {
 	resumeEditProposalSchema,
 } from "@open-resume/contracts";
 
-export function getModel(config: AIConfig) {
+export function getModel(config: AIConfig): LanguageModel {
 	const provider = config.provider;
 	const apiKey = config.apiKey;
 	const modelName = config.modelName;
