@@ -14,6 +14,7 @@ import { createJobRoutes } from "./routes/job-routes.js";
 import { createProfileRoutes } from "./routes/profile-routes.js";
 import { createResumeRoutes } from "./routes/resume-routes.js";
 import { createSystemRoutes } from "./routes/system-routes.js";
+import { createAiRoutes } from "./routes/ai-routes.js";
 
 export function createServer(options: CreateServerOptions = {}) {
 	const config = resolveConfig(options);
@@ -96,6 +97,11 @@ export function createServer(options: CreateServerOptions = {}) {
 			}),
 		);
 		server.register(createJobApplicationRoutes({ jobRepository }));
+		server.register(
+			createAiRoutes({
+				aiConfig: config.ai,
+			}),
+		);
 	});
 
 	if (config.recoverJobsOnStartup) {
