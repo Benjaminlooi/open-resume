@@ -84,12 +84,6 @@ vi.mock("#/lib/root-store", () => {
 			resumes: [{ id: "res-1", name: "My Default Resume" }],
 		},
 		jobApplication: getJobApplicationState(),
-		settings: {
-			defaultProvider: "openai",
-			apiKeys: { openai: "mock-key" },
-			baseUrls: {},
-			selectedModels: {},
-		},
 	});
 
 	return {
