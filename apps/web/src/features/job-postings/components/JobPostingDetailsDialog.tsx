@@ -188,7 +188,7 @@ export default function JobPostingDetailsDialog({
 				</div>
 
 				{/* Tab Content */}
-				<div className="flex-1 overflow-y-auto py-4 pr-1 min-h-0">
+				<div className="flex-1 overflow-y-auto py-4 pr-3 min-h-0">
 					{activeTab === "ai" && (
 						<div
 							id="details-panel-ai"
@@ -406,7 +406,7 @@ export default function JobPostingDetailsDialog({
 							className="h-full flex flex-col"
 						>
 							{!screenshotError ? (
-								<div className="flex-1 min-h-[400px] overflow-y-auto rounded-base border-2 border-border p-2 bg-gray-50 flex justify-center shadow-light">
+								<div className="flex-1 min-h-[400px] rounded-base border-2 border-border p-2 bg-gray-50 flex justify-center shadow-light">
 									<img
 										src={`${companionBaseUrl}/job-postings/${job.id}/screenshot`}
 										alt="Crawl Screenshot"

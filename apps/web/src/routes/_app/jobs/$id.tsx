@@ -376,7 +376,7 @@ function JobWorkspace() {
 				</div>
 
 				{/* Desktop Navigation vertical stepper */}
-				<div className="hidden lg:flex lg:col-span-1 flex-col gap-0 overflow-y-auto shrink-0 pr-1 relative">
+				<div className="hidden lg:flex lg:col-span-1 flex-col gap-0 overflow-y-auto shrink-0 pr-1 py-2 relative">
 					{PIPELINE_STEPS.map((pipelineStep, index) => {
 						const isActive = activeStepIndex === index;
 						const stepProgress = progress.steps[pipelineStep.id];
@@ -384,11 +384,11 @@ function JobWorkspace() {
 						const isBlocked = stepProgress.status === "blocked";
 
 						return (
-							<div className="flex gap-4 relative" key={pipelineStep.id}>
+							<div className="flex gap-4 pl-2 relative" key={pipelineStep.id}>
 								{/* Connector Line */}
 								{!isLast && (
 									<div
-										className={`absolute left-[15px] top-[32px] bottom-0 w-0.5 border-l-2 ${
+										className={`absolute left-[23px] top-[32px] bottom-0 w-0.5 border-l-2 ${
 											stepProgress.status === "complete"
 												? "border-emerald-500 border-solid"
 												: "border-border border-dashed"
@@ -455,7 +455,7 @@ function JobWorkspace() {
 				</div>
 
 				{/* Active Step Panel */}
-				<div className="lg:col-span-3 min-h-0 overflow-y-visible lg:overflow-y-auto pr-1">
+				<div className="lg:col-span-3 min-h-0 overflow-y-visible lg:overflow-hidden pr-1">
 					<div key={activeStepId} className="animate-fade-in-slide-up h-full">
 						<ActiveStepComponent applicationId={id} />
 					</div>

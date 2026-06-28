@@ -84,9 +84,9 @@ export default function StepShell({
 	);
 
 	return (
-		<div className="bg-white border-2 border-border rounded-base p-6 shadow-shadow text-[#082F49] flex flex-col gap-6">
+		<div className="bg-white border-2 border-border rounded-base p-6 shadow-shadow text-[#082F49] flex flex-col gap-6 h-full min-h-0">
 			{/* Header */}
-			<div className="flex flex-col border-b-2 border-border pb-4 gap-2">
+			<div className="flex flex-col border-b-2 border-border pb-4 gap-2 shrink-0">
 				<div className="flex justify-between items-start md:items-center">
 					<div>
 						<h2 className="text-2xl font-heading">{title}</h2>
@@ -113,44 +113,46 @@ export default function StepShell({
 			</div>
 
 			{/* Content / Blocked Warning */}
-			{isBlocked ? (
-				<div className="border-2 border-amber-200 bg-amber-50/50 rounded-base p-6 text-[#082F49] flex flex-col items-center justify-center text-center py-10 shadow-light">
-					<div className="size-12 rounded-full border-2 border-amber-300 bg-amber-100 flex items-center justify-center mb-3 text-amber-700">
-						<Lock className="size-5" />
+			<div className="flex-grow overflow-y-auto min-h-0 pt-1 pb-6 pr-4 pl-0 flex flex-col gap-6 scrollbar-thin">
+				{isBlocked ? (
+					<div className="border-2 border-amber-200 bg-amber-50/50 rounded-base p-6 text-[#082F49] flex flex-col items-center justify-center text-center py-10 shadow-light">
+						<div className="size-12 rounded-full border-2 border-amber-300 bg-amber-100 flex items-center justify-center mb-3 text-amber-700">
+							<Lock className="size-5" />
+						</div>
+						<h3 className="text-lg font-heading mb-1 text-amber-950">Step Blocked</h3>
+						{prerequisiteStepIndex !== -1 ? (
+							<>
+								<p className="text-sm text-muted-foreground max-w-md mb-5">
+									Requires <strong>{PIPELINE_STEPS[prerequisiteStepIndex].name}</strong> (Step {prerequisiteStepIndex + 1}) to be completed first.
+								</p>
+								<button
+									type="button"
+									onClick={() => goToStep(prerequisiteStepIndex)}
+									className="inline-flex h-9 items-center gap-1.5 px-4 border-2 border-border bg-white hover:bg-slate-50 font-bold text-xs rounded-base transition-all shadow-light hover:translate-x-boxShadowX hover:translate-y-boxShadowY hover:shadow-none cursor-pointer"
+								>
+									Go to Step {prerequisiteStepIndex + 1}
+									<ArrowRight className="size-3.5" />
+								</button>
+							</>
+						) : (
+							<>
+								<p className="text-sm text-muted-foreground max-w-md mb-5">
+									{stepProgress.nextAction || "Please select a default resume to start tailoring."}
+								</p>
+								<Link
+									to="/resumes"
+									className="inline-flex h-9 items-center gap-1.5 px-4 border-2 border-border bg-white hover:bg-slate-50 font-bold text-xs rounded-base transition-all shadow-light hover:translate-x-boxShadowX hover:translate-y-boxShadowY hover:shadow-none cursor-pointer"
+								>
+									Go to Resumes Page
+									<ArrowRight className="size-3.5" />
+								</Link>
+							</>
+						)}
 					</div>
-					<h3 className="text-lg font-heading mb-1 text-amber-950">Step Blocked</h3>
-					{prerequisiteStepIndex !== -1 ? (
-						<>
-							<p className="text-sm text-muted-foreground max-w-md mb-5">
-								Requires <strong>{PIPELINE_STEPS[prerequisiteStepIndex].name}</strong> (Step {prerequisiteStepIndex + 1}) to be completed first.
-							</p>
-							<button
-								type="button"
-								onClick={() => goToStep(prerequisiteStepIndex)}
-								className="inline-flex h-9 items-center gap-1.5 px-4 border-2 border-border bg-white hover:bg-slate-50 font-bold text-xs rounded-base transition-all shadow-light hover:translate-x-boxShadowX hover:translate-y-boxShadowY hover:shadow-none cursor-pointer"
-							>
-								Go to Step {prerequisiteStepIndex + 1}
-								<ArrowRight className="size-3.5" />
-							</button>
-						</>
-					) : (
-						<>
-							<p className="text-sm text-muted-foreground max-w-md mb-5">
-								{stepProgress.nextAction || "Please select a default resume to start tailoring."}
-							</p>
-							<Link
-								to="/resumes"
-								className="inline-flex h-9 items-center gap-1.5 px-4 border-2 border-border bg-white hover:bg-slate-50 font-bold text-xs rounded-base transition-all shadow-light hover:translate-x-boxShadowX hover:translate-y-boxShadowY hover:shadow-none cursor-pointer"
-							>
-								Go to Resumes Page
-								<ArrowRight className="size-3.5" />
-							</Link>
-						</>
-					)}
-				</div>
-			) : (
-				children
-			)}
+				) : (
+					children
+				)}
+			</div>
 		</div>
 	);
 }
