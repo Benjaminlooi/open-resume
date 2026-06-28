@@ -116,7 +116,7 @@ function JobWorkspace() {
 	const jobWarnings = warnings[id] || [];
 
 	return (
-		<main className="mx-auto w-full max-w-[1300px] h-[calc(100vh-74px)] p-4 md:p-6 lg:p-8 text-[#082F49] flex flex-col gap-4 md:gap-6 overflow-hidden">
+		<main className="mx-auto w-full max-w-[1300px] h-[calc(100dvh-74px)] p-4 md:p-6 lg:p-8 text-[#082F49] flex flex-col gap-4 md:gap-6 overflow-hidden">
 			{/* Back Link */}
 			<div className="shrink-0">
 				<Link
