@@ -116,9 +116,9 @@ function JobWorkspace() {
 	const jobWarnings = warnings[id] || [];
 
 	return (
-		<main className="mx-auto max-w-[1300px] p-4 md:p-8 text-[#082F49] flex flex-col gap-6">
+		<main className="mx-auto w-full max-w-[1300px] h-[calc(100vh-74px)] p-4 md:p-6 lg:p-8 text-[#082F49] flex flex-col gap-4 md:gap-6 overflow-hidden">
 			{/* Back Link */}
-			<div>
+			<div className="shrink-0">
 				<Link
 					to="/jobs"
 					className="inline-flex items-center gap-1.5 text-sm font-bold hover:underline"
@@ -129,7 +129,7 @@ function JobWorkspace() {
 			</div>
 
 			{/* Header */}
-			<div className="border-2 border-border rounded-base p-5 bg-white shadow-shadow flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+			<div className="shrink-0 border-2 border-border rounded-base p-5 bg-white shadow-shadow flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
 				<div>
 					<h1 className="text-3xl font-heading">{application.title}</h1>
 					<p className="text-lg font-bold text-muted-foreground mt-0.5">
@@ -148,7 +148,7 @@ function JobWorkspace() {
 
 			{/* Warnings Banner */}
 			{jobWarnings.length > 0 && (
-				<div className="bg-amber-100 border-2 border-amber-300 rounded-base p-4 text-amber-950 font-bold text-sm shadow-light">
+				<div className="shrink-0 bg-amber-100 border-2 border-amber-300 rounded-base p-4 text-amber-950 font-bold text-sm shadow-light">
 					<div className="font-heading text-md mb-1.5 flex items-center gap-1.5 text-amber-950">
 						⚠️ Pipeline Warnings for this Job:
 					</div>
@@ -160,9 +160,9 @@ function JobWorkspace() {
 				</div>
 			)}
 
-			<div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+			<div className="grid grid-cols-1 grid-rows-[auto_1fr] lg:grid-rows-none lg:grid-cols-4 gap-4 md:gap-6 flex-1 min-h-0">
 				{/* Navigation sidebar */}
-				<div className="lg:col-span-1 flex flex-col gap-2">
+				<div className="lg:col-span-1 flex flex-col gap-2 overflow-y-auto shrink-0 max-h-[160px] lg:max-h-none pr-1">
 					{PIPELINE_STEPS.map((pipelineStep, index) => {
 						const isActive = activeStepIndex === index;
 						const stepProgress = progress.steps[pipelineStep.id];
@@ -188,13 +188,13 @@ function JobWorkspace() {
 				</div>
 
 				{/* Active Step Panel */}
-				<div className="lg:col-span-3">
+				<div className="lg:col-span-3 min-h-0 overflow-y-auto pr-1">
 					<ActiveStepComponent applicationId={id} />
 				</div>
 			</div>
 
 			{/* Bottom Bar Navigation */}
-			<div className="border-2 border-border rounded-base p-4 bg-white shadow-shadow flex flex-col sm:flex-row justify-between items-center gap-4">
+			<div className="shrink-0 border-2 border-border rounded-base p-4 bg-white shadow-shadow flex flex-col sm:flex-row justify-between items-center gap-4">
 				<div className="text-sm font-bold text-[#082F49] bg-main/10 border-2 border-main/20 px-3 py-1.5 rounded-base">
 					Next Action: {progress.nextAction}
 				</div>
