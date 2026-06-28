@@ -1,5 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import { useRootStore } from "#/lib/root-store";
 import { createJobPosting } from "#/lib/local-companion-client";
 
@@ -25,6 +25,16 @@ export default function NewJobApplicationModal({
 	const createJobApplication = useRootStore(
 		(state) => state.jobApplication.createJobApplication,
 	);
+
+	useEffect(() => {
+		const handleKeyDown = (e: KeyboardEvent) => {
+			if (e.key === "Escape") {
+				onClose();
+			}
+		};
+		window.addEventListener("keydown", handleKeyDown);
+		return () => window.removeEventListener("keydown", handleKeyDown);
+	}, [onClose]);
 
 	const [activeTab, setActiveTab] = useState<"crawl" | "manual">("crawl");
 	const [error, setError] = useState("");

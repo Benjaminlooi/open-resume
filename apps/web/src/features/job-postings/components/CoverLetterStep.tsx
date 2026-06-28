@@ -25,23 +25,61 @@ export default function CoverLetterStep({
 	const saveCoverLetterDraft = useRootStore(
 		(s) => s.jobApplication.saveCoverLetterDraft,
 	);
+	const generatingCoverLetterAppId = useRootStore((s) => s.jobApplication.generatingCoverLetterAppId);
+	const setGeneratingCoverLetter = useRootStore((s) => s.jobApplication.setGeneratingCoverLetter);
 	const application = jobApplications.find((app) => app.id === applicationId);
 
 	const coverLetterDraft = application?.coverLetterDraft;
 
-	const [isGenerating, setIsGenerating] = useState(false);
+	const isGenerating = generatingCoverLetterAppId === applicationId;
 	const [error, setError] = useState<string | null>(null);
 	const [localContent, setLocalContent] = useState(
 		coverLetterDraft?.content || "",
 	);
 	const [isSaved, setIsSaved] = useState(false);
+	const [isSaving, setIsSaving] = useState(false);
 	const [isCopied, setIsCopied] = useState(false);
 
+	// Sync local states only when a new draft is generated to prevent cursor jump/race conditions
+	const [lastGeneratedAt, setLastGeneratedAt] = useState(coverLetterDraft?.generatedAt);
 	useEffect(() => {
 		if (coverLetterDraft) {
-			setLocalContent(coverLetterDraft.content || "");
+			if (coverLetterDraft.generatedAt !== lastGeneratedAt) {
+				setLocalContent(coverLetterDraft.content || "");
+				setLastGeneratedAt(coverLetterDraft.generatedAt);
+			}
+		} else {
+			setLocalContent("");
+			setLastGeneratedAt(undefined);
 		}
-	}, [coverLetterDraft]);
+	}, [coverLetterDraft, lastGeneratedAt]);
+
+	// Auto-save logic with debounce
+	useEffect(() => {
+		if (!coverLetterDraft || localContent === coverLetterDraft.content) {
+			return;
+		}
+
+		setIsSaving(true);
+		setIsSaved(false);
+
+		const timer = setTimeout(async () => {
+			try {
+				await saveCoverLetterDraft(applicationId, {
+					content: localContent,
+					generatedAt: coverLetterDraft.generatedAt,
+					updatedAt: Date.now(),
+				});
+				setIsSaved(true);
+			} catch (err) {
+				console.error("Auto-save cover letter failed:", err);
+			} finally {
+				setIsSaving(false);
+			}
+		}, 500);
+
+		return () => clearTimeout(timer);
+	}, [localContent, coverLetterDraft, applicationId, saveCoverLetterDraft]);
 
 	if (!application) {
 		// StepShell renders the "not found" state when the application is missing.
@@ -64,7 +102,7 @@ export default function CoverLetterStep({
 			return;
 		}
 
-		setIsGenerating(true);
+		setGeneratingCoverLetter(applicationId);
 		setError(null);
 
 		try {
@@ -93,6 +131,7 @@ export default function CoverLetterStep({
 				finalResume,
 			);
 			saveCoverLetterDraft(applicationId, draft);
+			setLastGeneratedAt(draft.generatedAt);
 		} catch (err) {
 			console.error(err);
 			setError(
@@ -101,22 +140,8 @@ export default function CoverLetterStep({
 					: "Failed to generate cover letter.",
 			);
 		} finally {
-			setIsGenerating(false);
+			setGeneratingCoverLetter(null);
 		}
-	};
-
-	const handleSave = () => {
-		if (!coverLetterDraft) return;
-
-		saveCoverLetterDraft(applicationId, {
-			content: localContent,
-			generatedAt: coverLetterDraft.generatedAt,
-			updatedAt: Date.now(),
-		});
-
-		setIsSaved(true);
-		const timer = setTimeout(() => setIsSaved(false), 3000);
-		return () => clearTimeout(timer);
 	};
 
 	const handleCopy = () => {
@@ -136,12 +161,6 @@ export default function CoverLetterStep({
 				<div className="bg-red-100 text-red-900 border-2 border-border rounded-base p-4 text-sm font-bold flex gap-2 items-center">
 					<AlertTriangle className="size-5 shrink-0" />
 					<span>{error}</span>
-				</div>
-			)}
-
-			{isSaved && (
-				<div className="bg-green-100 text-green-900 border-2 border-border rounded-base p-3 text-sm font-bold">
-					Cover letter saved successfully!
 				</div>
 			)}
 
@@ -214,6 +233,12 @@ export default function CoverLetterStep({
 						</div>
 					</div>
 
+					{/* Auto-save status feedback */}
+					<div className="flex justify-end text-xs font-bold text-muted-foreground h-4">
+						{isSaving && <span className="text-amber-600 animate-pulse">Saving changes...</span>}
+						{!isSaving && isSaved && <span className="text-emerald-600">✓ Auto-saved</span>}
+					</div>
+
 					<div className="flex flex-col gap-2">
 						<textarea
 							value={localContent}
@@ -222,16 +247,6 @@ export default function CoverLetterStep({
 							rows={18}
 							className="w-full border-2 border-border rounded-base p-4 focus:outline-none focus:ring-2 focus:ring-main font-mono text-sm bg-white shadow-inner leading-relaxed"
 						/>
-					</div>
-
-					<div className="flex justify-end pt-2 border-t border-border mt-2">
-						<button
-							type="button"
-							onClick={handleSave}
-							className="px-6 py-2.5 bg-main text-main-foreground border-2 border-border rounded-base font-bold shadow-shadow hover:translate-x-boxShadowX hover:translate-y-boxShadowY hover:shadow-none transition-all cursor-pointer bg-main"
-						>
-							Save Cover Letter
-						</button>
 					</div>
 				</div>
 			)}

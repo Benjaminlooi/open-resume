@@ -166,6 +166,19 @@ describe("Guided Workspace Step Components", () => {
 	});
 
 	describe("ResumeTailoringStep", () => {
+		beforeEach(() => {
+			mockCurrentApp.fitBrief = {
+				roleSummary: "summary",
+				requirements: [],
+				keywords: [],
+				strengths: [],
+				gaps: [],
+				risks: [],
+				nextActions: [],
+				generatedAt: 1000,
+			};
+		});
+
 		it("renders start tailoring state when tailoredResume is null", () => {
 			const html = renderToStaticMarkup(
 				<ResumeTailoringStep applicationId="job-123" />,
@@ -225,6 +238,19 @@ describe("Guided Workspace Step Components", () => {
 	});
 
 	describe("CoverLetterStep", () => {
+		beforeEach(() => {
+			mockCurrentApp.fitBrief = {
+				roleSummary: "summary",
+				requirements: [],
+				keywords: [],
+				strengths: [],
+				gaps: [],
+				risks: [],
+				nextActions: [],
+				generatedAt: 1000,
+			};
+		});
+
 		it("renders empty state when coverLetterDraft is null", () => {
 			const html = renderToStaticMarkup(
 				<CoverLetterStep applicationId="job-123" />,
@@ -244,7 +270,6 @@ describe("Guided Workspace Step Components", () => {
 				<CoverLetterStep applicationId="job-123" />,
 			);
 			expect(html).toContain("Dear Hiring Manager, I am excited...");
-			expect(html).toContain("Save Cover Letter");
 		});
 	});
 
@@ -257,7 +282,6 @@ describe("Guided Workspace Step Components", () => {
 			expect(html).toContain("Follow-up Reminder Date");
 			expect(html).toContain("Notes &amp; Log");
 			expect(html).toContain("Initial test notes.");
-			expect(html).toContain("Save Tracker Info");
 		});
 	});
 });

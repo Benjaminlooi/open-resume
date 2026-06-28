@@ -21,9 +21,11 @@ export default function FitBriefStep({ applicationId }: FitBriefStepProps) {
 	const jobApplications = useRootStore((s) => s.jobApplication.jobApplications);
 	const saveFitBrief = useRootStore((s) => s.jobApplication.saveFitBrief);
 	const setStatus = useRootStore((s) => s.jobApplication.setStatus);
+	const generatingFitAppId = useRootStore((s) => s.jobApplication.generatingFitAppId);
+	const setGeneratingFit = useRootStore((s) => s.jobApplication.setGeneratingFit);
 	const application = jobApplications.find((app) => app.id === applicationId);
 
-	const [isGenerating, setIsGenerating] = useState(false);
+	const isGenerating = generatingFitAppId === applicationId;
 	const [error, setError] = useState<string | null>(null);
 
 	if (!application) {
@@ -38,7 +40,7 @@ export default function FitBriefStep({ applicationId }: FitBriefStepProps) {
 	}
 
 	const handleGenerate = async () => {
-		setIsGenerating(true);
+		setGeneratingFit(applicationId);
 		setError(null);
 
 		try {
@@ -73,7 +75,7 @@ export default function FitBriefStep({ applicationId }: FitBriefStepProps) {
 					: "Failed to generate fit analysis.",
 			);
 		} finally {
-			setIsGenerating(false);
+			setGeneratingFit(null);
 		}
 	};
 

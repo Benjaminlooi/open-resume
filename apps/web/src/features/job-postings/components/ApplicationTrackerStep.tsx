@@ -42,11 +42,15 @@ export default function ApplicationTrackerStep({
 	const [followUpDate, setFollowUpDate] = useState(getInitialFollowUpDate());
 	const [notes, setNotes] = useState(application?.notes || "");
 	const [isSaved, setIsSaved] = useState(false);
+	const [isSaving, setIsSaving] = useState(false);
 
+	// Sync local states only when applicationId changes to prevent cursor jump/race conditions
+	const [prevAppId, setPrevAppId] = useState(applicationId);
 	useEffect(() => {
-		if (application) {
-			setNotes(application.notes || "");
-			if (application.followUpAt) {
+		if (applicationId !== prevAppId) {
+			setPrevAppId(applicationId);
+			setNotes(application?.notes || "");
+			if (application?.followUpAt) {
 				const d = new Date(application.followUpAt);
 				const year = d.getFullYear();
 				const month = String(d.getMonth() + 1).padStart(2, "0");
@@ -55,8 +59,47 @@ export default function ApplicationTrackerStep({
 			} else {
 				setFollowUpDate("");
 			}
+			setIsSaved(false);
+			setIsSaving(false);
 		}
-	}, [application]);
+	}, [applicationId, prevAppId, application]);
+
+	// Auto-save logic with debounce
+	useEffect(() => {
+		// Calculate the follow-up timestamp from current form state
+		let currentFollowUpTimestamp: number | null = null;
+		if (followUpDate) {
+			const [year, month, day] = followUpDate.split("-").map(Number);
+			currentFollowUpTimestamp = new Date(year, month - 1, day).getTime();
+		}
+
+		const storeFollowUp = application?.followUpAt || null;
+		const storeNotes = application?.notes || "";
+
+		// Check if there are actual changes before triggering auto-save
+		if (notes === storeNotes && currentFollowUpTimestamp === storeFollowUp) {
+			return;
+		}
+
+		setIsSaving(true);
+		setIsSaved(false);
+
+		const timer = setTimeout(async () => {
+			try {
+				await updateJobApplication(applicationId, {
+					notes: notes.trim(),
+					followUpAt: currentFollowUpTimestamp,
+				});
+				setIsSaved(true);
+			} catch (err) {
+				console.error("Auto-save failed:", err);
+			} finally {
+				setIsSaving(false);
+			}
+		}, 500);
+
+		return () => clearTimeout(timer);
+	}, [notes, followUpDate, applicationId, updateJobApplication, application]);
 
 	if (!application) {
 		// StepShell renders the "not found" state when the application is missing.
@@ -74,26 +117,6 @@ export default function ApplicationTrackerStep({
 		setStatus(applicationId, newStatus);
 	};
 
-	const handleSave = (e: React.FormEvent) => {
-		e.preventDefault();
-		setIsSaved(false);
-
-		let followUpTimestamp: number | null = null;
-		if (followUpDate) {
-			const [year, month, day] = followUpDate.split("-").map(Number);
-			followUpTimestamp = new Date(year, month - 1, day).getTime();
-		}
-
-		updateJobApplication(applicationId, {
-			notes: notes.trim(),
-			followUpAt: followUpTimestamp,
-		});
-
-		setIsSaved(true);
-		const timer = setTimeout(() => setIsSaved(false), 3000);
-		return () => clearTimeout(timer);
-	};
-
 	return (
 		<StepShell
 			applicationId={applicationId}
@@ -101,13 +124,13 @@ export default function ApplicationTrackerStep({
 			title="Application Tracker"
 			subtitle="Update the tracking status, follow-up reminders, and general interview notes."
 		>
-			{isSaved && (
-				<div className="bg-green-100 text-green-900 border-2 border-border rounded-base p-3 text-sm font-bold">
-					Tracker changes saved successfully!
+			<div className="flex flex-col gap-5">
+				{/* Auto-save status feedback */}
+				<div className="flex justify-end text-xs font-bold text-muted-foreground h-4">
+					{isSaving && <span className="text-amber-600 animate-pulse">Saving changes...</span>}
+					{!isSaving && isSaved && <span className="text-emerald-600">✓ Auto-saved</span>}
 				</div>
-			)}
 
-			<form onSubmit={handleSave} className="flex flex-col gap-5">
 				{/* Status Selection */}
 				<div>
 					<label className="block text-sm font-bold mb-1.5">
@@ -154,17 +177,7 @@ export default function ApplicationTrackerStep({
 						className="w-full border-2 border-border rounded-base p-3 focus:outline-none focus:ring-2 focus:ring-main bg-white"
 					/>
 				</div>
-
-				{/* Action Buttons */}
-				<div className="flex justify-end pt-2 border-t border-border mt-2">
-					<button
-						type="submit"
-						className="px-6 py-2.5 bg-main text-main-foreground border-2 border-border rounded-base font-bold shadow-shadow hover:translate-x-boxShadowX hover:translate-y-boxShadowY hover:shadow-none transition-all cursor-pointer bg-main"
-					>
-						Save Tracker Info
-					</button>
-				</div>
-			</form>
+			</div>
 		</StepShell>
 	);
 }

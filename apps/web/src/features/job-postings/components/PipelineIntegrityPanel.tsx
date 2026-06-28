@@ -1,6 +1,7 @@
 import { AlertTriangle, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 import { useRootStore } from "#/lib/root-store";
+import type { JobApplication, ResumeEditProposal } from "../job-application-schema";
 
 export default function PipelineIntegrityPanel() {
 	const jobApplications = useRootStore((s) => s.jobApplication.jobApplications);
@@ -26,7 +27,7 @@ export default function PipelineIntegrityPanel() {
 
 	if (appIdsWithWarnings.length === 0) {
 		return (
-			<div className="mb-8 p-4 border-2 border-emerald-500 rounded-base bg-emerald-50 text-emerald-950 flex items-center gap-3 shadow-[4px_4px_0px_0px_rgba(16,185,129,1)]">
+			<div className="mb-8 p-4 border-2 border-emerald-200 rounded-base bg-emerald-50/50 text-[#082F49] flex items-center gap-3 shadow-shadow">
 				<ShieldCheck className="size-5 text-emerald-600 shrink-0" />
 				<span className="font-bold text-sm">
 					Pipeline Integrity: All systems normal. No issues detected in your
@@ -36,7 +37,7 @@ export default function PipelineIntegrityPanel() {
 		);
 	}
 
-	const findProposalIdForWarning = (app: any, warning: string) => {
+	const findProposalIdForWarning = (app: JobApplication, warning: string) => {
 		if (!app || !app.resumeEditProposals) return null;
 		for (const prop of app.resumeEditProposals) {
 			const { target } = prop;
@@ -57,10 +58,10 @@ export default function PipelineIntegrityPanel() {
 		return null;
 	};
 
-	const handleClearAllProposals = (app: any) => {
+	const handleClearAllProposals = (app: JobApplication) => {
 		if (!app || !app.resumeEditProposals) return;
 		const pending = app.resumeEditProposals.filter(
-			(p: any) => p.status === "pending",
+			(p: ResumeEditProposal) => p.status === "pending",
 		);
 		for (const p of pending) {
 			clearStaleProposal(app.id, p.id);
@@ -68,19 +69,16 @@ export default function PipelineIntegrityPanel() {
 	};
 
 	return (
-		<div className="mb-8 border-2 border-black rounded-base bg-amber-50 text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] p-6 relative overflow-hidden">
-			{/* Top alert bar pattern */}
-			<div className="absolute top-0 left-0 right-0 h-2 bg-yellow-400 border-b-2 border-black" />
-
+		<div className="mb-8 border-2 border-amber-200 rounded-base bg-amber-50/50 text-[#082F49] shadow-shadow p-6 relative overflow-hidden">
 			<div className="flex items-center gap-3 mb-4 mt-2">
-				<div className="bg-yellow-400 p-2 border-2 border-black rounded-base shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-					<AlertTriangle className="size-6 text-black" />
+				<div className="bg-amber-100 p-2 border-2 border-amber-300 rounded-base shadow-light">
+					<AlertTriangle className="size-6 text-amber-700" />
 				</div>
 				<div>
 					<h2 className="text-xl font-heading text-[#082F49]">
 						Pipeline Integrity Warning
 					</h2>
-					<p className="text-xs font-bold text-gray-700 mt-0.5">
+					<p className="text-xs font-bold text-muted-foreground mt-0.5">
 						Some of your job applications have inconsistencies. Resolve them
 						below to keep your tailored resumes and proposals in sync.
 					</p>
@@ -97,16 +95,16 @@ export default function PipelineIntegrityPanel() {
 					return (
 						<div
 							key={appId}
-							className="border-2 border-black rounded-base p-4 bg-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] text-[#082F49]"
+							className="border-2 border-border rounded-base p-4 bg-white shadow-light text-[#082F49]"
 						>
-							<div className="flex items-center justify-between border-b-2 border-black pb-2 mb-3">
+							<div className="flex items-center justify-between border-b-2 border-border pb-2 mb-3">
 								<h3 className="font-heading text-lg truncate flex-1 mr-4">
 									{app.title || "Untitled Job"}{" "}
 									<span className="text-sm font-bold text-muted-foreground">
 										at {app.company || "Unknown Company"}
 									</span>
 								</h3>
-								<span className="text-xs px-2 py-0.5 border-2 border-black rounded-base bg-yellow-400 font-bold uppercase shrink-0">
+								<span className="text-xs px-2 py-0.5 border-2 border-amber-300 rounded-base bg-amber-100 text-amber-900 font-bold uppercase shrink-0">
 									{appWarnings.length}{" "}
 									{appWarnings.length === 1 ? "Warning" : "Warnings"}
 								</span>
@@ -125,7 +123,7 @@ export default function PipelineIntegrityPanel() {
 											<button
 												type="button"
 												onClick={() => archiveIncompleteJob(appId)}
-												className="bg-rose-400 text-black border-2 border-black rounded-base px-3 py-1 text-xs font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all cursor-pointer hover:bg-rose-500"
+												className="bg-rose-100 hover:bg-rose-250 text-rose-900 border-2 border-rose-300 rounded-base px-3 py-1 text-xs font-bold shadow-light hover:translate-x-boxShadowX hover:translate-y-boxShadowY hover:shadow-none transition-all cursor-pointer"
 											>
 												Archive Job
 											</button>
@@ -144,7 +142,7 @@ export default function PipelineIntegrityPanel() {
 															[appId]: e.target.value,
 														}))
 													}
-													className="border-2 border-black rounded-base px-2 py-1 bg-white text-xs font-bold focus:outline-hidden"
+													className="border-2 border-border rounded-base px-2 py-1 bg-white text-xs font-bold focus:outline-hidden"
 												>
 													<option value="">Select a resume...</option>
 													{resumes.map((r) => (
@@ -159,7 +157,7 @@ export default function PipelineIntegrityPanel() {
 													onClick={() =>
 														associateSourceResume(appId, selectedId)
 													}
-													className="bg-sky-400 disabled:opacity-50 disabled:pointer-events-none text-black border-2 border-black rounded-base px-3 py-1 text-xs font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all cursor-pointer hover:bg-sky-500"
+													className="bg-[#38BDF8] disabled:opacity-50 disabled:pointer-events-none text-[#082F49] border-2 border-border rounded-base px-3 py-1 text-xs font-bold shadow-light hover:translate-x-boxShadowX hover:translate-y-boxShadowY hover:shadow-none transition-all cursor-pointer"
 												>
 													Associate
 												</button>
@@ -172,7 +170,7 @@ export default function PipelineIntegrityPanel() {
 												<button
 													type="button"
 													onClick={() => clearStaleProposal(appId, proposalId)}
-													className="bg-amber-400 text-black border-2 border-black rounded-base px-3 py-1 text-xs font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all cursor-pointer hover:bg-amber-500"
+													className="bg-amber-100 hover:bg-amber-200 text-amber-900 border-2 border-amber-300 rounded-base px-3 py-1 text-xs font-bold shadow-light hover:translate-x-boxShadowX hover:translate-y-boxShadowY hover:shadow-none transition-all cursor-pointer"
 												>
 													Clear Proposal
 												</button>
@@ -185,7 +183,7 @@ export default function PipelineIntegrityPanel() {
 											<button
 												type="button"
 												onClick={() => handleClearAllProposals(app)}
-												className="bg-zinc-400 text-black border-2 border-black rounded-base px-3 py-1 text-xs font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all cursor-pointer hover:bg-zinc-500"
+												className="bg-slate-100 hover:bg-slate-200 text-slate-900 border-2 border-slate-300 rounded-base px-3 py-1 text-xs font-bold shadow-light hover:translate-x-boxShadowX hover:translate-y-boxShadowY hover:shadow-none transition-all cursor-pointer"
 											>
 												Clear Proposals
 											</button>
@@ -195,7 +193,7 @@ export default function PipelineIntegrityPanel() {
 									return (
 										<li
 											key={idx}
-											className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-amber-50/50 border border-amber-200 rounded-base text-sm"
+											className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-amber-50/30 border border-amber-200 rounded-base text-sm"
 										>
 											<div className="flex items-start gap-2">
 												<span className="text-amber-600 font-bold shrink-0 mt-0.5">

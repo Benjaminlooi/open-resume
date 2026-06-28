@@ -112,3 +112,19 @@
     -webkit-print-color-adjust: exact !important;
   }
 }
+
+@keyframes fade-in-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-slide-up {
+  animation: fade-in-slide-up 200ms ease-out forwards;
+}
+

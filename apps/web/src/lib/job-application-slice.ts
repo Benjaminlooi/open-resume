@@ -52,6 +52,10 @@ export interface JobApplicationSlice {
 	associateSourceResume: (appId: string, resumeId: string) => Promise<void>;
 	archiveIncompleteJob: (appId: string) => Promise<void>;
 	loadJobApplications: () => Promise<void>;
+	generatingFitAppId: string | null;
+	generatingCoverLetterAppId: string | null;
+	setGeneratingFit: (id: string | null) => void;
+	setGeneratingCoverLetter: (id: string | null) => void;
 }
 
 export const createJobApplicationSlice: StateCreator<
@@ -61,6 +65,17 @@ export const createJobApplicationSlice: StateCreator<
 	JobApplicationSlice
 > = (set, get) => ({
 	jobApplications: [],
+	generatingFitAppId: null,
+	generatingCoverLetterAppId: null,
+	setGeneratingFit: (id) =>
+		set((state) => ({
+			jobApplication: { ...state.jobApplication, generatingFitAppId: id },
+		})),
+	setGeneratingCoverLetter: (id) =>
+		set((state) => ({
+			jobApplication: { ...state.jobApplication, generatingCoverLetterAppId: id },
+		})),
+
 
 	loadJobApplications: async () => {
 		try {
