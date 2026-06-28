@@ -235,7 +235,7 @@ function JobsDashboard() {
 								className="w-full rounded-base border-2 border-border bg-white p-2 text-sm focus:outline-none focus:ring-2 focus:ring-main"
 							/>
 						</div>
-						<div className="flex flex-wrap gap-2 w-full md:w-auto">
+						<div className="flex overflow-x-auto md:flex-wrap gap-2 w-full md:w-auto pb-2 md:pb-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
 							{statuses.map((status) => {
 								const isActive = statusFilter === status.value;
 								return (
@@ -243,7 +243,7 @@ function JobsDashboard() {
 										key={status.value}
 										type="button"
 										onClick={() => setStatusFilter(status.value)}
-										className={`rounded-base border-2 border-border px-3 py-1 font-bold text-xs uppercase shadow-light transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none cursor-pointer ${
+										className={`shrink-0 rounded-base border-2 border-border px-3 py-1 font-bold text-xs uppercase shadow-light transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none cursor-pointer ${
 											isActive
 												? "bg-[#38BDF8] text-[#082F49] shadow-none"
 												: "bg-white text-muted-foreground"

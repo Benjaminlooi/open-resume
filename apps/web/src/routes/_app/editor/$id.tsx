@@ -29,8 +29,30 @@ function RouteComponent() {
 	const activeSection = useRootStore((state) => state.resume.activeSection);
 	const loadResume = useRootStore((state) => state.resume.loadResume);
 	const [isLoading, setIsLoading] = useState(true);
+	const [isMobile, setIsMobile] = useState(false);
+	const [activeTab, setActiveTab] = useState<"sections" | "fields" | "preview">(
+		"sections",
+	);
 
 	useResumeAutoSave();
+
+	useEffect(() => {
+		if (typeof window === "undefined") return;
+		const media = window.matchMedia("(max-width: 768px)");
+		setIsMobile(media.matches);
+		const listener = (e: MediaQueryListEvent) => {
+			setIsMobile(e.matches);
+		};
+		media.addEventListener("change", listener);
+		return () => media.removeEventListener("change", listener);
+	}, []);
+
+	// Auto-switch to "fields" tab on mobile when a section becomes active
+	useEffect(() => {
+		if (isMobile && activeSection) {
+			setActiveTab("fields");
+		}
+	}, [activeSection, isMobile]);
 
 	useEffect(() => {
 		let isActive = true;
@@ -118,6 +140,70 @@ function RouteComponent() {
 				return "Edit Section";
 		}
 	};
+
+	if (isMobile) {
+		return (
+			<div className="flex h-[calc(100vh-70px)] w-full flex-col overflow-hidden">
+				<EditorToolbar />
+
+				{/* Mobile Tabs */}
+				<div className="flex shrink-0 border-b-2 border-border bg-[#F0F9FF]">
+					<button
+						type="button"
+						onClick={() => setActiveTab("sections")}
+						className={`flex-1 py-3 text-center font-heading text-sm border-r-2 border-border transition-all ${
+							activeTab === "sections"
+								? "bg-main text-main-foreground font-bold shadow-[inset_0_-2px_0_0_#000]"
+								: "hover:bg-main/10"
+						}`}
+					>
+						Sections
+					</button>
+					<button
+						type="button"
+						onClick={() => setActiveTab("fields")}
+						className={`flex-1 py-3 text-center font-heading text-sm border-r-2 border-border transition-all whitespace-nowrap overflow-hidden text-ellipsis px-1 ${
+							activeTab === "fields"
+								? "bg-main text-main-foreground font-bold shadow-[inset_0_-2px_0_0_#000]"
+								: "hover:bg-main/10"
+						}`}
+					>
+						{getActiveFormTitle()}
+					</button>
+					<button
+						type="button"
+						onClick={() => setActiveTab("preview")}
+						className={`flex-1 py-3 text-center font-heading text-sm transition-all ${
+							activeTab === "preview"
+								? "bg-main text-main-foreground font-bold shadow-[inset_0_-2px_0_0_#000]"
+								: "hover:bg-main/10"
+						}`}
+					>
+						Preview
+					</button>
+				</div>
+
+				{/* Tab content area */}
+				<main className="flex-1 min-h-0 w-full overflow-y-auto p-4 bg-background">
+					{activeTab === "sections" && (
+						<div className="rounded-base border-2 border-border bg-secondary-background text-foreground shadow-shadow p-5">
+							<SectionList />
+						</div>
+					)}
+					{activeTab === "fields" && (
+						<div className="rounded-base border-2 border-border bg-secondary-background text-foreground shadow-shadow p-5">
+							{renderActiveForm()}
+						</div>
+					)}
+					{activeTab === "preview" && (
+						<div className="h-full rounded-base border-2 border-border bg-main text-main-foreground shadow-shadow overflow-hidden">
+							<ResumePreview />
+						</div>
+					)}
+				</main>
+			</div>
+		);
+	}
 
 	return (
 		<div className="flex h-[calc(100vh-70px)] w-full flex-col overflow-hidden">
