@@ -13,20 +13,23 @@ openapi.json:
     - '#/paths/~1resumes/get/responses'
     - '#/paths/~1resumes~1{id}/delete/responses'
     - '#/paths/~1resumes~1default/delete/responses'
-    - '#/paths/~1jobs/get/responses'
-    - '#/paths/~1jobs~1{id}/delete/responses'
+    - '#/paths/~1job-postings/get/responses'
+    - '#/paths/~1job-postings~1{id}/delete/responses'
     - '#/paths/~1job-applications/get/responses'
     - '#/paths/~1job-applications~1{id}/delete/responses'
+    - '#/paths/~1ai~1fit-brief/post/responses'
+    - '#/paths/~1ai~1tailor/post/responses'
+    - '#/paths/~1ai~1cover-letter/post/responses'
+    - '#/paths/~1ai~1chat/post/responses'
   struct:
-    - '#/components/schemas/CompanionJob/properties/crawlError/anyOf/1/type'
-    - '#/components/schemas/CompanionJob/properties/crawledAt/anyOf/1/type'
-    - '#/components/schemas/CompanionJob/properties/parsedTitle/anyOf/1/type'
-    - '#/components/schemas/CompanionJob/properties/parsedCompany/anyOf/1/type'
-    - '#/components/schemas/CompanionJob/properties/parsedLocation/anyOf/1/type'
-    - >-
-      #/components/schemas/CompanionJob/properties/parsedDescription/anyOf/1/type
-    - '#/components/schemas/CompanionJob/properties/fitScore/anyOf/1/type'
-    - '#/components/schemas/CompanionJob/properties/fitBriefJson/anyOf/1/type'
+    - '#/components/schemas/JobPosting/properties/crawlError/anyOf/1/type'
+    - '#/components/schemas/JobPosting/properties/crawledAt/anyOf/1/type'
+    - '#/components/schemas/JobPosting/properties/parsedTitle/anyOf/1/type'
+    - '#/components/schemas/JobPosting/properties/parsedCompany/anyOf/1/type'
+    - '#/components/schemas/JobPosting/properties/parsedLocation/anyOf/1/type'
+    - '#/components/schemas/JobPosting/properties/parsedDescription/anyOf/1/type'
+    - '#/components/schemas/JobPosting/properties/fitScore/anyOf/1/type'
+    - '#/components/schemas/JobPosting/properties/fitBriefJson/anyOf/1/type'
     - '#/components/schemas/JobApplication/properties/sourceResumeId/anyOf/1/type'
     - >-
       #/components/schemas/JobApplication/properties/sourceResumeName/anyOf/1/type
@@ -53,18 +56,6 @@ openapi.json:
     - >-
       #/components/schemas/JobApplication/properties/coverLetterDraft/anyOf/1/type
     - '#/components/schemas/JobApplication/properties/followUpAt/anyOf/1/type'
-    - '#/components/schemas/CompanionJobInput/properties/crawlError/anyOf/1/type'
-    - '#/components/schemas/CompanionJobInput/properties/crawledAt/anyOf/1/type'
-    - '#/components/schemas/CompanionJobInput/properties/parsedTitle/anyOf/1/type'
-    - >-
-      #/components/schemas/CompanionJobInput/properties/parsedCompany/anyOf/1/type
-    - >-
-      #/components/schemas/CompanionJobInput/properties/parsedLocation/anyOf/1/type
-    - >-
-      #/components/schemas/CompanionJobInput/properties/parsedDescription/anyOf/1/type
-    - '#/components/schemas/CompanionJobInput/properties/fitScore/anyOf/1/type'
-    - >-
-      #/components/schemas/CompanionJobInput/properties/fitBriefJson/anyOf/1/type
     - >-
       #/components/schemas/JobApplicationInput/properties/sourceResumeId/anyOf/1/type
     - >-
@@ -94,6 +85,16 @@ openapi.json:
       #/components/schemas/JobApplicationInput/properties/coverLetterDraft/anyOf/1/type
     - >-
       #/components/schemas/JobApplicationInput/properties/followUpAt/anyOf/1/type
+    - '#/components/schemas/JobPostingInput/properties/crawlError/anyOf/1/type'
+    - '#/components/schemas/JobPostingInput/properties/crawledAt/anyOf/1/type'
+    - '#/components/schemas/JobPostingInput/properties/parsedTitle/anyOf/1/type'
+    - '#/components/schemas/JobPostingInput/properties/parsedCompany/anyOf/1/type'
+    - >-
+      #/components/schemas/JobPostingInput/properties/parsedLocation/anyOf/1/type
+    - >-
+      #/components/schemas/JobPostingInput/properties/parsedDescription/anyOf/1/type
+    - '#/components/schemas/JobPostingInput/properties/fitScore/anyOf/1/type'
+    - '#/components/schemas/JobPostingInput/properties/fitBriefJson/anyOf/1/type'
   nullable-type-sibling:
     - >-
       #/paths/~1job-applications~1{id}/put/requestBody/content/application~1json/schema/properties/sourceResumeSnapshot/nullable
@@ -105,10 +106,10 @@ openapi.json:
     - '#/components/schemas/HealthResponseInput'
     - '#/components/schemas/ExtractJobRequestInput'
     - '#/components/schemas/JobExtractionResultInput'
-    - '#/components/schemas/CompanionErrorResponseInput'
+    - '#/components/schemas/BackendErrorResponseInput'
     - '#/components/schemas/JobIdParamsInput'
-    - '#/components/schemas/CompanionJobsResponseInput'
-    - '#/components/schemas/DeleteJobResponseInput'
+    - '#/components/schemas/JobPostingsResponseInput'
+    - '#/components/schemas/DeleteJobPostingResponseInput'
     - '#/components/schemas/ResumeDetailsInput'
     - '#/components/schemas/ResumesResponseInput'
     - '#/components/schemas/DeleteResumeResponseInput'
@@ -116,7 +117,7 @@ openapi.json:
     - '#/components/schemas/JobApplicationsResponseInput'
     - '#/components/schemas/ExtractJobRequest'
     - '#/components/schemas/JobExtractionResult'
-    - '#/components/schemas/CreateJobRequest'
+    - '#/components/schemas/CreateJobPostingRequest'
     - '#/components/schemas/JobIdParams'
     - '#/components/schemas/CreateResumeRequest'
     - '#/components/schemas/UpdateResumeRequest'
@@ -134,16 +135,20 @@ openapi.json:
     - '#/paths/~1resumes~1{id}/delete'
     - '#/paths/~1resumes~1{id}~1default/put'
     - '#/paths/~1resumes~1default/delete'
-    - '#/paths/~1jobs/get'
-    - '#/paths/~1jobs/post'
-    - '#/paths/~1jobs~1{id}/get'
-    - '#/paths/~1jobs~1{id}/delete'
-    - '#/paths/~1jobs~1{id}~1screenshot/get'
-    - '#/paths/~1jobs~1{id}~1retry-crawl/post'
-    - '#/paths/~1jobs~1{id}~1retry-analyze/post'
-    - '#/paths/~1jobs~1{id}~1convert/post'
+    - '#/paths/~1job-postings/get'
+    - '#/paths/~1job-postings/post'
+    - '#/paths/~1job-postings~1{id}/get'
+    - '#/paths/~1job-postings~1{id}/delete'
+    - '#/paths/~1job-postings~1{id}~1screenshot/get'
+    - '#/paths/~1job-postings~1{id}~1retry-crawl/post'
+    - '#/paths/~1job-postings~1{id}~1retry-analyze/post'
+    - '#/paths/~1job-postings~1{id}~1convert/post'
     - '#/paths/~1job-applications/get'
     - '#/paths/~1job-applications/post'
     - '#/paths/~1job-applications~1{id}/get'
     - '#/paths/~1job-applications~1{id}/put'
     - '#/paths/~1job-applications~1{id}/delete'
+    - '#/paths/~1ai~1fit-brief/post'
+    - '#/paths/~1ai~1tailor/post'
+    - '#/paths/~1ai~1cover-letter/post'
+    - '#/paths/~1ai~1chat/post'

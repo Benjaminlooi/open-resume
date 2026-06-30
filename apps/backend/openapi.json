@@ -1,9 +1,9 @@
 {
   "openapi": "3.0.3",
   "info": {
-    "title": "Open Resume Companion API",
+    "title": "Open Resume Backend API",
     "version": "0.1.0",
-    "description": "Local companion service for extracting job details from pasted job URLs."
+    "description": "Local backend service for extracting job details from pasted job URLs."
   },
   "components": {
     "schemas": {
@@ -84,7 +84,7 @@
         ],
         "additionalProperties": false
       },
-      "CompanionErrorResponseInput": {
+      "BackendErrorResponseInput": {
         "type": "object",
         "properties": {
           "error": {
@@ -258,7 +258,7 @@
       "JobPostingsResponseInput": {
         "type": "object",
         "properties": {
-          "jobs": {
+          "jobPostings": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/JobPostingInput"
@@ -266,7 +266,7 @@
           }
         },
         "required": [
-          "jobs"
+          "jobPostings"
         ],
         "additionalProperties": false
       },
@@ -1110,7 +1110,7 @@
         ],
         "additionalProperties": false
       },
-      "CompanionErrorResponse": {
+      "BackendErrorResponse": {
         "type": "object",
         "properties": {
           "error": {
@@ -1284,7 +1284,7 @@
       "JobPostingsResponse": {
         "type": "object",
         "properties": {
-          "jobs": {
+          "jobPostings": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/JobPosting"
@@ -1292,7 +1292,7 @@
           }
         },
         "required": [
-          "jobs"
+          "jobPostings"
         ],
         "additionalProperties": false
       },
@@ -2070,7 +2070,7 @@
     "/health": {
       "get": {
         "operationId": "getHealth",
-        "summary": "Check companion health",
+        "summary": "Check backend health",
         "tags": [
           "System"
         ],
@@ -2111,7 +2111,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                  "$ref": "#/components/schemas/BackendErrorResponse"
                 }
               }
             }
@@ -2150,7 +2150,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                  "$ref": "#/components/schemas/BackendErrorResponse"
                 }
               }
             }
@@ -2182,7 +2182,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                  "$ref": "#/components/schemas/BackendErrorResponse"
                 }
               }
             }
@@ -2192,7 +2192,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                  "$ref": "#/components/schemas/BackendErrorResponse"
                 }
               }
             }
@@ -2231,7 +2231,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                  "$ref": "#/components/schemas/BackendErrorResponse"
                 }
               }
             }
@@ -2291,7 +2291,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                  "$ref": "#/components/schemas/BackendErrorResponse"
                 }
               }
             }
@@ -2301,7 +2301,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                  "$ref": "#/components/schemas/BackendErrorResponse"
                 }
               }
             }
@@ -2343,7 +2343,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                  "$ref": "#/components/schemas/BackendErrorResponse"
                 }
               }
             }
@@ -2393,7 +2393,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                  "$ref": "#/components/schemas/BackendErrorResponse"
                 }
               }
             }
@@ -2465,7 +2465,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                  "$ref": "#/components/schemas/BackendErrorResponse"
                 }
               }
             }
@@ -2487,6 +2487,327 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/OkResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/job-postings": {
+      "post": {
+        "operationId": "createJobPosting",
+        "summary": "Create a job posting and enqueue crawling",
+        "tags": [
+          "Job Postings"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateJobPostingRequestInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobPosting"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackendErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackendErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "listJobPostings",
+        "summary": "List job postings",
+        "tags": [
+          "Job Postings"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobPostingsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/job-postings/{id}": {
+      "get": {
+        "operationId": "getJobPosting",
+        "summary": "Get a job posting",
+        "tags": [
+          "Job Postings"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobPosting"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackendErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteJobPosting",
+        "summary": "Delete a job posting",
+        "tags": [
+          "Job Postings"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteJobPostingResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/job-postings/{id}/screenshot": {
+      "get": {
+        "operationId": "getJobPostingScreenshot",
+        "summary": "Get a job posting crawl screenshot",
+        "tags": [
+          "Job Postings"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The captured screenshot PNG image.",
+            "content": {
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackendErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackendErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/job-postings/{id}/retry-crawl": {
+      "post": {
+        "operationId": "retryJobPostingCrawl",
+        "summary": "Retry crawling a job posting",
+        "tags": [
+          "Job Postings"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobPosting"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackendErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/job-postings/{id}/retry-analyze": {
+      "post": {
+        "operationId": "retryJobPostingAnalysis",
+        "summary": "Retry analysis for a job posting",
+        "tags": [
+          "Job Postings"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobPosting"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackendErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/job-postings/{id}/convert": {
+      "post": {
+        "operationId": "convertJobToApplication",
+        "summary": "Convert a job posting to a job application",
+        "tags": [
+          "Job Postings"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobApplication"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackendErrorResponse"
                 }
               }
             }
@@ -2576,7 +2897,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                  "$ref": "#/components/schemas/BackendErrorResponse"
                 }
               }
             }
@@ -2586,7 +2907,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                  "$ref": "#/components/schemas/BackendErrorResponse"
                 }
               }
             }
@@ -2628,7 +2949,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                  "$ref": "#/components/schemas/BackendErrorResponse"
                 }
               }
             }
@@ -2939,7 +3260,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                  "$ref": "#/components/schemas/BackendErrorResponse"
                 }
               }
             }
@@ -2986,69 +3307,43 @@
         }
       }
     },
-    "/job-postings": {
+    "/ai/fit-brief": {
       "post": {
-        "operationId": "createJobPosting",
-        "summary": "Create a companion job and enqueue crawling",
+        "operationId": "aiFitBrief",
+        "summary": "Generate Job Fit Brief",
         "tags": [
-          "Job Postings"
+          "AI"
         ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateJobPostingRequestInput"
+                "type": "object",
+                "properties": {
+                  "job": {
+                    "$ref": "#/components/schemas/JobApplicationInput"
+                  },
+                  "resume": {
+                    "type": "object",
+                    "additionalProperties": {}
+                  }
+                },
+                "required": [
+                  "job",
+                  "resume"
+                ]
               }
             }
           }
         },
         "responses": {
-          "201": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/JobPosting"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CompanionErrorResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CompanionErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      },
-      "get": {
-        "operationId": "listJobPostings",
-        "summary": "List companion jobs",
-        "tags": [
-          "Job Postings"
-        ],
-        "responses": {
           "200": {
             "description": "Default Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/JobPostingsResponse"
+                  "$ref": "#/components/schemas/JobFitBrief"
                 }
               }
             }
@@ -3056,166 +3351,226 @@
         }
       }
     },
-    "/job-postings/{id}": {
-      "get": {
-        "operationId": "getJobPosting",
-        "summary": "Get a companion job",
-        "tags": [
-          "Job Postings"
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            },
-            "in": "path",
-            "name": "id",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/JobPosting"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CompanionErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "operationId": "deleteJobPosting",
-        "summary": "Delete a companion job",
-        "tags": [
-          "Job Postings"
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            },
-            "in": "path",
-            "name": "id",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DeleteJobPostingResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/job-postings/{id}/screenshot": {
-      "get": {
-        "operationId": "getJobPostingScreenshot",
-        "summary": "Get a job crawl screenshot",
-        "tags": [
-          "Job Postings"
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            },
-            "in": "path",
-            "name": "id",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The captured screenshot PNG image.",
-            "content": {
-              "image/png": {
-                "schema": {
-                  "type": "string",
-                  "format": "binary"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CompanionErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CompanionErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/job-postings/{id}/retry-crawl": {
+    "/ai/tailor": {
       "post": {
-        "operationId": "retryJobPostingCrawl",
-        "summary": "Retry crawling a companion job",
+        "operationId": "aiTailor",
+        "summary": "Generate Resume Tailoring Proposals",
         "tags": [
-          "Job Postings"
+          "AI"
         ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            },
-            "in": "path",
-            "name": "id",
-            "required": true
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "job": {
+                    "$ref": "#/components/schemas/JobApplicationInput"
+                  },
+                  "fitBrief": {
+                    "$ref": "#/components/schemas/JobFitBriefInput"
+                  },
+                  "resume": {
+                    "type": "object",
+                    "additionalProperties": {}
+                  }
+                },
+                "required": [
+                  "job",
+                  "fitBrief",
+                  "resume"
+                ]
+              }
+            }
           }
-        ],
+        },
         "responses": {
           "200": {
             "description": "Default Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/JobPosting"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                  "type": "object",
+                  "properties": {
+                    "proposals": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "target": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "section": {
+                                    "type": "string",
+                                    "enum": [
+                                      "summary"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "section"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "section": {
+                                    "type": "string",
+                                    "enum": [
+                                      "experience"
+                                    ]
+                                  },
+                                  "itemId": {
+                                    "type": "string"
+                                  },
+                                  "field": {
+                                    "type": "string",
+                                    "enum": [
+                                      "role",
+                                      "description"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "section",
+                                  "itemId",
+                                  "field"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "section": {
+                                    "type": "string",
+                                    "enum": [
+                                      "experience"
+                                    ]
+                                  },
+                                  "itemId": {
+                                    "type": "string"
+                                  },
+                                  "field": {
+                                    "type": "string",
+                                    "enum": [
+                                      "bullet"
+                                    ]
+                                  },
+                                  "bulletIndex": {
+                                    "type": "number"
+                                  }
+                                },
+                                "required": [
+                                  "section",
+                                  "itemId",
+                                  "field",
+                                  "bulletIndex"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "section": {
+                                    "type": "string",
+                                    "enum": [
+                                      "skills"
+                                    ]
+                                  },
+                                  "itemId": {
+                                    "type": "string"
+                                  },
+                                  "field": {
+                                    "type": "string",
+                                    "enum": [
+                                      "items"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "section",
+                                  "itemId",
+                                  "field"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "section": {
+                                    "type": "string",
+                                    "enum": [
+                                      "projects"
+                                    ]
+                                  },
+                                  "itemId": {
+                                    "type": "string"
+                                  },
+                                  "field": {
+                                    "type": "string",
+                                    "enum": [
+                                      "description"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "section",
+                                  "itemId",
+                                  "field"
+                                ],
+                                "additionalProperties": false
+                              }
+                            ]
+                          },
+                          "currentText": {
+                            "type": "string"
+                          },
+                          "suggestedText": {
+                            "type": "string"
+                          },
+                          "rationale": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "pending",
+                              "approved",
+                              "rejected",
+                              "applied"
+                            ]
+                          },
+                          "createdAt": {
+                            "type": "number"
+                          },
+                          "appliedAt": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "target",
+                          "currentText",
+                          "suggestedText",
+                          "rationale",
+                          "status",
+                          "createdAt"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "proposals"
+                  ],
+                  "additionalProperties": false
                 }
               }
             }
@@ -3223,41 +3578,64 @@
         }
       }
     },
-    "/job-postings/{id}/retry-analyze": {
+    "/ai/cover-letter": {
       "post": {
-        "operationId": "retryJobPostingAnalyze",
-        "summary": "Retry analysis for a companion job",
+        "operationId": "aiCoverLetter",
+        "summary": "Generate Cover Letter",
         "tags": [
-          "Job Postings"
+          "AI"
         ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            },
-            "in": "path",
-            "name": "id",
-            "required": true
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "job": {
+                    "$ref": "#/components/schemas/JobApplicationInput"
+                  },
+                  "fitBrief": {
+                    "$ref": "#/components/schemas/JobFitBriefInput"
+                  },
+                  "resume": {
+                    "type": "object",
+                    "additionalProperties": {}
+                  }
+                },
+                "required": [
+                  "job",
+                  "fitBrief",
+                  "resume"
+                ]
+              }
+            }
           }
-        ],
+        },
         "responses": {
           "200": {
             "description": "Default Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/JobPosting"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CompanionErrorResponse"
+                  "type": "object",
+                  "properties": {
+                    "content": {
+                      "type": "string"
+                    },
+                    "generatedAt": {
+                      "type": "number"
+                    },
+                    "updatedAt": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "content",
+                    "generatedAt",
+                    "updatedAt"
+                  ],
+                  "additionalProperties": false
                 }
               }
             }
@@ -3265,44 +3643,62 @@
         }
       }
     },
-    "/job-postings/{id}/convert": {
+    "/ai/chat": {
       "post": {
-        "operationId": "convertJobToApplication",
-        "summary": "Convert a companion job to a job application",
+        "operationId": "aiChatStream",
+        "summary": "Stream AI Coach Suggestions",
         "tags": [
-          "Job Postings"
+          "AI"
         ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            },
-            "in": "path",
-            "name": "id",
-            "required": true
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "messages": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "role": {
+                          "type": "string",
+                          "enum": [
+                            "user",
+                            "assistant",
+                            "system",
+                            "tool"
+                          ]
+                        },
+                        "content": {},
+                        "_toolCalls": {
+                          "type": "array",
+                          "items": {}
+                        }
+                      },
+                      "required": [
+                        "role",
+                        "content"
+                      ]
+                    }
+                  },
+                  "context": {
+                    "type": "object",
+                    "additionalProperties": {}
+                  }
+                },
+                "required": [
+                  "messages",
+                  "context"
+                ]
+              }
+            }
           }
-        ],
+        },
         "responses": {
           "200": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/JobApplication"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CompanionErrorResponse"
-                }
-              }
-            }
+            "description": "Default Response"
           }
         }
       }
@@ -3311,7 +3707,7 @@
   "tags": [
     {
       "name": "System",
-      "description": "Operational companion endpoints."
+      "description": "Operational backend endpoints."
     },
     {
       "name": "Profile",
@@ -3322,8 +3718,8 @@
       "description": "Saved resume management endpoints."
     },
     {
-      "name": "Jobs",
-      "description": "Companion job intake and crawl lifecycle endpoints."
+      "name": "Job Postings",
+      "description": "Job posting intake and crawl lifecycle endpoints."
     }
   ]
 }
