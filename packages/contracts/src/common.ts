@@ -12,15 +12,15 @@ export const httpUrlSchema = z
 		}
 	}, "URL must use http or https");
 
-export const companionErrorResponseSchema = z
+export const backendErrorResponseSchema = z
 	.object({
 		error: z.string(),
 		details: z.string().optional(),
 	})
 	.strict();
 
-export type CompanionErrorResponse = z.infer<
-	typeof companionErrorResponseSchema
+export type BackendErrorResponse = z.infer<
+	typeof backendErrorResponseSchema
 >;
 
 export const okResponseSchema = z

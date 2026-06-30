@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { companionErrorResponseSchema, okResponseSchema } from "./common.js";
+import { backendErrorResponseSchema, okResponseSchema } from "./common.js";
 import {
 	jobApplicationSchema,
 	jobApplicationsResponseSchema,
@@ -41,8 +41,8 @@ if (registry) {
 	registry.add(healthResponseSchema, { id: "HealthResponse" });
 	registry.add(extractJobRequestSchema, { id: "ExtractJobRequest" });
 	registry.add(jobExtractionResultSchema, { id: "JobExtractionResult" });
-	registry.add(companionErrorResponseSchema, {
-		id: "CompanionErrorResponse",
+	registry.add(backendErrorResponseSchema, {
+		id: "BackendErrorResponse",
 	});
 	registry.add(crawlStatusSchema, { id: "CrawlStatus" });
 	registry.add(createJobPostingRequestSchema, { id: "CreateJobPostingRequest" });
