@@ -59,13 +59,13 @@ We will divide the schemas into domain modules under `packages/contracts/src/`:
 5. **`src/index.ts`**: Public entry point re-exporting all sub-modules.
 
 ### 1. Backend Integration
-Replace the contents of [schema.ts](file:///Users/ben/ghq/github.com/Benjaminlooi/resume-builder/.worktrees/job-application-ai-helper/apps/companion/src/schema.ts) with a clean re-export statement to minimize code modification in other backend controllers/handlers:
+Replace the contents of [schema.ts](file:///Users/ben/ghq/github.com/Benjaminlooi/resume-builder/.worktrees/job-application-ai-helper/apps/backend/src/schema.ts) with a clean re-export statement to minimize code modification in other backend controllers/handlers:
 ```typescript
-// apps/companion/src/schema.ts
+// apps/backend/src/schema.ts
 export * from "@open-resume/contracts";
 ```
 
-In `apps/companion/package.json`, add `@open-resume/contracts` as a dependency:
+In `apps/backend/package.json`, add `@open-resume/contracts` as a dependency:
 ```json
 "dependencies": {
   "@open-resume/contracts": "workspace:*"
@@ -73,11 +73,11 @@ In `apps/companion/package.json`, add `@open-resume/contracts` as a dependency:
 ```
 
 ### 2. Frontend Integration
-Remove duplicate schemas in [local-companion-client.ts](file:///Users/ben/ghq/github.com/Benjaminlooi/resume-builder/.worktrees/job-application-ai-helper/apps/web/src/lib/local-companion-client.ts) and replace them with imports from the contracts package:
+Remove duplicate schemas in [local-backend-client.ts](file:///Users/ben/ghq/github.com/Benjaminlooi/resume-builder/.worktrees/job-application-ai-helper/apps/web/src/lib/local-backend-client.ts) and replace them with imports from the contracts package:
 ```typescript
 import {
-  companionJobSchema,
-  companionJobsResponseSchema,
+  backendJobSchema,
+  backendJobsResponseSchema,
   deleteJobResponseSchema,
   resumeContentSchema,
   resumeSummarySchema,
@@ -88,7 +88,7 @@ import {
   candidateProfileSchema,
   resumeSyncRequestSchema,
   okResponseSchema,
-  type CompanionJob as LocalCompanionJob,
+  type BackendJob as LocalBackendJob,
   type TargetRoleArchetype,
   type CandidateProfile,
   type ResumeSyncRequest,
@@ -115,7 +115,7 @@ In `apps/web/package.json`, add `@open-resume/contracts` as a dependency:
 ### Automated Verification
 * `pnpm typecheck`: Validate imports and type satisfaction.
 * `pnpm test`: Execute unit test suites.
-* `pnpm build`: Verify clean compilation of client (`web`) and daemon (`companion`).
+* `pnpm build`: Verify clean compilation of client (`web`) and daemon (`backend`).
 
 ### Dead Code / Unused Schema Detection
 We can run `pnpm dlx knip` at the workspace level to analyze compile dependencies and identify any unused exports in `@open-resume/contracts`.

@@ -7,7 +7,7 @@ import {
 	retryJobPostingAnalyze,
 	retryJobPostingCrawl,
 	convertJobToApplication as convertJobToApplicationApi,
-} from "./local-companion-client";
+} from "./local-backend-client";
 
 export interface JobPostingSlice {
 	jobPostings: LocalJobPosting[];

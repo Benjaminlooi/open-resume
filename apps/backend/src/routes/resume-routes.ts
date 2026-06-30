@@ -1,7 +1,7 @@
 import type { FastifyPluginAsync } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
 import {
-	companionErrorResponseSchema,
+	backendErrorResponseSchema,
 	createResumeRequestSchema,
 	deleteResumeResponseSchema,
 	jobIdParamsSchema,
@@ -48,8 +48,8 @@ export function createResumeRoutes(
 					body: createResumeRequestSchema,
 					response: {
 						201: resumeDetailsSchema,
-						400: companionErrorResponseSchema,
-						500: companionErrorResponseSchema,
+						400: backendErrorResponseSchema,
+						500: backendErrorResponseSchema,
 					},
 				},
 			},
@@ -72,7 +72,7 @@ export function createResumeRoutes(
 					params: routeResumeIdParamsSchema,
 					response: {
 						200: resumeDetailsSchema,
-						404: companionErrorResponseSchema,
+						404: backendErrorResponseSchema,
 					},
 				},
 			},
@@ -97,7 +97,7 @@ export function createResumeRoutes(
 					body: updateResumeRequestSchema,
 					response: {
 						200: resumeDetailsSchema,
-						404: companionErrorResponseSchema,
+						404: backendErrorResponseSchema,
 					},
 				},
 			},
@@ -124,7 +124,7 @@ export function createResumeRoutes(
 					params: routeResumeIdParamsSchema,
 					response: {
 						200: resumeDetailsSchema,
-						404: companionErrorResponseSchema,
+						404: backendErrorResponseSchema,
 					},
 				},
 			},

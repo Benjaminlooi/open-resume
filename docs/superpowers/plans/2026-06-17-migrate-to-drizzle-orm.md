@@ -1,10 +1,10 @@
-# Migrate Companion Backend to Drizzle ORM Implementation Plan
+# Migrate Backend to Drizzle ORM Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Migrate the SQLite database layer in the companion app to Drizzle ORM to replace raw SQL strings with type-safe query builders, while maintaining compatibility with the existing repository interface and database data.
+**Goal:** Migrate the SQLite database layer in the backend app to Drizzle ORM to replace raw SQL strings with type-safe query builders, while maintaining compatibility with the existing repository interface and database data.
 
-**Architecture:** We will define Drizzle schemas in `apps/companion/src/db/schema.ts`, configure Drizzle Kit, generate migrations, execute migrations on server startup, and refactor the repository methods in `apps/companion/src/jobs/repository.ts` to use Drizzle queries.
+**Architecture:** We will define Drizzle schemas in `apps/backend/src/db/schema.ts`, configure Drizzle Kit, generate migrations, execute migrations on server startup, and refactor the repository methods in `apps/backend/src/jobs/repository.ts` to use Drizzle queries.
 
 **Tech Stack:** Drizzle ORM, Drizzle Kit, Fastify, TypeScript, Vitest
 
@@ -13,13 +13,13 @@
 ### Task 1: Add Dependencies & Configuration
 
 **Files:**
-- Modify: `apps/companion/package.json`
-- Create: `apps/companion/drizzle.config.ts`
+- Modify: `apps/backend/package.json`
+- Create: `apps/backend/drizzle.config.ts`
 
 - [ ] **Step 1: Install Drizzle dependencies**
   Add `drizzle-orm` to dependencies and `drizzle-kit` to devDependencies.
   
-  Replace the dependencies section in [package.json](file:///Users/ben/ghq/github.com/Benjaminlooi/resume-builder/.worktrees/job-application-ai-helper/apps/companion/package.json#L22-L36):
+  Replace the dependencies section in [package.json](file:///Users/ben/ghq/github.com/Benjaminlooi/resume-builder/.worktrees/job-application-ai-helper/apps/backend/package.json#L22-L36):
   ```json
   	"dependencies": {
   		"@ai-sdk/anthropic": "^3.0.81",
@@ -39,7 +39,7 @@
   	},
   ```
   
-  And add `drizzle-kit` to devDependencies in [package.json](file:///Users/ben/ghq/github.com/Benjaminlooi/resume-builder/.worktrees/job-application-ai-helper/apps/companion/package.json#L37-L45):
+  And add `drizzle-kit` to devDependencies in [package.json](file:///Users/ben/ghq/github.com/Benjaminlooi/resume-builder/.worktrees/job-application-ai-helper/apps/backend/package.json#L37-L45):
   ```json
   	"devDependencies": {
   		"@biomejs/biome": "2.4.5",
@@ -58,7 +58,7 @@
   Expected: Installation finishes successfully and generates updated `pnpm-lock.yaml`.
 
 - [ ] **Step 3: Create drizzle.config.ts**
-  Create the Drizzle Kit config file [drizzle.config.ts](file:///Users/ben/ghq/github.com/Benjaminlooi/resume-builder/.worktrees/job-application-ai-helper/apps/companion/drizzle.config.ts):
+  Create the Drizzle Kit config file [drizzle.config.ts](file:///Users/ben/ghq/github.com/Benjaminlooi/resume-builder/.worktrees/job-application-ai-helper/apps/backend/drizzle.config.ts):
   ```typescript
   import { defineConfig } from "drizzle-kit";
 
@@ -67,7 +67,7 @@
   	schema: "./src/db/schema.ts",
   	dialect: "sqlite",
   	dbCredentials: {
-  		url: process.env.OPEN_RESUME_COMPANION_DATABASE_PATH ?? ".open-resume-companion/jobs.sqlite",
+  		url: process.env.OPEN_RESUME_BACKEND_DATABASE_PATH ?? ".open-resume-backend/jobs.sqlite",
   	},
   });
   ```
@@ -77,10 +77,10 @@
 ### Task 2: Define Declarative Schema
 
 **Files:**
-- Create: `apps/companion/src/db/schema.ts`
+- Create: `apps/backend/src/db/schema.ts`
 
 - [ ] **Step 1: Create schema.ts**
-  Define Drizzle tables matching the existing SQLite tables [schema.ts](file:///Users/ben/ghq/github.com/Benjaminlooi/resume-builder/.worktrees/job-application-ai-helper/apps/companion/src/db/schema.ts):
+  Define Drizzle tables matching the existing SQLite tables [schema.ts](file:///Users/ben/ghq/github.com/Benjaminlooi/resume-builder/.worktrees/job-application-ai-helper/apps/backend/src/db/schema.ts):
   ```typescript
   import { eq } from "drizzle-orm";
   import { sqliteTable, text, integer, real, index, uniqueIndex } from "drizzle-orm/sqlite-core";
@@ -164,15 +164,15 @@
 ### Task 3: Generate Migration Files
 
 **Files:**
-- Modify: `apps/companion/package.json`
-- Create: `apps/companion/drizzle/*` (Generated)
+- Modify: `apps/backend/package.json`
+- Create: `apps/backend/drizzle/*` (Generated)
 
 - [ ] **Step 1: Generate initial migration**
-  Run: `pnpm --filter @open-resume/companion drizzle-kit generate`
-  Expected: Creates a folder `apps/companion/drizzle` containing an SQL migration script (e.g. `0000_init.sql`) and a meta directory.
+  Run: `pnpm --filter @open-resume/backend drizzle-kit generate`
+  Expected: Creates a folder `apps/backend/drizzle` containing an SQL migration script (e.g. `0000_init.sql`) and a meta directory.
 
 - [ ] **Step 2: Add IF NOT EXISTS to the migration file**
-  Open the newly generated `.sql` file in `apps/companion/drizzle/` and modify it:
+  Open the newly generated `.sql` file in `apps/backend/drizzle/` and modify it:
   - Add `IF NOT EXISTS` to all `CREATE TABLE` statements.
   - Add `IF NOT EXISTS` to all `CREATE INDEX` and `CREATE UNIQUE INDEX` statements.
   
@@ -188,8 +188,8 @@
   CREATE INDEX IF NOT EXISTS "resumes_last_modified_idx" ON "resumes" ("last_modified");
   ```
 
-- [ ] **Step 3: Update companion build command in package.json**
-  Update `"build"` in [package.json](file:///Users/ben/ghq/github.com/Benjaminlooi/resume-builder/.worktrees/job-application-ai-helper/apps/companion/package.json#L15) to copy the generated `drizzle` migrations directory into the build target directory.
+- [ ] **Step 3: Update backend build command in package.json**
+  Update `"build"` in [package.json](file:///Users/ben/ghq/github.com/Benjaminlooi/resume-builder/.worktrees/job-application-ai-helper/apps/backend/package.json#L15) to copy the generated `drizzle` migrations directory into the build target directory.
   
   Replace:
   ```json
@@ -201,12 +201,12 @@
 ### Task 4: Setup Startup Migration Runner in Repository
 
 **Files:**
-- Modify: `apps/companion/src/jobs/repository.ts`
+- Modify: `apps/backend/src/jobs/repository.ts`
 
 - [ ] **Step 1: Refactor repository setup**
   Import Drizzle dependencies and set up migration execution. Keep the legacy schema migration check intact to upgrade pre-existing databases before initializing Drizzle.
   
-  Modify [repository.ts](file:///Users/ben/ghq/github.com/Benjaminlooi/resume-builder/.worktrees/job-application-ai-helper/apps/companion/src/jobs/repository.ts#L1-L14):
+  Modify [repository.ts](file:///Users/ben/ghq/github.com/Benjaminlooi/resume-builder/.worktrees/job-application-ai-helper/apps/backend/src/jobs/repository.ts#L1-L14):
   ```typescript
   import { DatabaseSync } from "node:sqlite";
   import { drizzle } from "drizzle-orm/node-sqlite";
@@ -216,7 +216,7 @@
   import { eq, desc, asc, inArray, and } from "drizzle-orm";
   import { jobs, resumes, jobApplications } from "../db/schema.js";
   import type {
-  	CompanionJob,
+  	BackendJob,
   	CrawlStatus,
   	ResumeContent,
   	ResumeDetails,
@@ -231,7 +231,7 @@
   const __dirname = path.dirname(fileURLToPath(import.meta.url));
   ```
 
-  Modify the setup logic inside `createJobRepository` in [repository.ts](file:///Users/ben/ghq/github.com/Benjaminlooi/resume-builder/.worktrees/job-application-ai-helper/apps/companion/src/jobs/repository.ts#L129-L254):
+  Modify the setup logic inside `createJobRepository` in [repository.ts](file:///Users/ben/ghq/github.com/Benjaminlooi/resume-builder/.worktrees/job-application-ai-helper/apps/backend/src/jobs/repository.ts#L129-L254):
   ```typescript
   export function createJobRepository(dbPath: string) {
   	const database = new DatabaseSync(dbPath);
@@ -313,12 +313,12 @@
 ### Task 5: Refactor Repository Methods to Drizzle
 
 **Files:**
-- Modify: `apps/companion/src/jobs/repository.ts`
+- Modify: `apps/backend/src/jobs/repository.ts`
 
 - [ ] **Step 1: Refactor Job & Resume read/write methods**
   Rewrite the core SQL functions inside `createJobRepository` to use Drizzle builders.
   
-  Replace the internal functions in [repository.ts](file:///Users/ben/ghq/github.com/Benjaminlooi/resume-builder/.worktrees/job-application-ai-helper/apps/companion/src/jobs/repository.ts#L255-L407):
+  Replace the internal functions in [repository.ts](file:///Users/ben/ghq/github.com/Benjaminlooi/resume-builder/.worktrees/job-application-ai-helper/apps/backend/src/jobs/repository.ts#L255-L407):
   ```typescript
   	function getJob(id: string) {
   		const row = db
@@ -359,7 +359,7 @@
   					updatedAt: input.now,
   				})
   				.run();
-  			return getJob(input.id) as CompanionJob;
+  			return getJob(input.id) as BackendJob;
   		},
 
   		listJobs() {
@@ -409,7 +409,7 @@
   ```
 
 - [ ] **Step 2: Refactor remaining Job & Resume methods**
-  Replace functions in [repository.ts](file:///Users/ben/ghq/github.com/Benjaminlooi/resume-builder/.worktrees/job-application-ai-helper/apps/companion/src/jobs/repository.ts#L321-L534):
+  Replace functions in [repository.ts](file:///Users/ben/ghq/github.com/Benjaminlooi/resume-builder/.worktrees/job-application-ai-helper/apps/backend/src/jobs/repository.ts#L321-L534):
   ```typescript
   		markCrawled(
   			id: string,
@@ -534,7 +534,7 @@
   ```
 
 - [ ] **Step 3: Refactor Job Applications methods**
-  Replace functions in [repository.ts](file:///Users/ben/ghq/github.com/Benjaminlooi/resume-builder/.worktrees/job-application-ai-helper/apps/companion/src/jobs/repository.ts#L535-L751):
+  Replace functions in [repository.ts](file:///Users/ben/ghq/github.com/Benjaminlooi/resume-builder/.worktrees/job-application-ai-helper/apps/backend/src/jobs/repository.ts#L535-L751):
   ```typescript
   		getJobApplication,
 
@@ -662,15 +662,15 @@
 ### Task 6: Verification
 
 **Files:**
-- Test: `apps/companion/src/jobs/repository.test.ts`
+- Test: `apps/backend/src/jobs/repository.test.ts`
 
 - [ ] **Step 1: Run compilation check**
   Run: `pnpm typecheck`
-  Expected: TypeScript compiles with no semantic errors in `@open-resume/companion`.
+  Expected: TypeScript compiles with no semantic errors in `@open-resume/backend`.
 
 - [ ] **Step 2: Run test suite**
-  Run: `pnpm companion:test`
-  Expected: All 18 repository test suites and companion tests pass successfully.
+  Run: `pnpm backend:test`
+  Expected: All 18 repository test suites and backend tests pass successfully.
 
 - [ ] **Step 3: Run full verification build**
   Run: `pnpm verify`

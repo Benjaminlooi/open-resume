@@ -1,6 +1,6 @@
 # Web Lib — AGENTS.md
 
-**Shared state, schemas, and companion client** — the data layer for the frontend.
+**Shared state, schemas, and backend client** — the data layer for the frontend.
 
 ## STRUCTURE
 
@@ -12,7 +12,7 @@ src/lib/
 ├── resume-index-store.ts    # Resume list index (saved resumes)
 ├── settings-store.ts        # App settings (theme, AI config)
 ├── ai-store.ts              # AI provider preferences
-├── local-companion-client.ts # Typed fetch client for companion API
+├── local-backend-client.ts   # Typed fetch client for backend API
 ├── dummy-resume.ts          # Demo/initial resume data
 └── utils.ts                 # Shared utilities
 ```
@@ -23,7 +23,7 @@ src/lib/
 |------|------|-------|
 | Add/change resume field | `resume-schema.ts` + `resume-store.ts` | Schema first, store second |
 | Add store with persistence | `resume-store.ts` (pattern) | Zustand + devtools + localStorage |
-| Call companion API | `local-companion-client.ts` | Zod-validated responses |
+| Call backend API | `local-backend-client.ts` | Zod-validated responses |
 | Resume markdown export | `resume-markdown.ts` | Both directions |
 | Modify app settings | `settings-store.ts` | Persisted to localStorage |
 
@@ -31,6 +31,6 @@ src/lib/
 
 - Zustand stores use `devtools` middleware. Name the store in the middleware options for devtools debugging.
 - Stores with persistence use `persist` middleware with `localStorage`.
-- Companion client functions return Zod-parsed types — never raw `fetch` responses.
+- Backend client functions return Zod-parsed types — never raw `fetch` responses.
 - Schema changes must be backward-compatible (resume data is persisted).
 - Dummy data in `dummy-resume.ts` for first-run experience.

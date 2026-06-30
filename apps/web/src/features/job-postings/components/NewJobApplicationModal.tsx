@@ -1,7 +1,7 @@
 import { useNavigate } from "@tanstack/react-router";
 import { type FormEvent, useEffect, useState } from "react";
 import { useRootStore } from "#/lib/root-store";
-import { createJobPosting } from "#/lib/local-companion-client";
+import { createJobPosting } from "#/lib/local-backend-client";
 
 interface NewJobApplicationModalProps {
 	onClose: () => void;

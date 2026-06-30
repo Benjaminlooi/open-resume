@@ -2,31 +2,31 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Implement local-first candidate profile settings via a graphical user interface (GUI) on the frontend, and enable the companion backend to automatically parse, evaluate, and score crawled job descriptions against the candidate's profile and default resume. Support DeepSeek API as a first-class AI provider and mirror Career-Ops evaluation prompts.
+**Goal:** Implement local-first candidate profile settings via a graphical user interface (GUI) on the frontend, and enable the backend to automatically parse, evaluate, and score crawled job descriptions against the candidate's profile and default resume. Support DeepSeek API as a first-class AI provider and mirror Career-Ops evaluation prompts.
 
 ---
 
 ## File Structure
 
-- Modify `apps/companion/package.json`
+- Modify `apps/backend/package.json`
   - Add `ai`, `@ai-sdk/openai`, and `@ai-sdk/google` dependencies.
-- Modify `apps/companion/src/schema.ts`
+- Modify `apps/backend/src/schema.ts`
   - Extend job and API models for parsed details, compatibility score, fit brief, and `/profile` JSON endpoints.
-- Modify `apps/companion/src/jobs/repository.ts`
+- Modify `apps/backend/src/jobs/repository.ts`
   - Extend SQLite table and queries for scoring and parsing fields.
-- Modify `apps/companion/src/jobs/crawl-queue.ts`
+- Modify `apps/backend/src/jobs/crawl-queue.ts`
   - Orchestrate crawl -> analyze (AI scoring) -> ready lifecycle.
-- Create `apps/companion/src/jobs/ai-analyzer.ts`
+- Create `apps/backend/src/jobs/ai-analyzer.ts`
   - Implement LLM prompt building (mirroring Career-Ops scoring prompts), model execution (including DeepSeek), and validation for job details & suitability analysis.
-- Modify `apps/companion/src/server.ts`
+- Modify `apps/backend/src/server.ts`
   - Expose `/profile` and `/profile/resume` endpoints, and include scoring data in `/jobs` responses.
-- Modify `apps/web/src/lib/local-companion-client.ts`
+- Modify `apps/web/src/lib/local-backend-client.ts`
   - Add client helpers for profile GET/PUT and resume sync.
 - Create `apps/web/src/routes/profile.tsx`
   - A profile editing route featuring a structured form editor and resume sync status.
 - Modify `apps/web/src/routes/jobs.tsx`
-  - Restore the active Job Applications dashboard and filter buttons. Display ready companion jobs with parsed details and compatibility scores.
-- Modify `apps/web/src/components/jobs/CompanionJobCard.tsx`
+  - Restore the active Job Applications dashboard and filter buttons. Display ready backend jobs with parsed details and compatibility scores.
+- Modify `apps/web/src/components/jobs/BackendJobCard.tsx`
   - Render compatibility scores and a "Convert to Application" button for ready jobs.
 - Modify `apps/web/src/components/jobs/NewJobApplicationModal.tsx`
   - Add a toggle/tab to allow manual job application creation alongside URL entry.
@@ -36,18 +36,18 @@
 ## Task 1: Sync Profile and Resume Endpoints
 
 **Files:**
-- Modify: `apps/companion/src/schema.ts`
-- Modify: `apps/companion/src/server.ts`
-- Modify: `apps/companion/src/jobs/repository.ts`
-- Test: `apps/companion/src/server.test.ts`
+- Modify: `apps/backend/src/schema.ts`
+- Modify: `apps/backend/src/server.ts`
+- Modify: `apps/backend/src/jobs/repository.ts`
+- Test: `apps/backend/src/server.test.ts`
 
-- [ ] **Step 1: Extend companion schemas**
+- [ ] **Step 1: Extend backend schemas**
   - Add Zod schema for UserProfile (JSON format).
   - Add GET/PUT schemas for `/profile` and `/profile/resume`.
 - [ ] **Step 2: Implement `/profile` and `/profile/resume` endpoints**
-  - GET `/profile` reads `apps/companion/config/profile.json`. If missing, creates a default template.
-  - PUT `/profile` writes the structured JSON to `apps/companion/config/profile.json`.
-  - GET `/profile/resume` and PUT `/profile/resume` cache the default resume JSON in SQLite or in a local file (e.g. `.open-resume-companion/resume.json`).
+  - GET `/profile` reads `apps/backend/config/profile.json`. If missing, creates a default template.
+  - PUT `/profile` writes the structured JSON to `apps/backend/config/profile.json`.
+  - GET `/profile/resume` and PUT `/profile/resume` cache the default resume JSON in SQLite or in a local file (e.g. `.open-resume-backend/resume.json`).
 - [ ] **Step 3: Verify with unit tests**
   - Write route tests to verify reading/writing profile JSON and syncing resume JSON.
 
@@ -56,8 +56,8 @@
 ## Task 2: Database and Repository Extensions
 
 **Files:**
-- Modify: `apps/companion/src/jobs/repository.ts`
-- Test: `apps/companion/src/jobs/repository.test.ts`
+- Modify: `apps/backend/src/jobs/repository.ts`
+- Test: `apps/backend/src/jobs/repository.test.ts`
 
 - [ ] **Step 1: Update SQLite migrations**
   - Update `repository.ts` initialization to add columns to the `jobs` table if they do not exist:
@@ -74,12 +74,12 @@
 ## Task 3: Backend AI Interpretation & Scoring (DeepSeek & Career-Ops Mirror)
 
 **Files:**
-- Create: `apps/companion/src/jobs/ai-analyzer.ts`
-- Modify: `apps/companion/src/jobs/crawl-queue.ts`
-- Test: `apps/companion/src/jobs/ai-analyzer.test.ts`
+- Create: `apps/backend/src/jobs/ai-analyzer.ts`
+- Modify: `apps/backend/src/jobs/crawl-queue.ts`
+- Test: `apps/backend/src/jobs/ai-analyzer.test.ts`
 
 - [ ] **Step 1: Add AI SDK dependencies**
-  - Run `pnpm --filter @open-resume/companion add ai @ai-sdk/openai @ai-sdk/google`.
+  - Run `pnpm --filter @open-resume/backend add ai @ai-sdk/openai @ai-sdk/google`.
 - [ ] **Step 2: Implement `ai-analyzer.ts`**
   - Load environment variables for AI provider keys (`OPENAI_API_KEY`, `GEMINI_API_KEY`, `DEEPSEEK_API_KEY`).
   - Implement prompt templates comparing the job description against `profile.json` and `resume.json`.
@@ -101,7 +101,7 @@
 ## Task 4: Profile GUI Editor & Resume Auto-Sync
 
 **Files:**
-- Modify: `apps/web/src/lib/local-companion-client.ts`
+- Modify: `apps/web/src/lib/local-backend-client.ts`
 - Create: `apps/web/src/routes/profile.tsx`
 - Modify: `apps/web/src/routes/__root.tsx` (add navigation link)
 - Modify: `apps/web/src/lib/resume-store.ts` (or create a sync effect)
@@ -117,7 +117,7 @@
     - **Compensation & Location Tab**: Target ranges, timezone, availability, and policy options.
   - Add visual status indicating if the candidate resume is synced.
 - [ ] **Step 3: Add auto-sync hook**
-  - Sync the default resume to the companion backend when the web app loads or when the default resume is edited.
+  - Sync the default resume to the backend when the web app loads or when the default resume is edited.
 
 ---
 
@@ -125,16 +125,16 @@
 
 **Files:**
 - Modify: `apps/web/src/routes/jobs.tsx`
-- Modify: `apps/web/src/components/jobs/CompanionJobCard.tsx`
+- Modify: `apps/web/src/components/jobs/BackendJobCard.tsx`
 - Modify: `apps/web/src/components/jobs/NewJobApplicationModal.tsx`
 
 - [ ] **Step 1: Combine dashboards**
   - Render the active job applications pipeline (using `JobApplicationCard`s and status filters) as the main view.
-  - Render the companion crawler queue in a dedicated, collapsible top drawer or panel.
+  - Render the backend crawler queue in a dedicated, collapsible top drawer or panel.
 - [ ] **Step 2: Update job queue cards**
   - Display the parsed job title, company, and compatibility fit score badge on the card instead of the raw hostname URL.
 - [ ] **Step 3: Implement conversion action**
-  - Clicking "Convert to Application" calls `createJobApplication` in the frontend store using the pre-analyzed details and fit brief. It deletes the companion job and navigates the user to the workspace.
+  - Clicking "Convert to Application" calls `createJobApplication` in the frontend store using the pre-analyzed details and fit brief. It deletes the backend job and navigates the user to the workspace.
 - [ ] **Step 4: Restore manual application creation**
   - Restore the manual job creation form in `NewJobApplicationModal` so users can bypass the crawler queue if needed.
 

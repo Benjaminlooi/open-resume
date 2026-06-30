@@ -1,12 +1,12 @@
-# Companion Fastify Route Plugins Design
+# Backend Fastify Route Plugins Design
 
 ## Goal
 
-Refactor the companion backend so `apps/companion/src/server.ts` stops growing with every endpoint. The refactor should use Fastify's plugin model for route organization and app infrastructure, while preserving the existing API behavior.
+Refactor the backend so `apps/backend/src/server.ts` stops growing with every endpoint. The refactor should use Fastify's plugin model for route organization and app infrastructure, while preserving the existing API behavior.
 
 ## Current Context
 
-The companion backend is an API-only Fastify service. It currently creates dependencies, registers global infrastructure, and defines all endpoints inside `createServer()`.
+The backend is an API-only Fastify service. It currently creates dependencies, registers global infrastructure, and defines all endpoints inside `createServer()`.
 
 Existing route groups are already visible:
 
@@ -15,7 +15,7 @@ Existing route groups are already visible:
 - Resumes: `/resumes`, `/resumes/:id`, default resume endpoints
 - Jobs: `/jobs`, `/jobs/:id`, `/jobs/:id/retry-crawl`
 
-The branch is also moving companion contracts into the shared `@open-resume/contracts` package. The route refactor should keep using those schemas instead of creating a new contract layer.
+The branch is also moving backend contracts into the shared `@open-resume/contracts` package. The route refactor should keep using those schemas instead of creating a new contract layer.
 
 ## Chosen Approach
 
@@ -26,7 +26,7 @@ Use explicit Fastify plugin registration with one new infrastructure dependency:
 Proposed structure:
 
 ```text
-apps/companion/src/
+apps/backend/src/
   server.ts
   plugins/
     cors.ts
@@ -81,7 +81,7 @@ Routes may use this context, route schemas from shared contracts, and narrow loc
 
 Keep the existing root resource paths, such as `/jobs`, `/resumes`, and `/profile`.
 
-Do not introduce `/api` in this refactor. The companion is an API-only service running separately from the web app, so `/api` would add a breaking route migration without a clear immediate benefit. The route plugin design should still allow a prefix to be added later if the app needs public versioning or mixed web/API hosting.
+Do not introduce `/api` in this refactor. The backend is an API-only service running separately from the web app, so `/api` would add a breaking route migration without a clear immediate benefit. The route plugin design should still allow a prefix to be added later if the app needs public versioning or mixed web/API hosting.
 
 ## Behavior To Preserve
 
@@ -106,7 +106,7 @@ Do not add these in this pass:
 - API versioning
 - `/api` route prefixes
 - Repository or crawl queue behavior changes
-- Frontend companion client changes
+- Frontend backend client changes
 
 These can be revisited when the app has a concrete need for them.
 
@@ -117,15 +117,15 @@ Keep testing primarily at the existing `server.test.ts` integration level. Since
 Run at minimum:
 
 ```bash
-pnpm --filter @open-resume/companion test
-pnpm --filter @open-resume/companion typecheck
+pnpm --filter @open-resume/backend test
+pnpm --filter @open-resume/backend typecheck
 ```
 
 If OpenAPI registration is touched, also run:
 
 ```bash
-pnpm --filter @open-resume/companion openapi
-pnpm --filter @open-resume/companion openapi:lint
+pnpm --filter @open-resume/backend openapi
+pnpm --filter @open-resume/backend openapi:lint
 ```
 
 ## Success Criteria
@@ -134,4 +134,4 @@ pnpm --filter @open-resume/companion openapi:lint
 - Each route group can be understood without reading unrelated endpoints.
 - Fastify infrastructure is registered through named plugins.
 - No public API behavior changes.
-- Companion tests and typecheck pass.
+- Backend tests and typecheck pass.

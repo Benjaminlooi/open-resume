@@ -10,7 +10,7 @@ import {
 
 const mockStorage: Record<string, string> = {};
 
-vi.mock("#/lib/local-companion-client", () => {
+vi.mock("#/lib/local-backend-client", () => {
 	return {
 		getResume: vi.fn(async (id: string) => {
 			const contentStr = mockStorage[`resume-${id}`];

@@ -1,7 +1,7 @@
-# Refactoring Server Options and Environment Validation in Companion App
+# Refactoring Server Options and Environment Validation in Backend App
 
 ## Overview
-Currently, configuration parsing, default option resolution, and environment variable fallbacks are scattered across multiple files in the companion app:
+Currently, configuration parsing, default option resolution, and environment variable fallbacks are scattered across multiple files in the backend app:
 - `server.ts` resolves database and file paths dynamically in multiple helper functions.
 - `ai-analyzer.ts` directly reads `process.env` and hardcodes default provider names (`"openai"`) and default model names (`"gpt-4o-mini"`, `"gemini-1.5-flash"`, etc.).
 
@@ -91,10 +91,10 @@ export interface ResolvedConfig {
 }
 
 const EnvSchema = z.object({
-	OPEN_RESUME_COMPANION_DB_PATH: z.string().optional(),
-	OPEN_RESUME_COMPANION_LOG_LEVEL: LogLevelSchema.default("info"),
-	OPEN_RESUME_COMPANION_LOG_SCRAPED_DATA: z.string().optional(),
-	OPEN_RESUME_COMPANION_AI_PROVIDER: AIProviderSchema.default("openai"),
+	OPEN_RESUME_BACKEND_DB_PATH: z.string().optional(),
+	OPEN_RESUME_BACKEND_LOG_LEVEL: LogLevelSchema.default("info"),
+	OPEN_RESUME_BACKEND_LOG_SCRAPED_DATA: z.string().optional(),
+	OPEN_RESUME_BACKEND_AI_PROVIDER: AIProviderSchema.default("openai"),
 	OPENAI_API_KEY: z.string().optional(),
 	OPENAI_MODEL: z.string().default("gpt-4o-mini"),
 	GEMINI_API_KEY: z.string().optional(),
@@ -115,16 +115,16 @@ export function resolveConfig(options: CreateServerOptions): ResolvedConfig {
 
 	const databasePath =
 		parsedOptions.databasePath ??
-		parsedEnv.OPEN_RESUME_COMPANION_DB_PATH ??
-		resolve(process.cwd(), ".open-resume-companion/jobs.sqlite");
+		parsedEnv.OPEN_RESUME_BACKEND_DB_PATH ??
+		resolve(process.cwd(), ".open-resume-backend/jobs.sqlite");
 
-	const logLevel = parsedOptions.logLevel ?? parsedEnv.OPEN_RESUME_COMPANION_LOG_LEVEL;
+	const logLevel = parsedOptions.logLevel ?? parsedEnv.OPEN_RESUME_BACKEND_LOG_LEVEL;
 
 	const logScrapedData =
 		parsedOptions.logScrapedData ??
-		isScrapedDataLoggingEnabled(parsedEnv.OPEN_RESUME_COMPANION_LOG_SCRAPED_DATA);
+		isScrapedDataLoggingEnabled(parsedEnv.OPEN_RESUME_BACKEND_LOG_SCRAPED_DATA);
 
-	const provider = parsedEnv.OPEN_RESUME_COMPANION_AI_PROVIDER;
+	const provider = parsedEnv.OPEN_RESUME_BACKEND_AI_PROVIDER;
 	let apiKey: string | undefined;
 	let modelName: string | undefined;
 
@@ -226,6 +226,6 @@ export function createServer(options: CreateServerOptions = {}) {
 ### Automated Tests
 - Run existing vitest tests to verify no regressions:
   ```bash
-  pnpm companion:test
+  pnpm backend:test
   ```
 - Write a new `config.test.ts` verifying all env fallbacks and validation combinations.

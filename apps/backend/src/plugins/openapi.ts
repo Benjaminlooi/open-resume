@@ -17,13 +17,13 @@ export const registerOpenApi = fp(async (server) => {
 		openapi: {
 			openapi: "3.0.3",
 			info: {
-				title: "Open Resume Companion API",
+				title: "Open Resume Backend API",
 				version: "0.1.0",
-				description:
-					"Local companion service for extracting job details from pasted job URLs.",
+					description:
+						"Local backend service for extracting job details from pasted job URLs.",
 			},
 			tags: [
-				{ name: "System", description: "Operational companion endpoints." },
+				{ name: "System", description: "Operational backend endpoints." },
 				{
 					name: "Profile",
 					description: "Candidate profile and synced default resume endpoints.",

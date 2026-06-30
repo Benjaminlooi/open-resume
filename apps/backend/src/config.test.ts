@@ -15,11 +15,11 @@ describe("resolveConfig", () => {
 
 	it("resolves default database and file paths when no options are provided", () => {
 		const config = resolveConfig({});
-		expect(config.databasePath).toContain(".open-resume-companion/jobs.sqlite");
-		expect(config.profilePath).toContain(".open-resume-companion/profile.json");
-		expect(config.resumePath).toContain(".open-resume-companion/resume.json");
+		expect(config.databasePath).toContain(".open-resume-backend/jobs.sqlite");
+		expect(config.profilePath).toContain(".open-resume-backend/profile.json");
+		expect(config.resumePath).toContain(".open-resume-backend/resume.json");
 		expect(config.screenshotsPath).toContain(
-			".open-resume-companion/screenshots",
+			".open-resume-backend/screenshots",
 		);
 		expect(config.logLevel).toBe("info");
 		expect(config.ai.provider).toBe("openai");
@@ -45,14 +45,14 @@ describe("resolveConfig", () => {
 
 	it("throws an error if the selected provider key is missing", () => {
 		vi.unstubAllEnvs(); // Remove OPENAI_API_KEY as well
-		vi.stubEnv("OPEN_RESUME_COMPANION_AI_PROVIDER", "google");
+		vi.stubEnv("OPEN_RESUME_BACKEND_AI_PROVIDER", "google");
 		expect(() => resolveConfig({})).toThrow(
 			/AI Provider "google" is selected, but its required API key/,
 		);
 	});
 
 	it("correctly resolves other providers when their key is present", () => {
-		vi.stubEnv("OPEN_RESUME_COMPANION_AI_PROVIDER", "google");
+		vi.stubEnv("OPEN_RESUME_BACKEND_AI_PROVIDER", "google");
 		vi.stubEnv("GEMINI_API_KEY", "gemini-test-key");
 		const config = resolveConfig({});
 		expect(config.ai.provider).toBe("google");
@@ -66,11 +66,11 @@ describe("resolveConfig", () => {
 	});
 
 	it("resolves headless option correctly from environment variable", () => {
-		vi.stubEnv("OPEN_RESUME_COMPANION_HEADLESS", "false");
+		vi.stubEnv("OPEN_RESUME_BACKEND_HEADLESS", "false");
 		const config1 = resolveConfig({});
 		expect(config1.headless).toBe(false);
 
-		vi.stubEnv("OPEN_RESUME_COMPANION_HEADLESS", "0");
+		vi.stubEnv("OPEN_RESUME_BACKEND_HEADLESS", "0");
 		const config2 = resolveConfig({});
 		expect(config2.headless).toBe(false);
 	});

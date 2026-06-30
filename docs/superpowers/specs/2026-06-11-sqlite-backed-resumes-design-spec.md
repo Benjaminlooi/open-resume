@@ -3,9 +3,9 @@
 **Date:** 2026-06-11  
 **Status:** Draft  
 
-This specification details the design for migrating resume storage from browser `localStorage` in the frontend (`apps/web`) to a local SQLite database in the companion backend (`apps/companion`). 
+This specification details the design for migrating resume storage from browser `localStorage` in the frontend (`apps/web`) to a local SQLite database in the backend (`apps/backend`). 
 
-This change moves the application from a Cloudflare Workers standalone deployment target to a locally-run desktop/companion application.
+This change moves the application from a Cloudflare Workers standalone deployment target to a locally-run desktop/backend application.
 
 Existing browser `localStorage` resume data is intentionally not migrated into SQLite. After this change, SQLite is the source of truth for resumes, and users can recreate or import resumes through the new backend-backed flows.
 
@@ -22,7 +22,7 @@ graph TD
         dash[ResumesDashboard]
     end
 
-    subgraph Backend [Companion Fastify App]
+    subgraph Backend [Backend Fastify App]
         server[Fastify Server]
         repo[JobRepository]
         db[(SQLite Database)]
@@ -38,7 +38,7 @@ graph TD
 
 ## 2. Database Schema (SQLite)
 
-We will introduce a new `resumes` table in the companion SQLite database. To ensure only one default resume can exist, we will use a partial unique index.
+We will introduce a new `resumes` table in the backend SQLite database. To ensure only one default resume can exist, we will use a partial unique index.
 
 ```sql
 CREATE TABLE IF NOT EXISTS resumes (
@@ -56,11 +56,11 @@ CREATE UNIQUE INDEX IF NOT EXISTS resumes_default_idx ON resumes(is_default) WHE
 
 ---
 
-## 3. Companion API endpoints
+## 3. Backend API endpoints
 
-We will define new routes and schemas under `apps/companion/src/server.ts` and `apps/companion/src/schema.ts`.
+We will define new routes and schemas under `apps/backend/src/server.ts` and `apps/backend/src/schema.ts`.
 
-### 3.1 Zod Schemas (`apps/companion/src/schema.ts`)
+### 3.1 Zod Schemas (`apps/backend/src/schema.ts`)
 We will export new schemas:
 - `resumeSummarySchema`: `{ id, name, templateId, lastModified, isDefault }`
 - `resumeDetailsSchema`: `{ id, name, templateId, lastModified, isDefault, content }`
@@ -81,18 +81,18 @@ We will update `GET /profile/resume` to read the active default resume from the 
 ```typescript
 const defaultResume = jobRepository.getDefaultResume();
 ```
-If no default resume exists, this route returns `404` with the existing companion error response shape.
+If no default resume exists, this route returns `404` with the existing backend error response shape.
 
 We will also update `PUT /profile/resume` to write through SQLite instead of `resume.json`. This endpoint should upsert a backend resume record for the synced resume and mark it as default, so existing `syncResume()` callers cannot successfully write to a stale file-backed path while `GET /profile/resume` reads from SQLite.
 
-The companion should stop using `resume.json` as a second resume store once these endpoints are SQLite-backed.
+The backend should stop using `resume.json` as a second resume store once these endpoints are SQLite-backed.
 
 ---
 
 ## 4. Frontend Changes (`apps/web`)
 
-### 4.1 Companion Client API (`apps/web/src/lib/local-companion-client.ts`)
-Add helper functions to perform HTTP queries to the companion server:
+### 4.1 Backend Client API (`apps/web/src/lib/local-backend-client.ts`)
+Add helper functions to perform HTTP queries to the backend server:
 - `listResumes()`
 - `getResume(id)`
 - `createResume(id, name, templateId, content)`
@@ -118,7 +118,7 @@ Add helper functions to perform HTTP queries to the companion server:
 - Trigger `updateResumeName(name)` which updates the store state.
 - **Debounced Save to Backend:**
   - Remove direct `localStorage` persistence.
-  - Set up a store subscriber that debounces (500ms) updates and fires a `PUT /resumes/:id` request to the companion app, syncing the active resume name, templateId, and full content.
+  - Set up a store subscriber that debounces (500ms) updates and fires a `PUT /resumes/:id` request to the backend app, syncing the active resume name, templateId, and full content.
 
 ---
 
@@ -134,11 +134,11 @@ Add helper functions to perform HTTP queries to the companion server:
 ## 6. Verification Plan
 
 ### Automated tests
-- Unit tests for the companion routes in `apps/companion/src/server.test.ts`.
-- Unit tests for repository functions in `apps/companion/src/jobs/repository.test.ts`.
+- Unit tests for the backend routes in `apps/backend/src/server.test.ts`.
+- Unit tests for repository functions in `apps/backend/src/jobs/repository.test.ts`.
 - Unit tests for the frontend stores in `apps/web/src/lib/resume-store.test.ts` and `apps/web/src/lib/resume-index-store.test.ts` updating them to use mocked API responses.
 
 ### Manual verification
-- Launch Vite web server and companion server concurrently (`pnpm dev`).
+- Launch Vite web server and backend server concurrently (`pnpm dev`).
 - Verify that default resumes display correctly in the dashboard with their names.
 - Verify editing the name in the editor header updates instantly and persists across navigation.

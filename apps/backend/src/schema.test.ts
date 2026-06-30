@@ -15,16 +15,16 @@ import {
 	resumeSyncRequestSchema,
 } from "./schema.js";
 
-describe("companion schema", () => {
+describe("backend schema", () => {
 	it("accepts a valid health response", () => {
 		const parsed = healthResponseSchema.parse({
 			ok: true,
-			service: "companion",
+			service: "backend",
 		});
 
 		expect(parsed).toEqual({
 			ok: true,
-			service: "companion",
+			service: "backend",
 		});
 	});
 
@@ -32,7 +32,7 @@ describe("companion schema", () => {
 		expect(() =>
 			healthResponseSchema.parse({
 				ok: "true",
-				service: "companion",
+				service: "backend",
 			}),
 		).toThrow(ZodError);
 	});
@@ -87,7 +87,7 @@ describe("companion schema", () => {
 		expect(parsed.crawlStatus).toBe("pending");
 	});
 
-	it("rejects companion jobs with empty IDs", () => {
+	it("rejects backend jobs with empty IDs", () => {
 		expect(() =>
 			jobPostingSchema.parse({
 				id: "",

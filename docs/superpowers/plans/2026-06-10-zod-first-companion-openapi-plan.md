@@ -1,8 +1,8 @@
-# Zod-First Companion OpenAPI Implementation Plan
+# Zod-First Backend OpenAPI Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Make Zod the single source of truth for the companion Fastify API request, response, runtime validation, TypeScript inference, and OpenAPI generation.
+**Goal:** Make Zod the single source of truth for the backend Fastify API request, response, runtime validation, TypeScript inference, and OpenAPI generation.
 
 **Architecture:** Replace manually registered Fastify JSON Schemas in `openapi.ts` with `fastify-type-provider-zod` compilers and Swagger transforms. Route schemas in `server.ts` will reference Zod schemas directly, while named OpenAPI component schemas are produced from Zod registry IDs. This removes drift between `schema.ts` and `openapi.ts`.
 
@@ -12,36 +12,36 @@
 
 ## File Structure
 
-- Modify `apps/companion/package.json`
-  - Add `fastify-type-provider-zod` to companion dependencies.
-- Modify `apps/companion/src/schema.ts`
+- Modify `apps/backend/package.json`
+  - Add `fastify-type-provider-zod` to backend dependencies.
+- Modify `apps/backend/src/schema.ts`
   - Import from `zod`.
   - Add Zod metadata descriptions where the OpenAPI document currently has descriptions.
   - Add `healthResponseSchema`.
   - Register named schemas with `z.globalRegistry.add(..., { id })`.
-- Modify `apps/companion/src/openapi.ts`
+- Modify `apps/backend/src/openapi.ts`
   - Remove all manual `server.addSchema()` calls.
   - Configure Fastify to use Zod validator and serializer compilers.
   - Configure `@fastify/swagger` with `jsonSchemaTransform` and `jsonSchemaTransformObject`.
-- Modify `apps/companion/src/server.ts`
+- Modify `apps/backend/src/server.ts`
   - Create a typed Fastify instance with `ZodTypeProvider`.
   - Replace `$ref` route schemas with direct Zod schema references.
   - Remove manual `extractJobRequestSchema.safeParse(request.body)` because Fastify will validate the body before the handler.
   - Keep a custom error handler so invalid request responses preserve the existing `{ error, details }` shape.
-- Modify `apps/companion/src/server.test.ts`
+- Modify `apps/backend/src/server.test.ts`
   - Tighten tests to prove Fastify/Zod validation rejects invalid bodies before extraction runs.
   - Assert generated OpenAPI components still include the named schemas.
-- Modify `apps/companion/src/openapi.test.ts`
+- Modify `apps/backend/src/openapi.test.ts`
   - Add assertions that the OpenAPI schema reflects Zod validation, especially URL format and HTTP/HTTPS description.
-- Regenerate `apps/companion/openapi.json`
-  - Run `pnpm companion:openapi` after code changes.
+- Regenerate `apps/backend/openapi.json`
+  - Run `pnpm backend:openapi` after code changes.
 
 ---
 
 ### Task 1: Add Zod Type Provider Dependency
 
 **Files:**
-- Modify: `apps/companion/package.json`
+- Modify: `apps/backend/package.json`
 - Modify: `pnpm-lock.yaml`
 
 - [ ] **Step 1: Install the package**
@@ -49,10 +49,10 @@
 Run:
 
 ```bash
-pnpm --filter @open-resume/companion add fastify-type-provider-zod
+pnpm --filter @open-resume/backend add fastify-type-provider-zod
 ```
 
-Expected: `apps/companion/package.json` gains a dependency similar to:
+Expected: `apps/backend/package.json` gains a dependency similar to:
 
 ```json
 "fastify-type-provider-zod": "^6.1.0"
@@ -65,19 +65,19 @@ Important: this repo uses `zod` `^4.4.3` and `fastify` `^5.8.0`, so the installe
 Run:
 
 ```bash
-pnpm --filter @open-resume/companion typecheck
+pnpm --filter @open-resume/backend typecheck
 ```
 
 Expected: PASS or only pre-existing unrelated failures. If this fails because the installed provider version does not support Zod 4, install the latest v6+ release:
 
 ```bash
-pnpm --filter @open-resume/companion add fastify-type-provider-zod@latest
+pnpm --filter @open-resume/backend add fastify-type-provider-zod@latest
 ```
 
 - [ ] **Step 3: Commit dependency update**
 
 ```bash
-git add apps/companion/package.json pnpm-lock.yaml
+git add apps/backend/package.json pnpm-lock.yaml
 git commit -m "chore: add zod fastify type provider"
 ```
 
@@ -86,12 +86,12 @@ git commit -m "chore: add zod fastify type provider"
 ### Task 2: Make Zod Schemas the Named API Contract
 
 **Files:**
-- Modify: `apps/companion/src/schema.ts`
-- Test: `apps/companion/src/schema.test.ts`
+- Modify: `apps/backend/src/schema.ts`
+- Test: `apps/backend/src/schema.test.ts`
 
 - [ ] **Step 1: Update schema tests first**
 
-Modify `apps/companion/src/schema.test.ts` to include the health schema and registry-backed schemas:
+Modify `apps/backend/src/schema.test.ts` to include the health schema and registry-backed schemas:
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -102,22 +102,22 @@ import {
 	jobExtractionResultSchema,
 } from "./schema.js";
 
-describe("companion schema", () => {
+describe("backend schema", () => {
 	it("accepts a valid health response", () => {
 		const parsed = healthResponseSchema.parse({
 			ok: true,
-			service: "open-resume-companion",
+			service: "open-resume-backend",
 		});
 
 		expect(parsed.ok).toBe(true);
-		expect(parsed.service).toBe("open-resume-companion");
+		expect(parsed.service).toBe("open-resume-backend");
 	});
 
 	it("rejects an invalid health response", () => {
 		expect(() =>
 			healthResponseSchema.parse({
 				ok: "yes",
-				service: "open-resume-companion",
+				service: "open-resume-backend",
 			}),
 		).toThrow(ZodError);
 	});
@@ -176,14 +176,14 @@ describe("companion schema", () => {
 Run:
 
 ```bash
-pnpm --filter @open-resume/companion test -- src/schema.test.ts
+pnpm --filter @open-resume/backend test -- src/schema.test.ts
 ```
 
 Expected: FAIL because `healthResponseSchema` does not exist and Zod is still imported from `zod`.
 
 - [ ] **Step 3: Replace `schema.ts` with Zod-first contract definitions**
 
-Modify `apps/companion/src/schema.ts` to:
+Modify `apps/backend/src/schema.ts` to:
 
 ```ts
 import { z } from "zod";
@@ -240,22 +240,22 @@ export const jobExtractionResultSchema = z
 
 export type JobExtractionResult = z.infer<typeof jobExtractionResultSchema>;
 
-export const companionErrorResponseSchema = z
+export const backendErrorResponseSchema = z
 	.object({
 		error: z.string(),
 		details: z.string().optional(),
 	})
 	.strict();
 
-export type CompanionErrorResponse = z.infer<
-	typeof companionErrorResponseSchema
+export type BackendErrorResponse = z.infer<
+	typeof backendErrorResponseSchema
 >;
 
 z.globalRegistry.add(healthResponseSchema, { id: "HealthResponse" });
 z.globalRegistry.add(extractJobRequestSchema, { id: "ExtractJobRequest" });
 z.globalRegistry.add(jobExtractionResultSchema, { id: "JobExtractionResult" });
-z.globalRegistry.add(companionErrorResponseSchema, {
-	id: "CompanionErrorResponse",
+z.globalRegistry.add(backendErrorResponseSchema, {
+	id: "BackendErrorResponse",
 });
 ```
 
@@ -264,7 +264,7 @@ z.globalRegistry.add(companionErrorResponseSchema, {
 Run:
 
 ```bash
-pnpm --filter @open-resume/companion test -- src/schema.test.ts
+pnpm --filter @open-resume/backend test -- src/schema.test.ts
 ```
 
 Expected: PASS.
@@ -272,8 +272,8 @@ Expected: PASS.
 - [ ] **Step 5: Commit schema contract change**
 
 ```bash
-git add apps/companion/src/schema.ts apps/companion/src/schema.test.ts
-git commit -m "refactor: register companion zod schemas"
+git add apps/backend/src/schema.ts apps/backend/src/schema.test.ts
+git commit -m "refactor: register backend zod schemas"
 ```
 
 ---
@@ -281,12 +281,12 @@ git commit -m "refactor: register companion zod schemas"
 ### Task 3: Wire Fastify to Zod Validation and OpenAPI Generation
 
 **Files:**
-- Modify: `apps/companion/src/openapi.ts`
-- Test: `apps/companion/src/server.test.ts`
+- Modify: `apps/backend/src/openapi.ts`
+- Test: `apps/backend/src/server.test.ts`
 
 - [ ] **Step 1: Add failing server OpenAPI assertions**
 
-In `apps/companion/src/server.test.ts`, extend the `serves an OpenAPI document with companion route contracts` test after the `components.schemas` assertion:
+In `apps/backend/src/server.test.ts`, extend the `serves an OpenAPI document with backend route contracts` test after the `components.schemas` assertion:
 
 ```ts
 		expect(document.components.schemas.ExtractJobRequest.properties.url).toMatchObject({
@@ -305,14 +305,14 @@ In `apps/companion/src/server.test.ts`, extend the `serves an OpenAPI document w
 Run:
 
 ```bash
-pnpm --filter @open-resume/companion test -- src/server.test.ts
+pnpm --filter @open-resume/backend test -- src/server.test.ts
 ```
 
 Expected: FAIL until Swagger uses the Zod transform and component schemas are generated from the Zod registry.
 
 - [ ] **Step 3: Replace manual JSON Schema registration in `openapi.ts`**
 
-Modify `apps/companion/src/openapi.ts` to:
+Modify `apps/backend/src/openapi.ts` to:
 
 ```ts
 import swagger from "@fastify/swagger";
@@ -334,13 +334,13 @@ export function registerOpenApi(server: FastifyInstance) {
 		openapi: {
 			openapi: "3.0.3",
 			info: {
-				title: "Open Resume Companion API",
+				title: "Open Resume Backend API",
 				version: "0.1.0",
 				description:
-					"Local companion service for extracting job details from pasted job URLs.",
+					"Local backend service for extracting job details from pasted job URLs.",
 			},
 			tags: [
-				{ name: "System", description: "Operational companion endpoints." },
+				{ name: "System", description: "Operational backend endpoints." },
 				{
 					name: "Extraction",
 					description: "Job posting extraction endpoints.",
@@ -368,7 +368,7 @@ The side-effect import of `./schema.js` ensures Zod registry IDs are loaded befo
 Run:
 
 ```bash
-pnpm --filter @open-resume/companion test -- src/server.test.ts
+pnpm --filter @open-resume/backend test -- src/server.test.ts
 ```
 
 Expected: PASS.
@@ -376,7 +376,7 @@ Expected: PASS.
 - [ ] **Step 5: Commit OpenAPI wiring**
 
 ```bash
-git add apps/companion/src/openapi.ts apps/companion/src/server.test.ts
+git add apps/backend/src/openapi.ts apps/backend/src/server.test.ts
 git commit -m "refactor: generate openapi from zod schemas"
 ```
 
@@ -385,12 +385,12 @@ git commit -m "refactor: generate openapi from zod schemas"
 ### Task 4: Use Zod Schemas Directly in Routes
 
 **Files:**
-- Modify: `apps/companion/src/server.ts`
-- Test: `apps/companion/src/server.test.ts`
+- Modify: `apps/backend/src/server.ts`
+- Test: `apps/backend/src/server.test.ts`
 
 - [ ] **Step 1: Tighten request validation tests**
 
-In `apps/companion/src/server.test.ts`, update the invalid request tests to also assert the extractor is not called:
+In `apps/backend/src/server.test.ts`, update the invalid request tests to also assert the extractor is not called:
 
 ```ts
 	it("rejects invalid extraction requests", async () => {
@@ -429,14 +429,14 @@ In `apps/companion/src/server.test.ts`, update the invalid request tests to also
 Run:
 
 ```bash
-pnpm --filter @open-resume/companion test -- src/server.test.ts
+pnpm --filter @open-resume/backend test -- src/server.test.ts
 ```
 
 Expected: PASS before the route refactor. This proves the strengthened behavior is already expected.
 
 - [ ] **Step 3: Replace `$ref` route schemas with Zod schemas and type provider**
 
-Modify imports in `apps/companion/src/server.ts`:
+Modify imports in `apps/backend/src/server.ts`:
 
 ```ts
 import cors from "@fastify/cors";
@@ -446,7 +446,7 @@ import { hasZodFastifySchemaValidationErrors } from "fastify-type-provider-zod";
 import { extractWithPlaywright } from "./extract/playwright.js";
 import { registerOpenApi } from "./openapi.js";
 import {
-	companionErrorResponseSchema,
+	backendErrorResponseSchema,
 	extractJobRequestSchema,
 	healthResponseSchema,
 	jobExtractionResultSchema,
@@ -490,7 +490,7 @@ Inside `server.after`, replace `server.get` / `server.post` route registrations 
 				schema: {
 					operationId: "getHealth",
 					tags: ["System"],
-					summary: "Check companion health",
+					summary: "Check backend health",
 					response: {
 						200: healthResponseSchema,
 					},
@@ -498,7 +498,7 @@ Inside `server.after`, replace `server.get` / `server.post` route registrations 
 			},
 			async () => ({
 				ok: true,
-				service: "open-resume-companion",
+				service: "open-resume-backend",
 			}),
 		);
 
@@ -522,9 +522,9 @@ Inside `server.after`, replace `server.get` / `server.post` route registrations 
 					body: extractJobRequestSchema,
 					response: {
 						200: jobExtractionResultSchema,
-						400: companionErrorResponseSchema,
-						500: companionErrorResponseSchema,
-						502: companionErrorResponseSchema,
+						400: backendErrorResponseSchema,
+						500: backendErrorResponseSchema,
+						502: backendErrorResponseSchema,
 					},
 				},
 			},
@@ -563,7 +563,7 @@ Inside `server.after`, replace `server.get` / `server.post` route registrations 
 Run:
 
 ```bash
-pnpm --filter @open-resume/companion test -- src/server.test.ts
+pnpm --filter @open-resume/backend test -- src/server.test.ts
 ```
 
 Expected: PASS. If the error handler returns a different details string, keep the exact `error: "Invalid extraction request"` shape and adjust only tests that assert `details`.
@@ -573,7 +573,7 @@ Expected: PASS. If the error handler returns a different details string, keep th
 Run:
 
 ```bash
-pnpm --filter @open-resume/companion typecheck
+pnpm --filter @open-resume/backend typecheck
 ```
 
 Expected: PASS. This is the proof that `request.body.url` is inferred from the Zod schema.
@@ -581,8 +581,8 @@ Expected: PASS. This is the proof that `request.body.url` is inferred from the Z
 - [ ] **Step 6: Commit route migration**
 
 ```bash
-git add apps/companion/src/server.ts apps/companion/src/server.test.ts
-git commit -m "refactor: validate companion routes with zod"
+git add apps/backend/src/server.ts apps/backend/src/server.test.ts
+git commit -m "refactor: validate backend routes with zod"
 ```
 
 ---
@@ -590,12 +590,12 @@ git commit -m "refactor: validate companion routes with zod"
 ### Task 5: Update Static OpenAPI Contract Tests and Artifact
 
 **Files:**
-- Modify: `apps/companion/src/openapi.test.ts`
-- Modify: `apps/companion/openapi.json`
+- Modify: `apps/backend/src/openapi.test.ts`
+- Modify: `apps/backend/openapi.json`
 
 - [ ] **Step 1: Strengthen static OpenAPI tests**
 
-In `apps/companion/src/openapi.test.ts`, add:
+In `apps/backend/src/openapi.test.ts`, add:
 
 ```ts
 	it("should include zod-derived request validation details", () => {
@@ -623,28 +623,28 @@ In `apps/companion/src/openapi.test.ts`, add:
 Run:
 
 ```bash
-pnpm --filter @open-resume/companion test -- src/openapi.test.ts
+pnpm --filter @open-resume/backend test -- src/openapi.test.ts
 ```
 
-Expected: FAIL because `apps/companion/openapi.json` has not been regenerated.
+Expected: FAIL because `apps/backend/openapi.json` has not been regenerated.
 
 - [ ] **Step 3: Regenerate OpenAPI artifact**
 
 Run:
 
 ```bash
-pnpm companion:openapi
+pnpm backend:openapi
 ```
 
-Expected: `apps/companion/openapi.json` is rewritten with schemas generated from Zod.
+Expected: `apps/backend/openapi.json` is rewritten with schemas generated from Zod.
 
 - [ ] **Step 4: Run static OpenAPI tests and lint**
 
 Run:
 
 ```bash
-pnpm --filter @open-resume/companion test -- src/openapi.test.ts
-pnpm --filter @open-resume/companion openapi:lint
+pnpm --filter @open-resume/backend test -- src/openapi.test.ts
+pnpm --filter @open-resume/backend openapi:lint
 ```
 
 Expected: PASS for both commands.
@@ -652,7 +652,7 @@ Expected: PASS for both commands.
 - [ ] **Step 5: Commit OpenAPI artifact update**
 
 ```bash
-git add apps/companion/src/openapi.test.ts apps/companion/openapi.json
+git add apps/backend/src/openapi.test.ts apps/backend/openapi.json
 git commit -m "test: assert zod generated openapi contract"
 ```
 
@@ -663,15 +663,15 @@ git commit -m "test: assert zod generated openapi contract"
 **Files:**
 - No source edits expected.
 
-- [ ] **Step 1: Run companion verification commands**
+- [ ] **Step 1: Run backend verification commands**
 
 Run:
 
 ```bash
-pnpm --filter @open-resume/companion typecheck
-pnpm --filter @open-resume/companion test
-pnpm --filter @open-resume/companion build
-pnpm --filter @open-resume/companion openapi:lint
+pnpm --filter @open-resume/backend typecheck
+pnpm --filter @open-resume/backend test
+pnpm --filter @open-resume/backend build
+pnpm --filter @open-resume/backend openapi:lint
 ```
 
 Expected: PASS for all commands.
@@ -684,7 +684,7 @@ Run:
 pnpm verify
 ```
 
-Expected: PASS, unless unrelated pre-existing failures exist outside `apps/companion`.
+Expected: PASS, unless unrelated pre-existing failures exist outside `apps/backend`.
 
 - [ ] **Step 3: Inspect diff**
 
@@ -692,7 +692,7 @@ Run:
 
 ```bash
 git diff --stat
-git diff -- apps/companion/src/schema.ts apps/companion/src/openapi.ts apps/companion/src/server.ts
+git diff -- apps/backend/src/schema.ts apps/backend/src/openapi.ts apps/backend/src/server.ts
 ```
 
 Expected:
@@ -706,8 +706,8 @@ Expected:
 If any verification-only fixes were made:
 
 ```bash
-git add apps/companion
-git commit -m "fix: complete zod first companion migration"
+git add apps/backend
+git commit -m "fix: complete zod first backend migration"
 ```
 
 ---
@@ -716,4 +716,4 @@ git commit -m "fix: complete zod first companion migration"
 
 - Spec coverage: The plan migrates schema ownership from manual JSON Schema in `openapi.ts` to Zod schemas in `schema.ts`, wires Fastify validation and serialization to Zod, updates OpenAPI generation, regenerates the static artifact, and verifies route behavior.
 - Placeholder scan: No placeholders remain; every task includes exact files, code shape, commands, and expected results.
-- Type consistency: Schema names are consistent across Zod registry IDs, tests, route schemas, and expected OpenAPI component names: `HealthResponse`, `ExtractJobRequest`, `JobExtractionResult`, and `CompanionErrorResponse`.
+- Type consistency: Schema names are consistent across Zod registry IDs, tests, route schemas, and expected OpenAPI component names: `HealthResponse`, `ExtractJobRequest`, `JobExtractionResult`, and `BackendErrorResponse`.

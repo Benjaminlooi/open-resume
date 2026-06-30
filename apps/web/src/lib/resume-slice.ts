@@ -1,7 +1,7 @@
 import type { StateCreator } from "zustand";
 import type { RootState } from "./root-store";
 import { blankResumeState, dummyResumeData } from "./dummy-resume";
-import { getResume, type ResumeContent } from "./local-companion-client";
+import { getResume, type ResumeContent } from "./local-backend-client";
 import type {
 	Certification,
 	ContactLink,

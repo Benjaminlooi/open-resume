@@ -1,10 +1,10 @@
-# Local Companion Backend Bootstrap Implementation Plan
+# Local Backend Bootstrap Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Bootstrap a local Node companion backend that lets Open Resume extract job details from pasted job URLs through a localhost API.
+**Goal:** Bootstrap a local Node backend that lets Open Resume extract job details from pasted job URLs through a localhost API.
 
-**Architecture:** Convert the repository into a cohesive pnpm monorepo with `apps/web` for the existing TanStack Start application and `apps/companion` for the local Node backend. The root package becomes an orchestrator only: `pnpm dev` starts both apps, while package-specific scripts remain available through pnpm filters. The companion exposes a health endpoint and a URL extraction endpoint that returns a typed job extraction result, and the web app calls it opportunistically.
+**Architecture:** Convert the repository into a cohesive pnpm monorepo with `apps/web` for the existing TanStack Start application and `apps/backend` for the local Node backend. The root package becomes an orchestrator only: `pnpm dev` starts both apps, while package-specific scripts remain available through pnpm filters. The backend exposes a health endpoint and a URL extraction endpoint that returns a typed job extraction result, and the web app calls it opportunistically.
 
 **Tech Stack:** pnpm workspace, TypeScript, Fastify, Playwright, Zod, Vitest, tsx, tsup, existing React/TanStack Start app.
 
@@ -16,18 +16,18 @@
 - Move the current web app files into `apps/web`.
 - Replace root `package.json` with monorepo orchestration scripts.
 - Move the existing app `package.json` to `apps/web/package.json`.
-- Create `apps/companion/package.json` for the local backend package.
-- Create `apps/companion/tsconfig.json` for Node-oriented TypeScript.
-- Create `apps/companion/vitest.config.ts` for companion tests.
-- Create `apps/companion/src/schema.ts` for request/response contracts.
-- Create `apps/companion/src/extract/json-ld.ts` for `schema.org/JobPosting` extraction.
-- Create `apps/companion/src/extract/html.ts` for readable text fallback extraction.
-- Create `apps/companion/src/extract/normalize.ts` for normalizing extracted fields.
-- Create `apps/companion/src/server.ts` for the Fastify app factory.
-- Create `apps/companion/src/index.ts` for local daemon startup.
-- Create `apps/companion/src/*.test.ts` files for unit and route coverage.
-- Create `apps/web/src/lib/local-companion-client.ts` in the web app for optional localhost calls.
-- Create `apps/web/src/lib/local-companion-client.test.ts` for the web client behavior.
+- Create `apps/backend/package.json` for the local backend package.
+- Create `apps/backend/tsconfig.json` for Node-oriented TypeScript.
+- Create `apps/backend/vitest.config.ts` for backend tests.
+- Create `apps/backend/src/schema.ts` for request/response contracts.
+- Create `apps/backend/src/extract/json-ld.ts` for `schema.org/JobPosting` extraction.
+- Create `apps/backend/src/extract/html.ts` for readable text fallback extraction.
+- Create `apps/backend/src/extract/normalize.ts` for normalizing extracted fields.
+- Create `apps/backend/src/server.ts` for the Fastify app factory.
+- Create `apps/backend/src/index.ts` for local daemon startup.
+- Create `apps/backend/src/*.test.ts` files for unit and route coverage.
+- Create `apps/web/src/lib/local-backend-client.ts` in the web app for optional localhost calls.
+- Create `apps/web/src/lib/local-backend-client.test.ts` for the web client behavior.
 - Modify `apps/web/src/components/jobs/NewJobApplicationModal.tsx` to add a “Fetch details” action beside the URL field.
 
 ## Task 1: Add Workspace Scaffolding
@@ -43,16 +43,16 @@
 - Move: `components.json` to `apps/web/components.json` if present
 - Move: `wrangler.jsonc` to `apps/web/wrangler.jsonc` if present
 - Move: `test-ai-sdk.ts` to `apps/web/test-ai-sdk.ts`
-- Create: `apps/companion/package.json`
-- Create: `apps/companion/tsconfig.json`
-- Create: `apps/companion/vitest.config.ts`
+- Create: `apps/backend/package.json`
+- Create: `apps/backend/tsconfig.json`
+- Create: `apps/backend/vitest.config.ts`
 
 - [ ] **Step 1: Create app directories and move the existing web app**
 
 Run:
 
 ```bash
-mkdir -p apps/web apps/companion
+mkdir -p apps/web apps/backend
 git mv package.json apps/web/package.json
 git mv src apps/web/src
 git mv public apps/web/public
@@ -92,16 +92,16 @@ Create a new root `package.json`:
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "pnpm -r --parallel --filter @open-resume/web --filter @open-resume/companion dev",
+    "dev": "pnpm -r --parallel --filter @open-resume/web --filter @open-resume/backend dev",
     "web:dev": "pnpm --filter @open-resume/web dev",
-    "companion:dev": "pnpm --filter @open-resume/companion dev",
-    "build": "pnpm -r --filter @open-resume/web --filter @open-resume/companion build",
+    "backend:dev": "pnpm --filter @open-resume/backend dev",
+    "build": "pnpm -r --filter @open-resume/web --filter @open-resume/backend build",
     "web:build": "pnpm --filter @open-resume/web build",
-    "companion:build": "pnpm --filter @open-resume/companion build",
-    "test": "pnpm -r --filter @open-resume/web --filter @open-resume/companion test",
+    "backend:build": "pnpm --filter @open-resume/backend build",
+    "test": "pnpm -r --filter @open-resume/web --filter @open-resume/backend test",
     "web:test": "pnpm --filter @open-resume/web test",
-    "companion:test": "pnpm --filter @open-resume/companion test",
-    "typecheck": "pnpm -r --filter @open-resume/web --filter @open-resume/companion typecheck",
+    "backend:test": "pnpm --filter @open-resume/backend test",
+    "typecheck": "pnpm -r --filter @open-resume/web --filter @open-resume/backend typecheck",
     "verify": "pnpm typecheck && pnpm test && pnpm build",
     "lint": "pnpm --filter @open-resume/web lint",
     "format": "pnpm --filter @open-resume/web format",
@@ -125,13 +125,13 @@ In `apps/web/package.json`, change the existing `"name"` from `"open-resume"` to
 }
 ```
 
-- [ ] **Step 5: Create companion package manifest**
+- [ ] **Step 5: Create backend package manifest**
 
-Create `apps/companion/package.json`:
+Create `apps/backend/package.json`:
 
 ```json
 {
-  "name": "@open-resume/companion",
+  "name": "@open-resume/backend",
   "private": true,
   "type": "module",
   "scripts": {
@@ -157,9 +157,9 @@ Create `apps/companion/package.json`:
 }
 ```
 
-- [ ] **Step 6: Create companion TypeScript config**
+- [ ] **Step 6: Create backend TypeScript config**
 
-Create `apps/companion/tsconfig.json`:
+Create `apps/backend/tsconfig.json`:
 
 ```json
 {
@@ -180,9 +180,9 @@ Create `apps/companion/tsconfig.json`:
 }
 ```
 
-- [ ] **Step 7: Create companion Vitest config**
+- [ ] **Step 7: Create backend Vitest config**
 
-Create `apps/companion/vitest.config.ts`:
+Create `apps/backend/vitest.config.ts`:
 
 ```ts
 import { defineConfig } from "vitest/config";
@@ -210,7 +210,7 @@ Expected: `pnpm-lock.yaml` updates and install completes without dependency reso
 Run:
 
 ```bash
-pnpm --filter @open-resume/companion typecheck
+pnpm --filter @open-resume/backend typecheck
 ```
 
 Expected: TypeScript reports no input files or no errors until source files are added. If it reports no input files, continue to Task 2.
@@ -223,24 +223,24 @@ Run:
 pnpm dev
 ```
 
-Expected: pnpm starts both filtered `dev` scripts. Stop it with `Ctrl-C` after confirming `@open-resume/web` starts Vite and `@open-resume/companion` starts `tsx watch`.
+Expected: pnpm starts both filtered `dev` scripts. Stop it with `Ctrl-C` after confirming `@open-resume/web` starts Vite and `@open-resume/backend` starts `tsx watch`.
 
 - [ ] **Step 11: Commit scaffolding**
 
 ```bash
-git add package.json pnpm-workspace.yaml pnpm-lock.yaml apps/web apps/companion/package.json apps/companion/tsconfig.json apps/companion/vitest.config.ts
+git add package.json pnpm-workspace.yaml pnpm-lock.yaml apps/web apps/backend/package.json apps/backend/tsconfig.json apps/backend/vitest.config.ts
 git commit -m "chore: scaffold app workspace"
 ```
 
-## Task 2: Define Companion API Contracts
+## Task 2: Define Backend API Contracts
 
 **Files:**
-- Create: `apps/companion/src/schema.ts`
-- Test: `apps/companion/src/schema.test.ts`
+- Create: `apps/backend/src/schema.ts`
+- Test: `apps/backend/src/schema.test.ts`
 
 - [ ] **Step 1: Write schema tests**
 
-Create `apps/companion/src/schema.test.ts`:
+Create `apps/backend/src/schema.test.ts`:
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -249,7 +249,7 @@ import {
   jobExtractionResultSchema,
 } from "./schema.js";
 
-describe("companion schema", () => {
+describe("backend schema", () => {
   it("accepts a valid extraction request", () => {
     const parsed = extractJobRequestSchema.parse({
       url: "https://example.com/jobs/123",
@@ -286,14 +286,14 @@ describe("companion schema", () => {
 Run:
 
 ```bash
-pnpm --filter @open-resume/companion test src/schema.test.ts
+pnpm --filter @open-resume/backend test src/schema.test.ts
 ```
 
-Expected: FAIL because `apps/companion/src/schema.ts` does not exist.
+Expected: FAIL because `apps/backend/src/schema.ts` does not exist.
 
 - [ ] **Step 3: Implement schemas**
 
-Create `apps/companion/src/schema.ts`:
+Create `apps/backend/src/schema.ts`:
 
 ```ts
 import { z } from "zod";
@@ -331,13 +331,13 @@ export const jobExtractionResultSchema = z.object({
 
 export type JobExtractionResult = z.infer<typeof jobExtractionResultSchema>;
 
-export const companionErrorResponseSchema = z.object({
+export const backendErrorResponseSchema = z.object({
   error: z.string(),
   details: z.string().optional(),
 });
 
-export type CompanionErrorResponse = z.infer<
-  typeof companionErrorResponseSchema
+export type BackendErrorResponse = z.infer<
+  typeof backendErrorResponseSchema
 >;
 ```
 
@@ -346,7 +346,7 @@ export type CompanionErrorResponse = z.infer<
 Run:
 
 ```bash
-pnpm --filter @open-resume/companion test src/schema.test.ts
+pnpm --filter @open-resume/backend test src/schema.test.ts
 ```
 
 Expected: PASS.
@@ -354,23 +354,23 @@ Expected: PASS.
 - [ ] **Step 5: Commit API contracts**
 
 ```bash
-git add apps/companion/src/schema.ts apps/companion/src/schema.test.ts
-git commit -m "feat: define companion extraction contracts"
+git add apps/backend/src/schema.ts apps/backend/src/schema.test.ts
+git commit -m "feat: define backend extraction contracts"
 ```
 
 ## Task 3: Implement HTML and JSON-LD Extraction
 
 **Files:**
-- Create: `apps/companion/src/extract/json-ld.ts`
-- Create: `apps/companion/src/extract/html.ts`
-- Create: `apps/companion/src/extract/normalize.ts`
-- Test: `apps/companion/src/extract/json-ld.test.ts`
-- Test: `apps/companion/src/extract/html.test.ts`
-- Test: `apps/companion/src/extract/normalize.test.ts`
+- Create: `apps/backend/src/extract/json-ld.ts`
+- Create: `apps/backend/src/extract/html.ts`
+- Create: `apps/backend/src/extract/normalize.ts`
+- Test: `apps/backend/src/extract/json-ld.test.ts`
+- Test: `apps/backend/src/extract/html.test.ts`
+- Test: `apps/backend/src/extract/normalize.test.ts`
 
 - [ ] **Step 1: Write JSON-LD tests**
 
-Create `apps/companion/src/extract/json-ld.test.ts`:
+Create `apps/backend/src/extract/json-ld.test.ts`:
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -413,7 +413,7 @@ describe("extractJobPostingJsonLd", () => {
 
 - [ ] **Step 2: Write HTML fallback tests**
 
-Create `apps/companion/src/extract/html.test.ts`:
+Create `apps/backend/src/extract/html.test.ts`:
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -444,7 +444,7 @@ describe("extractReadableText", () => {
 
 - [ ] **Step 3: Write normalization tests**
 
-Create `apps/companion/src/extract/normalize.test.ts`:
+Create `apps/backend/src/extract/normalize.test.ts`:
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -493,14 +493,14 @@ describe("normalizeExtraction", () => {
 Run:
 
 ```bash
-pnpm --filter @open-resume/companion test src/extract
+pnpm --filter @open-resume/backend test src/extract
 ```
 
 Expected: FAIL because extraction modules do not exist.
 
 - [ ] **Step 5: Implement JSON-LD extraction**
 
-Create `apps/companion/src/extract/json-ld.ts`:
+Create `apps/backend/src/extract/json-ld.ts`:
 
 ```ts
 interface StructuredJobPosting {
@@ -606,7 +606,7 @@ function decodeHtmlEntities(value: string): string {
 
 - [ ] **Step 6: Implement readable text extraction**
 
-Create `apps/companion/src/extract/html.ts`:
+Create `apps/backend/src/extract/html.ts`:
 
 ```ts
 export function extractReadableText(html: string): string {
@@ -628,7 +628,7 @@ export function extractReadableText(html: string): string {
 
 - [ ] **Step 7: Implement normalized extraction result**
 
-Create `apps/companion/src/extract/normalize.ts`:
+Create `apps/backend/src/extract/normalize.ts`:
 
 ```ts
 import type { JobExtractionResult } from "../schema.js";
@@ -670,7 +670,7 @@ export function normalizeExtraction(
 Run:
 
 ```bash
-pnpm --filter @open-resume/companion test src/extract
+pnpm --filter @open-resume/backend test src/extract
 ```
 
 Expected: PASS.
@@ -678,26 +678,26 @@ Expected: PASS.
 - [ ] **Step 9: Commit extraction modules**
 
 ```bash
-git add apps/companion/src/extract
+git add apps/backend/src/extract
 git commit -m "feat: extract job details from html"
 ```
 
-## Task 4: Build the Fastify Companion Server
+## Task 4: Build the Fastify Backend Server
 
 **Files:**
-- Create: `apps/companion/src/server.ts`
-- Create: `apps/companion/src/index.ts`
-- Test: `apps/companion/src/server.test.ts`
+- Create: `apps/backend/src/server.ts`
+- Create: `apps/backend/src/index.ts`
+- Test: `apps/backend/src/server.test.ts`
 
 - [ ] **Step 1: Write route tests**
 
-Create `apps/companion/src/server.test.ts`:
+Create `apps/backend/src/server.test.ts`:
 
 ```ts
 import { describe, expect, it } from "vitest";
 import { createServer } from "./server.js";
 
-describe("companion server", () => {
+describe("backend server", () => {
   it("responds to health checks", async () => {
     const server = createServer();
     const response = await server.inject({
@@ -708,7 +708,7 @@ describe("companion server", () => {
     expect(response.statusCode).toBe(200);
     expect(response.json()).toEqual({
       ok: true,
-      service: "open-resume-companion",
+      service: "open-resume-backend",
     });
   });
 
@@ -733,14 +733,14 @@ describe("companion server", () => {
 Run:
 
 ```bash
-pnpm --filter @open-resume/companion test src/server.test.ts
+pnpm --filter @open-resume/backend test src/server.test.ts
 ```
 
 Expected: FAIL because `createServer` is not defined.
 
 - [ ] **Step 3: Implement Fastify app factory**
 
-Create `apps/companion/src/server.ts`:
+Create `apps/backend/src/server.ts`:
 
 ```ts
 import cors from "@fastify/cors";
@@ -761,7 +761,7 @@ export function createServer() {
 
   server.get("/health", async () => ({
     ok: true,
-    service: "open-resume-companion",
+    service: "open-resume-backend",
   }));
 
   server.post("/extract-job", async (request, reply) => {
@@ -777,7 +777,7 @@ export function createServer() {
     const response = await fetch(parsed.data.url, {
       headers: {
         "user-agent":
-          "OpenResumeCompanion/0.1 (+https://github.com/Benjaminlooi/resume-builder)",
+          "OpenResumeBackend/0.1 (+https://github.com/Benjaminlooi/resume-builder)",
         accept: "text/html,application/xhtml+xml",
       },
     });
@@ -808,19 +808,19 @@ export function createServer() {
 
 - [ ] **Step 4: Implement daemon entrypoint**
 
-Create `apps/companion/src/index.ts`:
+Create `apps/backend/src/index.ts`:
 
 ```ts
 import { createServer } from "./server.js";
 
-const port = Number.parseInt(process.env.OPEN_RESUME_COMPANION_PORT ?? "47321", 10);
-const host = process.env.OPEN_RESUME_COMPANION_HOST ?? "127.0.0.1";
+const port = Number.parseInt(process.env.OPEN_RESUME_BACKEND_PORT ?? "47321", 10);
+const host = process.env.OPEN_RESUME_BACKEND_HOST ?? "127.0.0.1";
 
 const server = createServer();
 
 try {
   await server.listen({ host, port });
-  console.log(`Open Resume companion listening on http://${host}:${port}`);
+  console.log(`Open Resume backend listening on http://${host}:${port}`);
 } catch (error) {
   server.log.error(error);
   process.exit(1);
@@ -832,17 +832,17 @@ try {
 Run:
 
 ```bash
-pnpm --filter @open-resume/companion test src/server.test.ts
+pnpm --filter @open-resume/backend test src/server.test.ts
 ```
 
 Expected: PASS.
 
-- [ ] **Step 6: Run companion typecheck**
+- [ ] **Step 6: Run backend typecheck**
 
 Run:
 
 ```bash
-pnpm --filter @open-resume/companion typecheck
+pnpm --filter @open-resume/backend typecheck
 ```
 
 Expected: PASS.
@@ -850,20 +850,20 @@ Expected: PASS.
 - [ ] **Step 7: Commit server bootstrap**
 
 ```bash
-git add apps/companion/src/server.ts apps/companion/src/index.ts apps/companion/src/server.test.ts
-git commit -m "feat: add local companion server"
+git add apps/backend/src/server.ts apps/backend/src/index.ts apps/backend/src/server.test.ts
+git commit -m "feat: add local backend server"
 ```
 
 ## Task 5: Add Playwright Fallback Extraction
 
 **Files:**
-- Modify: `apps/companion/src/server.ts`
-- Create: `apps/companion/src/extract/playwright.ts`
-- Test: `apps/companion/src/extract/playwright.test.ts`
+- Modify: `apps/backend/src/server.ts`
+- Create: `apps/backend/src/extract/playwright.ts`
+- Test: `apps/backend/src/extract/playwright.test.ts`
 
 - [ ] **Step 1: Write Playwright unit test with injected page HTML**
 
-Create `apps/companion/src/extract/playwright.test.ts`:
+Create `apps/backend/src/extract/playwright.test.ts`:
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -888,14 +888,14 @@ describe("normalizePlaywrightExtraction", () => {
 Run:
 
 ```bash
-pnpm --filter @open-resume/companion test src/extract/playwright.test.ts
+pnpm --filter @open-resume/backend test src/extract/playwright.test.ts
 ```
 
 Expected: FAIL because `playwright.ts` does not exist.
 
 - [ ] **Step 3: Implement Playwright extraction helper**
 
-Create `apps/companion/src/extract/playwright.ts`:
+Create `apps/backend/src/extract/playwright.ts`:
 
 ```ts
 import { chromium } from "playwright";
@@ -941,7 +941,7 @@ export async function extractWithPlaywright(
 
 - [ ] **Step 4: Update server fallback logic**
 
-In `apps/companion/src/server.ts`, add this import:
+In `apps/backend/src/server.ts`, add this import:
 
 ```ts
 import { extractWithPlaywright } from "./extract/playwright.js";
@@ -976,12 +976,12 @@ if (!result.description || result.description.length < 160) {
 }
 ```
 
-- [ ] **Step 5: Run companion tests**
+- [ ] **Step 5: Run backend tests**
 
 Run:
 
 ```bash
-pnpm --filter @open-resume/companion test
+pnpm --filter @open-resume/backend test
 ```
 
 Expected: PASS.
@@ -991,7 +991,7 @@ Expected: PASS.
 Run:
 
 ```bash
-pnpm --filter @open-resume/companion exec playwright install chromium
+pnpm --filter @open-resume/backend exec playwright install chromium
 ```
 
 Expected: Chromium installs for local extraction.
@@ -999,30 +999,30 @@ Expected: Chromium installs for local extraction.
 - [ ] **Step 7: Commit Playwright fallback**
 
 ```bash
-git add apps/companion/src/extract/playwright.ts apps/companion/src/extract/playwright.test.ts apps/companion/src/server.ts
+git add apps/backend/src/extract/playwright.ts apps/backend/src/extract/playwright.test.ts apps/backend/src/server.ts
 git commit -m "feat: add playwright extraction fallback"
 ```
 
-## Task 6: Add Web App Companion Client
+## Task 6: Add Web App Backend Client
 
 **Files:**
-- Create: `apps/web/src/lib/local-companion-client.ts`
-- Test: `apps/web/src/lib/local-companion-client.test.ts`
+- Create: `apps/web/src/lib/local-backend-client.ts`
+- Test: `apps/web/src/lib/local-backend-client.test.ts`
 
 - [ ] **Step 1: Write web client tests**
 
-Create `apps/web/src/lib/local-companion-client.test.ts`:
+Create `apps/web/src/lib/local-backend-client.test.ts`:
 
 ```ts
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { extractJobWithLocalCompanion } from "./local-companion-client";
+import { extractJobWithLocalBackend } from "./local-backend-client";
 
-describe("local companion client", () => {
+describe("local backend client", () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  it("returns extracted job details from the companion", async () => {
+  it("returns extracted job details from the backend", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async () => ({
@@ -1040,7 +1040,7 @@ describe("local companion client", () => {
       })),
     );
 
-    const result = await extractJobWithLocalCompanion("https://example.com/job");
+    const result = await extractJobWithLocalBackend("https://example.com/job");
 
     expect(result).toMatchObject({
       title: "Engineer",
@@ -1049,7 +1049,7 @@ describe("local companion client", () => {
     });
   });
 
-  it("returns a user-facing error when the companion is unavailable", async () => {
+  it("returns a user-facing error when the backend is unavailable", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async () => {
@@ -1058,8 +1058,8 @@ describe("local companion client", () => {
     );
 
     await expect(
-      extractJobWithLocalCompanion("https://example.com/job"),
-    ).rejects.toThrow("Local companion is not reachable");
+      extractJobWithLocalBackend("https://example.com/job"),
+    ).rejects.toThrow("Local backend is not reachable");
   });
 });
 ```
@@ -1069,19 +1069,19 @@ describe("local companion client", () => {
 Run:
 
 ```bash
-pnpm --filter @open-resume/web test src/lib/local-companion-client.test.ts
+pnpm --filter @open-resume/web test src/lib/local-backend-client.test.ts
 ```
 
-Expected: FAIL because `local-companion-client.ts` does not exist.
+Expected: FAIL because `local-backend-client.ts` does not exist.
 
 - [ ] **Step 3: Implement web client**
 
-Create `apps/web/src/lib/local-companion-client.ts`:
+Create `apps/web/src/lib/local-backend-client.ts`:
 
 ```ts
 import { z } from "zod";
 
-const companionBaseUrl = "http://127.0.0.1:47321";
+const backendBaseUrl = "http://127.0.0.1:47321";
 
 const jobExtractionResultSchema = z.object({
   sourceUrl: z.string().url(),
@@ -1094,17 +1094,17 @@ const jobExtractionResultSchema = z.object({
   extractedAt: z.number(),
 });
 
-export type LocalCompanionJobExtraction = z.infer<
+export type LocalBackendJobExtraction = z.infer<
   typeof jobExtractionResultSchema
 >;
 
-export async function extractJobWithLocalCompanion(
+export async function extractJobWithLocalBackend(
   url: string,
-): Promise<LocalCompanionJobExtraction> {
+): Promise<LocalBackendJobExtraction> {
   let response: Response;
 
   try {
-    response = await fetch(`${companionBaseUrl}/extract-job`, {
+    response = await fetch(`${backendBaseUrl}/extract-job`, {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -1113,12 +1113,12 @@ export async function extractJobWithLocalCompanion(
     });
   } catch {
     throw new Error(
-      "Local companion is not reachable. Start it with pnpm --filter @open-resume/companion dev.",
+      "Local backend is not reachable. Start it with pnpm --filter @open-resume/backend dev.",
     );
   }
 
   if (!response.ok) {
-    throw new Error("Local companion could not extract this job URL.");
+    throw new Error("Local backend could not extract this job URL.");
   }
 
   return jobExtractionResultSchema.parse(await response.json());
@@ -1130,7 +1130,7 @@ export async function extractJobWithLocalCompanion(
 Run:
 
 ```bash
-pnpm --filter @open-resume/web test src/lib/local-companion-client.test.ts
+pnpm --filter @open-resume/web test src/lib/local-backend-client.test.ts
 ```
 
 Expected: PASS.
@@ -1138,8 +1138,8 @@ Expected: PASS.
 - [ ] **Step 5: Commit web client**
 
 ```bash
-git add apps/web/src/lib/local-companion-client.ts apps/web/src/lib/local-companion-client.test.ts
-git commit -m "feat: add local companion client"
+git add apps/web/src/lib/local-backend-client.ts apps/web/src/lib/local-backend-client.test.ts
+git commit -m "feat: add local backend client"
 ```
 
 ## Task 7: Wire URL Extraction Into New Job Modal
@@ -1153,7 +1153,7 @@ git commit -m "feat: add local companion client"
 Append this test to `apps/web/src/components/jobs/NewJobApplicationModal.test.tsx`:
 
 ```tsx
-it("fills job fields from the local companion", async () => {
+it("fills job fields from the local backend", async () => {
   vi.mocked(fetch).mockResolvedValueOnce({
     ok: true,
     json: async () => ({
@@ -1200,12 +1200,12 @@ pnpm --filter @open-resume/web test src/components/jobs/NewJobApplicationModal.t
 
 Expected: FAIL because the Fetch details button does not exist.
 
-- [ ] **Step 3: Import the companion client**
+- [ ] **Step 3: Import the backend client**
 
 In `apps/web/src/components/jobs/NewJobApplicationModal.tsx`, add:
 
 ```ts
-import { extractJobWithLocalCompanion } from "#/lib/local-companion-client";
+import { extractJobWithLocalBackend } from "#/lib/local-backend-client";
 ```
 
 - [ ] **Step 4: Add extraction loading state**
@@ -1231,7 +1231,7 @@ const handleFetchDetails = async () => {
   setIsExtracting(true);
 
   try {
-    const extracted = await extractJobWithLocalCompanion(sourceUrl.trim());
+    const extracted = await extractJobWithLocalBackend(sourceUrl.trim());
     setCompany(extracted.company);
     setTitle(extracted.title);
     setLocation(extracted.location);
@@ -1356,7 +1356,7 @@ Expected: PASS.
 
 ```bash
 git add apps/web/src/components/jobs/NewJobApplicationModal.tsx apps/web/src/components/jobs/NewJobApplicationModal.test.tsx
-git commit -m "feat: fetch job details from local companion"
+git commit -m "feat: fetch job details from local backend"
 ```
 
 ## Task 8: Verify End-to-End Bootstrap
@@ -1364,20 +1364,20 @@ git commit -m "feat: fetch job details from local companion"
 **Files:**
 - Modify: `README.md`
 
-- [ ] **Step 1: Add monorepo and local companion usage docs**
+- [ ] **Step 1: Add monorepo and local backend usage docs**
 
 Add this section to `README.md`:
 
 ````md
 ## Development
 
-Start the web app and local companion together:
+Start the web app and local backend together:
 
 ```bash
 pnpm dev
 ```
 
-The web app runs on `http://localhost:3000`. The local companion runs on `http://127.0.0.1:47321`.
+The web app runs on `http://localhost:3000`. The local backend runs on `http://127.0.0.1:47321`.
 
 Run only the web app:
 
@@ -1385,15 +1385,15 @@ Run only the web app:
 pnpm web:dev
 ```
 
-Run only the local companion:
+Run only the local backend:
 
 ```bash
-pnpm companion:dev
+pnpm backend:dev
 ```
 
-## Local Companion
+## Local Backend
 
-Open Resume can use the optional local companion service to extract job details from pasted job URLs.
+Open Resume can use the optional local backend service to extract job details from pasted job URLs.
 
 ```bash
 curl http://127.0.0.1:47321/health
@@ -1402,10 +1402,10 @@ curl http://127.0.0.1:47321/health
 Expected response:
 
 ```json
-{"ok":true,"service":"open-resume-companion"}
+{"ok":true,"service":"open-resume-backend"}
 ```
 
-Open `http://localhost:3000/jobs`, create a job application, paste a job URL, and click **Fetch details**. If the companion is not running, the app keeps working with manual job description paste.
+Open `http://localhost:3000/jobs`, create a job application, paste a job URL, and click **Fetch details**. If the backend is not running, the app keeps working with manual job description paste.
 ````
 
 - [ ] **Step 2: Run full verification**
@@ -1413,8 +1413,8 @@ Open `http://localhost:3000/jobs`, create a job application, paste a job URL, an
 Run:
 
 ```bash
-pnpm companion:test
-pnpm companion:build
+pnpm backend:test
+pnpm backend:build
 pnpm typecheck
 pnpm test
 pnpm build
@@ -1439,7 +1439,7 @@ curl http://127.0.0.1:47321/health
 Expected:
 
 ```json
-{"ok":true,"service":"open-resume-companion"}
+{"ok":true,"service":"open-resume-backend"}
 ```
 
 Terminal 2:
@@ -1456,11 +1456,11 @@ Expected: JSON response with `sourceUrl`, `description`, `rawText`, `extractionM
 
 ```bash
 git add README.md
-git commit -m "docs: document local companion workflow"
+git commit -m "docs: document local backend workflow"
 ```
 
 ## Self-Review
 
-- Spec coverage: The plan covers a cohesive pnpm monorepo shape, moving the web app to `apps/web`, adding a local Node companion backend, a single root `pnpm dev`, localhost API extraction, typed contracts, web app integration, and verification. It does not include desktop packaging, cloud sync, authentication, persistent local companion storage, or batch scanning; those are intentionally out of scope for bootstrap.
+- Spec coverage: The plan covers a cohesive pnpm monorepo shape, moving the web app to `apps/web`, adding a local Node backend, a single root `pnpm dev`, localhost API extraction, typed contracts, web app integration, and verification. It does not include desktop packaging, cloud sync, authentication, persistent local backend storage, or batch scanning; those are intentionally out of scope for bootstrap.
 - Placeholder scan: No task uses open-ended placeholders. Each code-changing step includes exact files, code, commands, and expected results.
-- Type consistency: The extraction methods are consistently `json-ld`, `readability`, and `playwright`; the web client and companion schema use the same response fields; modal state maps directly into the existing `createJobApplication` fields.
+- Type consistency: The extraction methods are consistently `json-ld`, `readability`, and `playwright`; the web client and backend schema use the same response fields; modal state maps directly into the existing `createJobApplication` fields.

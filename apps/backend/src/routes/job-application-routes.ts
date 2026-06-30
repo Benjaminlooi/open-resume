@@ -2,7 +2,7 @@ import type { FastifyPluginAsync } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
 import { z } from "zod";
 import {
-	companionErrorResponseSchema,
+	backendErrorResponseSchema,
 	coverLetterDraftSchema,
 	jobApplicationSchema,
 	jobApplicationStatusSchema,
@@ -59,8 +59,8 @@ export function createJobApplicationRoutes(
 						.strict(),
 					response: {
 						201: jobApplicationSchema,
-						400: companionErrorResponseSchema,
-						500: companionErrorResponseSchema,
+						400: backendErrorResponseSchema,
+						500: backendErrorResponseSchema,
 					},
 				},
 			},
@@ -83,7 +83,7 @@ export function createJobApplicationRoutes(
 					params: routeJobIdParamsSchema,
 					response: {
 						200: jobApplicationSchema,
-						404: companionErrorResponseSchema,
+						404: backendErrorResponseSchema,
 					},
 				},
 			},
@@ -127,7 +127,7 @@ export function createJobApplicationRoutes(
 						.strict(),
 					response: {
 						200: jobApplicationSchema,
-						404: companionErrorResponseSchema,
+						404: backendErrorResponseSchema,
 					},
 				},
 			},

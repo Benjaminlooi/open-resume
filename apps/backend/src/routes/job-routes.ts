@@ -5,7 +5,7 @@ import type { FastifyPluginAsync } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
 import { z } from "zod";
 import {
-	companionErrorResponseSchema,
+	backendErrorResponseSchema,
 	jobPostingSchema,
 	jobPostingsResponseSchema,
 	createJobPostingRequestSchema,
@@ -32,8 +32,8 @@ export function createJobRoutes(context: JobRouteContext): FastifyPluginAsync {
 					body: createJobPostingRequestSchema,
 					response: {
 						201: jobPostingSchema,
-						400: companionErrorResponseSchema,
-						500: companionErrorResponseSchema,
+						400: backendErrorResponseSchema,
+						500: backendErrorResponseSchema,
 					},
 				},
 			},
@@ -76,7 +76,7 @@ export function createJobRoutes(context: JobRouteContext): FastifyPluginAsync {
 					params: routeJobIdParamsSchema,
 					response: {
 						200: jobPostingSchema,
-						404: companionErrorResponseSchema,
+						404: backendErrorResponseSchema,
 					},
 				},
 			},
@@ -100,8 +100,8 @@ export function createJobRoutes(context: JobRouteContext): FastifyPluginAsync {
 					params: routeJobIdParamsSchema,
 					response: {
 						200: z.any().describe("The captured screenshot PNG image."),
-						400: companionErrorResponseSchema,
-						404: companionErrorResponseSchema,
+						400: backendErrorResponseSchema,
+						404: backendErrorResponseSchema,
 					},
 				},
 			},
@@ -140,7 +140,7 @@ export function createJobRoutes(context: JobRouteContext): FastifyPluginAsync {
 					params: routeJobIdParamsSchema,
 					response: {
 						200: jobPostingSchema,
-						404: companionErrorResponseSchema,
+						404: backendErrorResponseSchema,
 					},
 				},
 			},
@@ -168,7 +168,7 @@ export function createJobRoutes(context: JobRouteContext): FastifyPluginAsync {
 					params: routeJobIdParamsSchema,
 					response: {
 						200: jobPostingSchema,
-						404: companionErrorResponseSchema,
+						404: backendErrorResponseSchema,
 					},
 				},
 			},
@@ -196,7 +196,7 @@ export function createJobRoutes(context: JobRouteContext): FastifyPluginAsync {
 					params: routeJobIdParamsSchema,
 					response: {
 						200: jobApplicationSchema,
-						404: companionErrorResponseSchema,
+						404: backendErrorResponseSchema,
 					},
 				},
 			},

@@ -62,22 +62,22 @@ export type {
 	JobApplicationsResponse,
 };
 
-export const companionBaseUrl = "http://127.0.0.1:47321";
+export const backendBaseUrl = "http://127.0.0.1:47321";
 
-async function companionFetch(
+async function backendFetch(
 	path: string,
 	init?: RequestInit,
 ): Promise<Response> {
 	try {
-		return await fetch(`${companionBaseUrl}${path}`, init);
+		return await fetch(`${backendBaseUrl}${path}`, init);
 	} catch {
 		throw new Error(
-			"Local companion is not reachable. Start it with pnpm companion:dev.",
+			"Local backend is not reachable. Start it with pnpm backend:dev.",
 		);
 	}
 }
 
-async function parseCompanionResponse<T>(
+async function parseBackendResponse<T>(
 	response: Response,
 	schema: z.ZodType<T>,
 	fallbackMessage: string,
@@ -91,26 +91,26 @@ async function parseCompanionResponse<T>(
 export async function createJobPosting(
 	sourceUrl: string,
 ): Promise<LocalJobPosting> {
-	const response = await companionFetch("/job-postings", {
+	const response = await backendFetch("/job-postings", {
 		method: "POST",
 		headers: {
 			"content-type": "application/json",
 		},
 		body: JSON.stringify({ sourceUrl }),
 	});
-	return parseCompanionResponse(
+	return parseBackendResponse(
 		response,
 		jobPostingSchema,
-		"Local companion could not create this job posting.",
+		"Local backend could not create this job posting.",
 	);
 }
 
 export async function listJobPostings(): Promise<LocalJobPosting[]> {
-	const response = await companionFetch("/job-postings");
-	const parsed = await parseCompanionResponse(
+	const response = await backendFetch("/job-postings");
+	const parsed = await parseBackendResponse(
 		response,
 		jobPostingsResponseSchema,
-		"Local companion could not list job postings.",
+		"Local backend could not list job postings.",
 	);
 	return parsed.jobPostings;
 }
@@ -118,101 +118,101 @@ export async function listJobPostings(): Promise<LocalJobPosting[]> {
 export async function retryJobPostingCrawl(
 	id: string,
 ): Promise<LocalJobPosting> {
-	const response = await companionFetch(`/job-postings/${id}/retry-crawl`, {
+	const response = await backendFetch(`/job-postings/${id}/retry-crawl`, {
 		method: "POST",
 	});
-	return parseCompanionResponse(
+	return parseBackendResponse(
 		response,
 		jobPostingSchema,
-		"Local companion could not retry this crawl.",
+		"Local backend could not retry this crawl.",
 	);
 }
 
 export async function retryJobPostingAnalyze(
 	id: string,
 ): Promise<LocalJobPosting> {
-	const response = await companionFetch(`/job-postings/${id}/retry-analyze`, {
+	const response = await backendFetch(`/job-postings/${id}/retry-analyze`, {
 		method: "POST",
 	});
-	return parseCompanionResponse(
+	return parseBackendResponse(
 		response,
 		jobPostingSchema,
-		"Local companion could not retry this analysis.",
+		"Local backend could not retry this analysis.",
 	);
 }
 
 export async function deleteJobPosting(
 	id: string,
 ): Promise<{ deleted: boolean }> {
-	const response = await companionFetch(`/job-postings/${id}`, {
+	const response = await backendFetch(`/job-postings/${id}`, {
 		method: "DELETE",
 	});
-	return parseCompanionResponse(
+	return parseBackendResponse(
 		response,
 		deleteJobPostingResponseSchema,
-		"Local companion could not delete this job posting.",
+		"Local backend could not delete this job posting.",
 	);
 }
 
 export async function getProfile(): Promise<CandidateProfile> {
-	const response = await companionFetch("/profile");
-	return parseCompanionResponse(
+	const response = await backendFetch("/profile");
+	return parseBackendResponse(
 		response,
 		candidateProfileSchema,
-		"Local companion could not retrieve profile.",
+		"Local backend could not retrieve profile.",
 	);
 }
 
 export async function updateProfile(
 	profile: CandidateProfile,
 ): Promise<CandidateProfile> {
-	const response = await companionFetch("/profile", {
+	const response = await backendFetch("/profile", {
 		method: "PUT",
 		headers: {
 			"content-type": "application/json",
 		},
 		body: JSON.stringify(profile),
 	});
-	return parseCompanionResponse(
+	return parseBackendResponse(
 		response,
 		candidateProfileSchema,
-		"Local companion could not update profile.",
+		"Local backend could not update profile.",
 	);
 }
 
 export async function syncResume(
 	resume: Record<string, unknown>,
 ): Promise<OkResponse> {
-	const response = await companionFetch("/profile/resume", {
+	const response = await backendFetch("/profile/resume", {
 		method: "PUT",
 		headers: {
 			"content-type": "application/json",
 		},
 		body: JSON.stringify({ resume }),
 	});
-	return parseCompanionResponse(
+	return parseBackendResponse(
 		response,
 		okResponseSchema,
-		"Local companion could not sync default resume.",
+		"Local backend could not sync default resume.",
 	);
 }
 
 export async function listResumes(): Promise<ResumeSummary[]> {
-	const response = await companionFetch("/resumes");
-	const parsed = await parseCompanionResponse(
+	const response = await backendFetch("/resumes");
+	const parsed = await parseBackendResponse(
 		response,
 		resumesResponseSchema,
-		"Local companion could not list resumes.",
+		"Local backend could not list resumes.",
 	);
 	return parsed.resumes;
 }
 
 export async function getResume(id: string): Promise<ResumeDetails> {
-	const response = await companionFetch(`/resumes/${id}`);
-	return parseCompanionResponse(
+	const response = await backendFetch(`/resumes/${id}`);
+	return parseBackendResponse(
 		response,
 		resumeDetailsSchema,
-		"Local companion could not retrieve this resume.",
+		"Local backend could not retrieve this resume.",
 	);
 }
 
@@ -222,17 +222,17 @@ export async function createResume(
 	templateId: string,
 	content: ResumeContent,
 ): Promise<ResumeDetails> {
-	const response = await companionFetch("/resumes", {
+	const response = await backendFetch("/resumes", {
 		method: "POST",
 		headers: {
 			"content-type": "application/json",
 		},
 		body: JSON.stringify({ id, name, templateId, content }),
 	});
-	return parseCompanionResponse(
+	return parseBackendResponse(
 		response,
 		resumeDetailsSchema,
-		"Local companion could not create this resume.",
+		"Local backend could not create this resume.",
 	);
 }
 
@@ -240,69 +240,69 @@ export async function updateResume(
 	id: string,
 	data: UpdateResumeRequest,
 ): Promise<ResumeDetails> {
-	const response = await companionFetch(`/resumes/${id}`, {
+	const response = await backendFetch(`/resumes/${id}`, {
 		method: "PUT",
 		headers: {
 			"content-type": "application/json",
 		},
 		body: JSON.stringify(data),
 	});
-	return parseCompanionResponse(
+	return parseBackendResponse(
 		response,
 		resumeDetailsSchema,
-		"Local companion could not update this resume.",
+		"Local backend could not update this resume.",
 	);
 }
 
 export async function deleteResume(id: string): Promise<{ deleted: boolean }> {
-	const response = await companionFetch(`/resumes/${id}`, {
+	const response = await backendFetch(`/resumes/${id}`, {
 		method: "DELETE",
 	});
-	return parseCompanionResponse(
+	return parseBackendResponse(
 		response,
 		deleteResumeResponseSchema,
-		"Local companion could not delete this resume.",
+		"Local backend could not delete this resume.",
 	);
 }
 
 export async function setDefaultResume(id: string): Promise<ResumeDetails> {
-	const response = await companionFetch(`/resumes/${id}/default`, {
+	const response = await backendFetch(`/resumes/${id}/default`, {
 		method: "PUT",
 	});
-	return parseCompanionResponse(
+	return parseBackendResponse(
 		response,
 		resumeDetailsSchema,
-		"Local companion could not set the default resume.",
+		"Local backend could not set the default resume.",
 	);
 }
 
 export async function clearDefaultResume(): Promise<OkResponse> {
-	const response = await companionFetch("/resumes/default", {
+	const response = await backendFetch("/resumes/default", {
 		method: "DELETE",
 	});
-	return parseCompanionResponse(
+	return parseBackendResponse(
 		response,
 		okResponseSchema,
-		"Local companion could not clear the default resume.",
+		"Local backend could not clear the default resume.",
 	);
 }
 
 export async function listJobApplications(): Promise<JobApplication[]> {
-	const response = await companionFetch("/job-applications");
-	const parsed = await parseCompanionResponse(
+	const response = await backendFetch("/job-applications");
+	const parsed = await parseBackendResponse(
 		response,
 		jobApplicationsResponseSchema,
-		"Local companion could not list job applications.",
+		"Local backend could not list job applications.",
 	);
 	return parsed.jobApplications;
 }
 
 export async function getJobApplication(id: string): Promise<JobApplication> {
-	const response = await companionFetch(`/job-applications/${id}`);
-	return parseCompanionResponse(
+	const response = await backendFetch(`/job-applications/${id}`);
+	return parseBackendResponse(
 		response,
 		jobApplicationSchema,
-		"Local companion could not retrieve this job application.",
+		"Local backend could not retrieve this job application.",
 	);
 }
 
@@ -314,7 +314,7 @@ export async function createJobApplication(
 	sourceUrl: string,
 	description: string,
 ): Promise<JobApplication> {
-	const response = await companionFetch("/job-applications", {
+	const response = await backendFetch("/job-applications", {
 		method: "POST",
 		headers: {
 			"content-type": "application/json",
@@ -328,10 +328,10 @@ export async function createJobApplication(
 			description,
 		}),
 	});
-	return parseCompanionResponse(
+	return parseBackendResponse(
 		response,
 		jobApplicationSchema,
-		"Local companion could not create this job application.",
+		"Local backend could not create this job application.",
 	);
 }
 
@@ -339,42 +339,42 @@ export async function updateJobApplication(
 	id: string,
 	data: any,
 ): Promise<JobApplication> {
-	const response = await companionFetch(`/job-applications/${id}`, {
+	const response = await backendFetch(`/job-applications/${id}`, {
 		method: "PUT",
 		headers: {
 			"content-type": "application/json",
 		},
 		body: JSON.stringify(data),
 	});
-	return parseCompanionResponse(
+	return parseBackendResponse(
 		response,
 		jobApplicationSchema,
-		"Local companion could not update this job application.",
+		"Local backend could not update this job application.",
 	);
 }
 
 export async function deleteJobApplication(
 	id: string,
 ): Promise<{ deleted: boolean }> {
-	const response = await companionFetch(`/job-applications/${id}`, {
+	const response = await backendFetch(`/job-applications/${id}`, {
 		method: "DELETE",
 	});
-	return parseCompanionResponse(
+	return parseBackendResponse(
 		response,
 		deleteJobPostingResponseSchema,
-		"Local companion could not delete this job application.",
+		"Local backend could not delete this job application.",
 	);
 }
 
 export async function convertJobToApplication(
 	id: string,
 ): Promise<JobApplication> {
-	const response = await companionFetch(`/job-postings/${id}/convert`, {
+	const response = await backendFetch(`/job-postings/${id}/convert`, {
 		method: "POST",
 	});
-	return parseCompanionResponse(
+	return parseBackendResponse(
 		response,
 		jobApplicationSchema,
-		"Local companion could not convert this job posting.",
+		"Local backend could not convert this job posting.",
 	);
 }

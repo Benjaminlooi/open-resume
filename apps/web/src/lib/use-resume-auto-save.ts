@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useRootStore } from "./root-store";
-import { updateResume } from "./local-companion-client";
+import { updateResume } from "./local-backend-client";
 import {
 	getIsLoadingResume,
 	getSaveTimer,
@@ -10,7 +10,7 @@ import {
 
 /**
  * Custom React hook that automatically saves changes in the active resume
- * state to the companion daemon's database. It is debounced by 500ms
+ * state to the backend daemon's database. It is debounced by 500ms
  * and only saves when the resume slice itself has actually changed.
  */
 export function useResumeAutoSave() {

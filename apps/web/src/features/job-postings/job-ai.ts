@@ -1,4 +1,4 @@
-import { companionBaseUrl } from "#/lib/local-companion-client";
+import { backendBaseUrl } from "#/lib/local-backend-client";
 import type { Resume } from "#/lib/resume-schema";
 import {
 	type CoverLetterDraft,
@@ -19,7 +19,7 @@ export function getProviderConfig(): ProviderConfig {
 }
 
 async function callBackendAi(endpoint: string, body: unknown): Promise<unknown> {
-	const response = await fetch(`${companionBaseUrl}${endpoint}`, {
+	const response = await fetch(`${backendBaseUrl}${endpoint}`, {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",

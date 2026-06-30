@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Centralize options and environment variable validation in the companion app using Zod, enforce conditional validation for AI provider API keys, and remove all environment variable reads and hardcoded default models/providers from the core business logic (`ai-analyzer.ts`).
+**Goal:** Centralize options and environment variable validation in the backend app using Zod, enforce conditional validation for AI provider API keys, and remove all environment variable reads and hardcoded default models/providers from the core business logic (`ai-analyzer.ts`).
 
 **Architecture:** Create a new `config.ts` module to handle options and environment validation. Update the server to use this config, and inject the resolved `aiConfig` configuration down into the crawl queue and the AI analyzer.
 
@@ -13,18 +13,18 @@
 ### Task 1: Create `config.ts` and verify with new tests
 
 **Files:**
-- Create: `apps/companion/src/config.ts`
-- Create: `apps/companion/src/config.test.ts`
+- Create: `apps/backend/src/config.ts`
+- Create: `apps/backend/src/config.test.ts`
 
 - [ ] **Step 1: Write tests for config validation and resolution**
-  Create `apps/companion/src/config.test.ts` verifying that:
+  Create `apps/backend/src/config.test.ts` verifying that:
   - Default DB path, profile path, and resume path resolve correctly based on workspace cwd.
   - Specifying custom paths in options overrides environment variables.
   - Invalid log levels throw Zod parsing errors.
   - Selecting an AI provider without its key environment variable throws a validation error.
   - Valid setups return a fully-populated `ResolvedConfig` object.
 
-  Code content for `apps/companion/src/config.test.ts`:
+  Code content for `apps/backend/src/config.test.ts`:
   ```typescript
   import { describe, expect, it, beforeEach, afterEach, vi } from "vitest";
   import { resolve } from "node:path";
@@ -44,9 +44,9 @@
 
   	it("resolves default database and file paths when no options are provided", () => {
   		const config = resolveConfig({});
-  		expect(config.databasePath).toContain(".open-resume-companion/jobs.sqlite");
-  		expect(config.profilePath).toContain(".open-resume-companion/profile.json");
-  		expect(config.resumePath).toContain(".open-resume-companion/resume.json");
+  		expect(config.databasePath).toContain(".open-resume-backend/jobs.sqlite");
+  		expect(config.profilePath).toContain(".open-resume-backend/profile.json");
+  		expect(config.resumePath).toContain(".open-resume-backend/resume.json");
   		expect(config.logLevel).toBe("info");
   		expect(config.ai.provider).toBe("openai");
   		expect(config.ai.apiKey).toBe("sk-test-openai");
@@ -69,13 +69,13 @@
   	});
 
   	it("throws an error if the selected provider key is missing", () => {
-  		vi.stubEnv("OPEN_RESUME_COMPANION_AI_PROVIDER", "google");
+  		vi.stubEnv("OPEN_RESUME_BACKEND_AI_PROVIDER", "google");
   		vi.unstubAllEnvs(); // Remove OPENAI_API_KEY as well
   		expect(() => resolveConfig({})).toThrow(/AI Provider "google" is selected, but its required API key/);
   	});
 
   	it("correctly resolves other providers when their key is present", () => {
-  		vi.stubEnv("OPEN_RESUME_COMPANION_AI_PROVIDER", "google");
+  		vi.stubEnv("OPEN_RESUME_BACKEND_AI_PROVIDER", "google");
   		vi.stubEnv("GEMINI_API_KEY", "gemini-test-key");
   		const config = resolveConfig({});
   		expect(config.ai.provider).toBe("google");
@@ -86,11 +86,11 @@
   ```
 
 - [ ] **Step 2: Run test to verify it fails**
-  Run: `pnpm --filter @open-resume/companion test config.test.ts`
+  Run: `pnpm --filter @open-resume/backend test config.test.ts`
   Expected: FAIL with "Cannot find module './config.js'" or similar compile/import error.
 
 - [ ] **Step 3: Write config implementation**
-  Create `apps/companion/src/config.ts`:
+  Create `apps/backend/src/config.ts`:
   ```typescript
   import { resolve, dirname } from "node:path";
   import { z } from "zod";
@@ -148,10 +148,10 @@
   }
 
   const EnvSchema = z.object({
-  	OPEN_RESUME_COMPANION_DB_PATH: z.string().optional(),
-  	OPEN_RESUME_COMPANION_LOG_LEVEL: LogLevelSchema.default("info"),
-  	OPEN_RESUME_COMPANION_LOG_SCRAPED_DATA: z.string().optional(),
-  	OPEN_RESUME_COMPANION_AI_PROVIDER: AIProviderSchema.default("openai"),
+  	OPEN_RESUME_BACKEND_DB_PATH: z.string().optional(),
+  	OPEN_RESUME_BACKEND_LOG_LEVEL: LogLevelSchema.default("info"),
+  	OPEN_RESUME_BACKEND_LOG_SCRAPED_DATA: z.string().optional(),
+  	OPEN_RESUME_BACKEND_AI_PROVIDER: AIProviderSchema.default("openai"),
   	OPENAI_API_KEY: z.string().optional(),
   	OPENAI_MODEL: z.string().default("gpt-4o-mini"),
   	GEMINI_API_KEY: z.string().optional(),
@@ -172,16 +172,16 @@
 
   	const databasePath =
   		parsedOptions.databasePath ??
-  		parsedEnv.OPEN_RESUME_COMPANION_DB_PATH ??
-  		resolve(process.cwd(), ".open-resume-companion/jobs.sqlite");
+  		parsedEnv.OPEN_RESUME_BACKEND_DB_PATH ??
+  		resolve(process.cwd(), ".open-resume-backend/jobs.sqlite");
 
-  	const logLevel = parsedOptions.logLevel ?? parsedEnv.OPEN_RESUME_COMPANION_LOG_LEVEL;
+  	const logLevel = parsedOptions.logLevel ?? parsedEnv.OPEN_RESUME_BACKEND_LOG_LEVEL;
 
   	const logScrapedData =
   		parsedOptions.logScrapedData ??
-  		isScrapedDataLoggingEnabled(parsedEnv.OPEN_RESUME_COMPANION_LOG_SCRAPED_DATA);
+  		isScrapedDataLoggingEnabled(parsedEnv.OPEN_RESUME_BACKEND_LOG_SCRAPED_DATA);
 
-  	const provider = parsedEnv.OPEN_RESUME_COMPANION_AI_PROVIDER;
+  	const provider = parsedEnv.OPEN_RESUME_BACKEND_AI_PROVIDER;
   	let apiKey: string | undefined;
   	let modelName: string | undefined;
 
@@ -230,14 +230,14 @@
   ```
 
 - [ ] **Step 4: Run test to verify it passes**
-  Run: `pnpm --filter @open-resume/companion test config.test.ts`
+  Run: `pnpm --filter @open-resume/backend test config.test.ts`
   Expected: PASS.
 
 - [ ] **Step 5: Commit config files**
   Run:
   ```bash
-  git add apps/companion/src/config.ts apps/companion/src/config.test.ts
-  git commit -m "feat(companion): add centralized config and validation"
+  git add apps/backend/src/config.ts apps/backend/src/config.test.ts
+  git commit -m "feat(backend): add centralized config and validation"
   ```
 
 ---
@@ -245,11 +245,11 @@
 ### Task 2: Refactor `ai-analyzer.ts` and update tests
 
 **Files:**
-- Modify: `apps/companion/src/jobs/ai-analyzer.ts`
-- Modify: `apps/companion/src/jobs/ai-analyzer.test.ts`
+- Modify: `apps/backend/src/jobs/ai-analyzer.ts`
+- Modify: `apps/backend/src/jobs/ai-analyzer.test.ts`
 
 - [ ] **Step 1: Update `ai-analyzer.ts` signature and model creation**
-  Modify [ai-analyzer.ts](file:///Users/ben/ghq/github.com/Benjaminlooi/resume-builder/.worktrees/job-application-ai-helper/apps/companion/src/jobs/ai-analyzer.ts#L47-L124) to accept required `aiConfig`, remove all environment variable accesses, and remove local defaults.
+  Modify [ai-analyzer.ts](file:///Users/ben/ghq/github.com/Benjaminlooi/resume-builder/.worktrees/job-application-ai-helper/apps/backend/src/jobs/ai-analyzer.ts#L47-L124) to accept required `aiConfig`, remove all environment variable accesses, and remove local defaults.
 
   Modified code section:
   ```typescript
@@ -320,7 +320,7 @@
   ```
 
 - [ ] **Step 2: Update `ai-analyzer.test.ts`**
-  Modify [ai-analyzer.test.ts](file:///Users/ben/ghq/github.com/Benjaminlooi/resume-builder/.worktrees/job-application-ai-helper/apps/companion/src/jobs/ai-analyzer.test.ts):
+  Modify [ai-analyzer.test.ts](file:///Users/ben/ghq/github.com/Benjaminlooi/resume-builder/.worktrees/job-application-ai-helper/apps/backend/src/jobs/ai-analyzer.test.ts):
   - Remove all tests checking environment variable/config-resolution defaults (as these are moved to `config.test.ts` in Task 1).
   - Update all `analyzeJobPosting` calls in the test file to pass a mock/explicit `aiConfig` object.
 
@@ -342,14 +342,14 @@
   ```
 
 - [ ] **Step 3: Run AI Analyzer tests to verify**
-  Run: `pnpm --filter @open-resume/companion test ai-analyzer.test.ts`
+  Run: `pnpm --filter @open-resume/backend test ai-analyzer.test.ts`
   Expected: PASS.
 
 - [ ] **Step 4: Commit changes**
   Run:
   ```bash
-  git add apps/companion/src/jobs/ai-analyzer.ts apps/companion/src/jobs/ai-analyzer.test.ts
-  git commit -m "refactor(companion): decouple ai-analyzer from env variable fallbacks"
+  git add apps/backend/src/jobs/ai-analyzer.ts apps/backend/src/jobs/ai-analyzer.test.ts
+  git commit -m "refactor(backend): decouple ai-analyzer from env variable fallbacks"
   ```
 
 ---
@@ -357,11 +357,11 @@
 ### Task 3: Update `crawl-queue.ts` and `crawl-queue.test.ts`
 
 **Files:**
-- Modify: `apps/companion/src/jobs/crawl-queue.ts`
-- Modify: `apps/companion/src/jobs/crawl-queue.test.ts`
+- Modify: `apps/backend/src/jobs/crawl-queue.ts`
+- Modify: `apps/backend/src/jobs/crawl-queue.test.ts`
 
 - [ ] **Step 1: Pass `aiConfig` through `CrawlQueueOptions`**
-  Update [crawl-queue.ts](file:///Users/ben/ghq/github.com/Benjaminlooi/resume-builder/.worktrees/job-application-ai-helper/apps/companion/src/jobs/crawl-queue.ts) to accept `aiConfig` and forward it to `analyzeJobPosting`.
+  Update [crawl-queue.ts](file:///Users/ben/ghq/github.com/Benjaminlooi/resume-builder/.worktrees/job-application-ai-helper/apps/backend/src/jobs/crawl-queue.ts) to accept `aiConfig` and forward it to `analyzeJobPosting`.
 
   Modified section in `crawl-queue.ts`:
   ```typescript
@@ -391,7 +391,7 @@
   ```
 
 - [ ] **Step 2: Update `crawl-queue.test.ts`**
-  Modify [crawl-queue.test.ts](file:///Users/ben/ghq/github.com/Benjaminlooi/resume-builder/.worktrees/job-application-ai-helper/apps/companion/src/jobs/crawl-queue.test.ts) to pass a dummy `aiConfig` into `createCrawlQueue()`.
+  Modify [crawl-queue.test.ts](file:///Users/ben/ghq/github.com/Benjaminlooi/resume-builder/.worktrees/job-application-ai-helper/apps/backend/src/jobs/crawl-queue.test.ts) to pass a dummy `aiConfig` into `createCrawlQueue()`.
   ```typescript
   const crawlQueue = createCrawlQueue({
   	repository,
@@ -401,14 +401,14 @@
   ```
 
 - [ ] **Step 3: Run crawl queue tests to verify**
-  Run: `pnpm --filter @open-resume/companion test crawl-queue.test.ts`
+  Run: `pnpm --filter @open-resume/backend test crawl-queue.test.ts`
   Expected: PASS.
 
 - [ ] **Step 4: Commit changes**
   Run:
   ```bash
-  git add apps/companion/src/jobs/crawl-queue.ts apps/companion/src/jobs/crawl-queue.test.ts
-  git commit -m "refactor(companion): pass aiConfig through crawl queue options"
+  git add apps/backend/src/jobs/crawl-queue.ts apps/backend/src/jobs/crawl-queue.test.ts
+  git commit -m "refactor(backend): pass aiConfig through crawl queue options"
   ```
 
 ---
@@ -416,11 +416,11 @@
 ### Task 4: Integrate `resolveConfig` into `server.ts` and update tests
 
 **Files:**
-- Modify: `apps/companion/src/server.ts`
-- Modify: `apps/companion/src/server.test.ts`
+- Modify: `apps/backend/src/server.ts`
+- Modify: `apps/backend/src/server.test.ts`
 
 - [ ] **Step 1: Replace parameters, helpers, and bootstrap logic in `server.ts`**
-  Update `apps/companion/src/server.ts` to call `resolveConfig`, remove all duplicate fallback methods (`getDefaultDatabasePath`, `getProfilePath`, `getResumePath`, `createLoggerOptions`), and pass the resolved values down.
+  Update `apps/backend/src/server.ts` to call `resolveConfig`, remove all duplicate fallback methods (`getDefaultDatabasePath`, `getProfilePath`, `getResumePath`, `createLoggerOptions`), and pass the resolved values down.
 
   Modified file code:
   ```typescript
@@ -509,17 +509,17 @@
   ```
 
 - [ ] **Step 2: Update `server.test.ts` to pass required inputs**
-  Update the test helper `createTestServer` in [server.test.ts](file:///Users/ben/ghq/github.com/Benjaminlooi/resume-builder/.worktrees/job-application-ai-helper/apps/companion/src/server.test.ts#L42-L84) to mock/set `OPENAI_API_KEY` env variable, or configure a default mock AI config on start.
+  Update the test helper `createTestServer` in [server.test.ts](file:///Users/ben/ghq/github.com/Benjaminlooi/resume-builder/.worktrees/job-application-ai-helper/apps/backend/src/server.test.ts#L42-L84) to mock/set `OPENAI_API_KEY` env variable, or configure a default mock AI config on start.
 
 - [ ] **Step 3: Run server tests to verify**
-  Run: `pnpm --filter @open-resume/companion test server.test.ts`
+  Run: `pnpm --filter @open-resume/backend test server.test.ts`
   Expected: PASS.
 
 - [ ] **Step 4: Commit changes**
   Run:
   ```bash
-  git add apps/companion/src/server.ts apps/companion/src/server.test.ts
-  git commit -m "refactor(companion): integrate resolveConfig into server bootstrap"
+  git add apps/backend/src/server.ts apps/backend/src/server.test.ts
+  git commit -m "refactor(backend): integrate resolveConfig into server bootstrap"
   ```
 
 ---
@@ -536,4 +536,4 @@
 
 - [ ] **Step 3: Build package**
   Run: `pnpm build`
-  Expected: Successful compilation of web and companion bundles.
+  Expected: Successful compilation of web and backend bundles.

@@ -10,11 +10,11 @@
 
 ---
 
-### Task 1: Extend local-companion-client.ts
+### Task 1: Extend local-backend-client.ts
 
 **Files:**
-- Modify: `apps/web/src/lib/local-companion-client.ts`
-- Test: `apps/web/src/lib/local-companion-client.test.ts`
+- Modify: `apps/web/src/lib/local-backend-client.ts`
+- Test: `apps/web/src/lib/local-backend-client.test.ts`
 
 - [ ] **Step 1: Write CandidateProfile and Resume Zod schemas**
   Extend client library with Zod definitions matching the backend:
@@ -27,7 +27,7 @@
   - Implement `updateProfile(profile: CandidateProfile): Promise<CandidateProfile>`
   - Implement `syncResume(resume: Record<string, unknown>): Promise<{ ok: boolean }>`
 - [ ] **Step 3: Write tests for client methods**
-  Add mock fetch calls in `apps/web/src/lib/local-companion-client.test.ts` to assert that they correctly call URLs:
+  Add mock fetch calls in `apps/web/src/lib/local-backend-client.test.ts` to assert that they correctly call URLs:
   - `GET /profile`
   - `PUT /profile`
   - `PUT /profile/resume`

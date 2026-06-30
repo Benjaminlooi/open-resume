@@ -18,7 +18,7 @@ import {
 	deleteJobApplication as deleteJobApplicationApi,
 	listJobApplications,
 	updateJobApplication as updateJobApplicationApi,
-} from "./local-companion-client";
+} from "./local-backend-client";
 
 export interface JobApplicationSlice {
 	jobApplications: JobApplication[];
@@ -88,7 +88,7 @@ export const createJobApplicationSlice: StateCreator<
 			}));
 		} catch (err) {
 			console.error(
-				"Failed to load job applications from companion backend",
+				"Failed to load job applications from backend",
 				err,
 			);
 		}

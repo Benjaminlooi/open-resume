@@ -47,7 +47,7 @@ job-postings/
 ## ANTI-PATTERNS
 
 - Don't hardcode provider logic in components — use `job-ai.ts`.
-- Don't call companion API directly from components — use `job-posting-store.ts`.
+- Don't call backend API directly from components — use `job-posting-store.ts`.
 - Don't add new steps without updating the step sequence in `Steps/`.
 - `applyResumeEditProposal` must ONLY mutate `tailoredResume`, never the saved source resume.
 - Don't fabricate job details — if crawling fails, mark as `failed` with actionable error.

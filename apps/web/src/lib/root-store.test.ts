@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { getResume, updateResume } from "./local-companion-client";
+import { getResume, updateResume } from "./local-backend-client";
 import { useRootStore } from "./root-store";
 
-vi.mock("./local-companion-client", () => ({
+vi.mock("./local-backend-client", () => ({
 	getResume: vi.fn(),
 	updateResume: vi.fn(),
 }));
@@ -163,7 +163,7 @@ describe("resume slice", () => {
 		expect(state.summary).toBe("<p>Imported summary.</p>");
 	});
 
-	it("loads a resume asynchronously from the companion", async () => {
+	it("loads a resume asynchronously from the backend", async () => {
 		getResumeMock.mockResolvedValue({
 			id: "resume-1",
 			name: "Backend Resume",
@@ -194,7 +194,7 @@ describe("resume slice", () => {
 		});
 	});
 
-	it("returns false when companion resume loading fails", async () => {
+	it("returns false when backend resume loading fails", async () => {
 		getResumeMock.mockRejectedValue(new Error("missing"));
 		const consoleErrorSpy = vi
 			.spyOn(console, "error")

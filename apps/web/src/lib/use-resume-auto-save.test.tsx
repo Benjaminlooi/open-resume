@@ -4,15 +4,15 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useRootStore } from "./root-store";
-import { updateResume } from "./local-companion-client";
+import { updateResume } from "./local-backend-client";
 import { useResumeAutoSave } from "./use-resume-auto-save";
 
 (
 	globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }
 ).IS_REACT_ACT_ENVIRONMENT = true;
 
-// Mock companion client
-vi.mock("./local-companion-client", () => ({
+// Mock backend client
+vi.mock("./local-backend-client", () => ({
 	getResume: vi.fn(),
 	updateResume: vi.fn(),
 }));
@@ -71,7 +71,7 @@ describe("useResumeAutoSave hook", () => {
 		vi.useRealTimers();
 	});
 
-	it("subscribes on mount and debounces companion saves when resume name changes", async () => {
+	it("subscribes on mount and debounces backend saves when resume name changes", async () => {
 		await act(async () => {
 			root.render(<TestComponent />);
 		});

@@ -1,6 +1,6 @@
 # Design: SQLite-Backed Job Applications & Backend Conversion
 
-This specification details moving the storage and conversion logic of job applications from frontend-only `localStorage` to the companion backend SQLite database.
+This specification details moving the storage and conversion logic of job applications from frontend-only `localStorage` to the backend SQLite database.
 
 ## 1. Shared Contracts (`@open-resume/contracts`)
 
@@ -17,7 +17,7 @@ We will introduce a new schema module for job applications in the shared contrac
 
 ---
 
-## 2. SQLite Database & Repository (`apps/companion`)
+## 2. SQLite Database & Repository (`apps/backend`)
 
 The backend SQLite repository will be updated to manage the `job_applications` table.
 
@@ -56,17 +56,17 @@ Add the following CRUD operations:
 - `updateJobApplication(id, updates)`: Updates an existing job application with partial updates, performing JSON serialization on complex fields if provided.
 - `deleteJobApplication(id)`: Deletes a job application.
 - `convertJobToApplication(jobId, now)`: Performed inside an SQLite transaction:
-  1. Retrieves the companion job by ID.
+  1. Retrieves the backend job by ID.
   2. Extracts parameters (e.g. `company` = `job.parsedCompany` || hostname, `title` = `job.parsedTitle` || "Untitled Job", description, and fit brief).
   3. Inserts a new `job_applications` row.
-  4. Deletes the companion job row.
+  4. Deletes the backend job row.
   5. Returns the mapped `JobApplication` object.
 
 ---
 
-## 3. Companion API Routes (`apps/companion`)
+## 3. Backend API Routes (`apps/backend`)
 
-We will expose new routes on the companion Fastify server:
+We will expose new routes on the backend Fastify server:
 
 ### CRUD Routes
 - **Endpoint:** `/job-applications`
@@ -85,10 +85,10 @@ We will expose new routes on the companion Fastify server:
 
 ## 4. Web Frontend Refactoring (`apps/web`)
 
-The frontend will use the new companion APIs and remove reliance on `localStorage` for job applications.
+The frontend will use the new backend APIs and remove reliance on `localStorage` for job applications.
 
 ### Client Update
-- **File:** `apps/web/src/lib/local-companion-client.ts`
+- **File:** `apps/web/src/lib/local-backend-client.ts`
 - **Additions:**
   - Expose API client wrappers for:
     - `listJobApplications()`
@@ -116,14 +116,14 @@ The frontend will use the new companion APIs and remove reliance on `localStorag
     - `saveCoverLetterDraft`
     - `associateSourceResume`
     - `archiveIncompleteJob`
-  - Update `useCompanionJobStore.ts` to delegate conversion to the backend `/jobs/:id/convert` endpoint rather than mapping fields in the frontend.
+  - Update `useBackendJobStore.ts` to delegate conversion to the backend `/jobs/:id/convert` endpoint rather than mapping fields in the frontend.
 
 ---
 
 ## Verification Plan
 
 ### Automated Tests
-- Add unit tests for SQLite migrations and repository CRUD in `apps/companion/src/jobs/repository.test.ts`.
-- Add integration tests for Fastify endpoints in `apps/companion/src/server.test.ts`.
+- Add unit tests for SQLite migrations and repository CRUD in `apps/backend/src/jobs/repository.test.ts`.
+- Add integration tests for Fastify endpoints in `apps/backend/src/server.test.ts`.
 - Update/adapt tests in `apps/web/src/features/jobs/job-application-store.test.ts` to mock/verify backend API calls.
 - Run `pnpm verify` to check formatting, linting, type-checking, and test suite health across the workspace.

@@ -83,7 +83,7 @@ describe("crawlCleanedTextWithPlaywright", () => {
 		const dataUrl = `data:text/html;charset=utf-8,${encodeURIComponent(htmlContent)}`;
 		const screenshotPath = join(
 			process.cwd(),
-			".open-resume-companion",
+			".open-resume-backend",
 			`test-screenshot-${randomUUID()}.png`,
 		);
 

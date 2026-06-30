@@ -5,7 +5,7 @@ import type { ZodTypeProvider } from "fastify-type-provider-zod";
 import { defaultProfile } from "../profile/default-profile.js";
 import {
 	candidateProfileSchema,
-	companionErrorResponseSchema,
+	backendErrorResponseSchema,
 	okResponseSchema,
 	resumeSyncRequestSchema,
 	syncedResumeResponseSchema,
@@ -29,7 +29,7 @@ export function createProfileRoutes(
 					summary: "Get candidate profile",
 					response: {
 						200: candidateProfileSchema,
-						500: companionErrorResponseSchema,
+						500: backendErrorResponseSchema,
 					},
 				},
 			},
@@ -61,7 +61,7 @@ export function createProfileRoutes(
 					body: candidateProfileSchema,
 					response: {
 						200: candidateProfileSchema,
-						500: companionErrorResponseSchema,
+						500: backendErrorResponseSchema,
 					},
 				},
 			},
@@ -89,8 +89,8 @@ export function createProfileRoutes(
 					summary: "Get synced default resume",
 					response: {
 						200: syncedResumeResponseSchema,
-						404: companionErrorResponseSchema,
-						500: companionErrorResponseSchema,
+						404: backendErrorResponseSchema,
+						500: backendErrorResponseSchema,
 					},
 				},
 			},
@@ -114,7 +114,7 @@ export function createProfileRoutes(
 					body: resumeSyncRequestSchema,
 					response: {
 						200: okResponseSchema,
-						500: companionErrorResponseSchema,
+						500: backendErrorResponseSchema,
 					},
 				},
 			},

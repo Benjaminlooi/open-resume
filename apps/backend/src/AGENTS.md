@@ -1,4 +1,4 @@
-# Companion Backend — AGENTS.md
+# Backend — AGENTS.md
 
 **Fastify 5 daemon** — job scraping, AI analysis, SQLite persistence, OpenAPI.
 
@@ -35,7 +35,7 @@ src/
 - Zod 4 for request/response validation. All routes use `fastify-type-provider-zod`.
 - Playwright scrapes in headless Chromium — no extra browser deps needed.
 - Crawl queue uses SQLite as a job store (polling, not Pub/Sub).
-- OpenAPI 3.0 generated from route schemas. Run `pnpm companion:openapi` to export.
+- OpenAPI 3.0 generated from route schemas. Run `pnpm backend:openapi` to export.
 - Config via env vars, defaulting in `config.ts`. See `.env.example`.
 
 ## ANTI-PATTERNS
@@ -43,7 +43,7 @@ src/
 - Don't hardcode paths or URLs — use `config.ts`.
 - Don't bypass OpenAPI registration — every route must expose its schema.
 - Don't store secrets in code — use `.env` (gitignored).
-- Don't add heavy dependencies — the companion is intentionally lightweight.
+- Don't add heavy dependencies — the backend is intentionally lightweight.
 - Route files MUST NOT create repositories, crawl queues, or read env vars directly — inject from `context.ts`.
 - Route files MUST NOT decorate the parent server without `fastify-plugin`.
 - Don't rely on old synchronous boolean contract for `loadResume()` — await the async result.

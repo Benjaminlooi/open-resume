@@ -2,7 +2,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { Eye, RotateCcw, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useRootStore } from "#/lib/root-store";
-import type { LocalJobPosting } from "#/lib/local-companion-client";
+import type { LocalJobPosting } from "#/lib/local-backend-client";
 import JobPostingDetailsDialog from "./JobPostingDetailsDialog";
 
 interface JobPostingCardProps {

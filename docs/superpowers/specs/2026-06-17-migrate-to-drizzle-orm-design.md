@@ -1,27 +1,27 @@
-# Design Spec: Migrating Companion Backend to Drizzle ORM
+# Design Spec: Migrating Backend to Drizzle ORM
 
 ## Overview
 
-This design outlines the migration of the SQLite database layer in the Fastify companion app (`apps/companion`) to Drizzle ORM. The migration focuses on improving type safety, maintainability, and query structure while preserving the existing **Repository Pattern** boundary, existing data compatibility, and shared frontend/backend typescript types.
+This design outlines the migration of the SQLite database layer in the Fastify backend app (`apps/backend`) to Drizzle ORM. The migration focuses on improving type safety, maintainability, and query structure while preserving the existing **Repository Pattern** boundary, existing data compatibility, and shared frontend/backend typescript types.
 
 ---
 
 ## Architectural Boundaries
 
-1. **Contracts (`packages/contracts`)**: Unchanged. The Zod schemas and TypeScript interfaces (like `CompanionJob`, `JobApplication`, etc.) remain the source of truth shared by both `apps/web` (frontend) and `apps/companion` (backend).
-2. **Repository (`apps/companion/src/jobs/repository.ts`)**: Serves as the mapping layer. Internally, it uses Drizzle to query the database and maps the resulting Drizzle entities back to the shared domain models before returning them.
-3. **Database Schema (`apps/companion/src/db/schema.ts`)**: New declarative definitions of the three SQLite tables (`jobs`, `resumes`, `job_applications`).
+1. **Contracts (`packages/contracts`)**: Unchanged. The Zod schemas and TypeScript interfaces (like `BackendJob`, `JobApplication`, etc.) remain the source of truth shared by both `apps/web` (frontend) and `apps/backend` (backend).
+2. **Repository (`apps/backend/src/jobs/repository.ts`)**: Serves as the mapping layer. Internally, it uses Drizzle to query the database and maps the resulting Drizzle entities back to the shared domain models before returning them.
+3. **Database Schema (`apps/backend/src/db/schema.ts`)**: New declarative definitions of the three SQLite tables (`jobs`, `resumes`, `job_applications`).
 
 ---
 
 ## Configuration & Dependencies
 
-### `apps/companion/package.json`
+### `apps/backend/package.json`
 Add the following packages:
 - `drizzle-orm` (Runtime ORM client)
 - `drizzle-kit` (Dev dependency for generating migration files)
 
-### `apps/companion/drizzle.config.ts`
+### `apps/backend/drizzle.config.ts`
 Drizzle Kit configuration for SQLite:
 ```typescript
 import { defineConfig } from "drizzle-kit";
@@ -31,14 +31,14 @@ export default defineConfig({
 	schema: "./src/db/schema.ts",
 	dialect: "sqlite",
 	dbCredentials: {
-		url: process.env.OPEN_RESUME_COMPANION_DATABASE_PATH ?? ".open-resume-companion/jobs.sqlite",
+		url: process.env.OPEN_RESUME_BACKEND_DATABASE_PATH ?? ".open-resume-backend/jobs.sqlite",
 	},
 });
 ```
 
 ---
 
-## Database Schema (`apps/companion/src/db/schema.ts`)
+## Database Schema (`apps/backend/src/db/schema.ts`)
 
 ```typescript
 import { eq } from "drizzle-orm";
@@ -122,10 +122,10 @@ export const jobApplications = sqliteTable(
 ## Migration Strategy
 
 1. **Generation**:
-   Run `pnpm --filter @open-resume/companion drizzle-kit generate` to generate the initial migration in `apps/companion/drizzle/`.
+   Run `pnpm --filter @open-resume/backend drizzle-kit generate` to generate the initial migration in `apps/backend/drizzle/`.
    
 2. **Startup Runner**:
-   In `apps/companion/src/jobs/repository.ts`, we run migrations programmatically when setting up the repository:
+   In `apps/backend/src/jobs/repository.ts`, we run migrations programmatically when setting up the repository:
    ```typescript
    import { migrate } from "drizzle-orm/node-sqlite/migrator";
    
@@ -187,5 +187,5 @@ createJobApplication(input: { ... }) {
 
 ### Automated Verification
 1. **Compilation Check**: Run `pnpm typecheck` to verify TypeScript compile status.
-2. **Unit Tests**: Run `pnpm companion:test` to ensure all existing repository unit tests pass. Since the repository public API remains identical, all test assertions should pass unmodified.
+2. **Unit Tests**: Run `pnpm backend:test` to ensure all existing repository unit tests pass. Since the repository public API remains identical, all test assertions should pass unmodified.
 3. **Workspace Check**: Run `pnpm verify` to confirm builds and formatting rules pass.

@@ -14,7 +14,7 @@ import { Textarea } from "#/components/ui/textarea";
 import { useShallow } from "zustand/react/shallow";
 import { type Message, useRootStore } from "#/lib/root-store";
 import { cn } from "#/lib/utils";
-import { companionBaseUrl } from "#/lib/local-companion-client";
+import { backendBaseUrl } from "#/lib/local-backend-client";
 
 interface Props {
 	context: Record<string, unknown>;
@@ -131,7 +131,7 @@ export function InteractiveAIPromptModal({
 				return m as any;
 			});
 
-			const response = await fetch(`${companionBaseUrl}/ai/chat`, {
+			const response = await fetch(`${backendBaseUrl}/ai/chat`, {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",

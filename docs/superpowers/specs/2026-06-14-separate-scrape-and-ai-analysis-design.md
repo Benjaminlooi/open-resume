@@ -1,6 +1,6 @@
 # Design: Separating Scrape Flow and AI Analysis Flow
 
-This document details the design to separate the job scraping/crawling phase from the AI analysis phase in the companion app. This enables retrying AI analysis directly without repeating the scraping step if the crawl succeeded but the AI analysis failed.
+This document details the design to separate the job scraping/crawling phase from the AI analysis phase in the backend app. This enables retrying AI analysis directly without repeating the scraping step if the crawl succeeded but the AI analysis failed.
 
 ## Objectives
 - Persist the scraped `cleanedText` as soon as crawling successfully finishes.
@@ -10,7 +10,7 @@ This document details the design to separate the job scraping/crawling phase fro
 
 ---
 
-## 1. DB & Repository Updates (`apps/companion/src/jobs/repository.ts`)
+## 1. DB & Repository Updates (`apps/backend/src/jobs/repository.ts`)
 
 ### Changes to JobRepository:
 - **`markAnalyzing(id, cleanedText, now)`**: Update to accept `cleanedText` and persist it to the SQLite database.
@@ -20,7 +20,7 @@ This document details the design to separate the job scraping/crawling phase fro
 
 ---
 
-## 2. Crawl Queue & Background Worker (`apps/companion/src/jobs/crawl-queue.ts`)
+## 2. Crawl Queue & Background Worker (`apps/backend/src/jobs/crawl-queue.ts`)
 
 ### Flow inside `runJob(id)`:
 1. Fetch the job details. If status is `ready`, return.
@@ -41,7 +41,7 @@ This document details the design to separate the job scraping/crawling phase fro
 
 ---
 
-## 3. Fastify Backend Routing (`apps/companion/src/routes/job-routes.ts`)
+## 3. Fastify Backend Routing (`apps/backend/src/routes/job-routes.ts`)
 
 - Register a new POST route `/jobs/:id/retry-analyze`.
 - The route will:
@@ -53,10 +53,10 @@ This document details the design to separate the job scraping/crawling phase fro
 
 ## 4. Frontend Client and UI (`apps/web`)
 
-### Client API (`apps/web/src/lib/local-companion-client.ts`)
-- Add `retryCompanionJobAnalyze(id)` wrapper calling the POST `/jobs/:id/retry-analyze` route.
+### Client API (`apps/web/src/lib/local-backend-client.ts`)
+- Add `retryBackendJobAnalyze(id)` wrapper calling the POST `/jobs/:id/retry-analyze` route.
 
-### Job Card Component (`apps/web/src/components/jobs/CompanionJobCard.tsx`)
+### Job Card Component (`apps/web/src/components/jobs/BackendJobCard.tsx`)
 - Props: Add `onRetryAnalyze: (id: string) => void`.
 - Status Badge rendering:
   - If `job.crawlStatus === "failed"`:
@@ -76,5 +76,5 @@ This document details the design to separate the job scraping/crawling phase fro
   - If `job.cleanedText` is non-empty, render a second button: **Retry AI Analysis** (calls `onRetryAnalyze`).
 
 ### Job Tracker Page (`apps/web/src/routes/jobs.tsx`)
-- Implement `handleRetryAnalyze` callback which invokes `retryCompanionJobAnalyze` and updates state.
-- Pass `onRetryAnalyze={handleRetryAnalyze}` to `CompanionJobCard`.
+- Implement `handleRetryAnalyze` callback which invokes `retryBackendJobAnalyze` and updates state.
+- Pass `onRetryAnalyze={handleRetryAnalyze}` to `BackendJobCard`.

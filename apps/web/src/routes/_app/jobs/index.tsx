@@ -130,7 +130,7 @@ function JobsDashboard() {
 				</div>
 			)}
 
-			{/* Collapsible Companion Queue Panel */}
+			{/* Collapsible Crawler Queue Panel */}
 			{isMounted && (
 				<div className="mb-8 border-2 border-border rounded-base bg-[#F0F9FF] shadow-shadow">
 					<button
@@ -139,7 +139,7 @@ function JobsDashboard() {
 						className="w-full flex justify-between items-center p-4 font-heading text-md md:text-lg text-left cursor-pointer hover:bg-main/5 transition-colors"
 					>
 						<span>
-							Companion Queue: {readyJobs.length} ready, {pendingJobs.length}{" "}
+							Crawler Queue: {readyJobs.length} ready, {pendingJobs.length}{" "}
 							pending, {failedJobs.length} failed. Click to{" "}
 							{isQueueExpanded ? "collapse" : "expand"}.
 						</span>

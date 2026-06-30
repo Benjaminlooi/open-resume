@@ -18,8 +18,8 @@
 ### Task 1: Job Repository changes
 
 **Files:**
-- Modify: `apps/companion/src/jobs/repository.ts`
-- Modify: `apps/companion/src/jobs/repository.test.ts`
+- Modify: `apps/backend/src/jobs/repository.ts`
+- Modify: `apps/backend/src/jobs/repository.test.ts`
 
 - [ ] **Step 1: Write failing tests in `repository.test.ts`**
   Add test cases to verify:
@@ -29,7 +29,7 @@
   4. `listRunnableJobs` includes jobs with status `'analyzing'`.
   
   ```typescript
-  // Add to apps/companion/src/jobs/repository.test.ts
+  // Add to apps/backend/src/jobs/repository.test.ts
   it("saves cleanedText in markAnalyzing", () => {
       const repository = createTestRepository();
       repository.createJob({ id: "job-1", sourceUrl: "https://example.com", now: 1000 });
@@ -75,11 +75,11 @@
   ```
 
 - [ ] **Step 2: Run tests to verify they fail**
-  Run command: `pnpm --filter @open-resume/companion test repository.test.ts`
+  Run command: `pnpm --filter @open-resume/backend test repository.test.ts`
   Expected: Failing tests for the new assertions.
 
 - [ ] **Step 3: Modify repository implementation**
-  Update `apps/companion/src/jobs/repository.ts` to implement the new signatures and methods:
+  Update `apps/backend/src/jobs/repository.ts` to implement the new signatures and methods:
   ```typescript
   // Modify markAnalyzing:
   markAnalyzing(id: string, cleanedText: string, now: number) {
@@ -129,17 +129,17 @@
           .map((row) => mapJob(row as unknown as JobRow));
   },
   ```
-  *Note: Make sure to also update `markAnalyzing` calls in existing test code in `apps/companion/src/jobs/repository.test.ts` to pass an empty string or dummy text.*
+  *Note: Make sure to also update `markAnalyzing` calls in existing test code in `apps/backend/src/jobs/repository.test.ts` to pass an empty string or dummy text.*
 
 - [ ] **Step 4: Run tests to verify they pass**
-  Run command: `pnpm --filter @open-resume/companion test repository.test.ts`
+  Run command: `pnpm --filter @open-resume/backend test repository.test.ts`
   Expected: PASS
 
 - [ ] **Step 5: Commit**
   Run command:
   ```bash
-  git add apps/companion/src/jobs/repository.ts apps/companion/src/jobs/repository.test.ts
-  git commit -m "feat(companion): support persisting cleanedText on markAnalyzing and resetForAnalysisRetry"
+  git add apps/backend/src/jobs/repository.ts apps/backend/src/jobs/repository.test.ts
+  git commit -m "feat(backend): support persisting cleanedText on markAnalyzing and resetForAnalysisRetry"
   ```
 
 ---
@@ -147,8 +147,8 @@
 ### Task 2: Crawl Queue background worker changes
 
 **Files:**
-- Modify: `apps/companion/src/jobs/crawl-queue.ts`
-- Modify: `apps/companion/src/jobs/crawl-queue.test.ts`
+- Modify: `apps/backend/src/jobs/crawl-queue.ts`
+- Modify: `apps/backend/src/jobs/crawl-queue.test.ts`
 
 - [ ] **Step 1: Write failing tests in `crawl-queue.test.ts`**
   Add tests for:
@@ -157,7 +157,7 @@
   3. Processing `analyzing` jobs in `enqueueRunnableJobs`.
 
   ```typescript
-  // Add to apps/companion/src/jobs/crawl-queue.test.ts
+  // Add to apps/backend/src/jobs/crawl-queue.test.ts
   it("bypasses crawl and executes AI analysis when cleanedText is already populated", async () => {
       const repository = createTestRepository();
       createDefaultResume(repository);
@@ -210,11 +210,11 @@
   ```
 
 - [ ] **Step 2: Run tests to verify they fail**
-  Run command: `pnpm --filter @open-resume/companion test crawl-queue.test.ts`
+  Run command: `pnpm --filter @open-resume/backend test crawl-queue.test.ts`
   Expected: Failing test.
 
 - [ ] **Step 3: Modify crawl queue implementation**
-  Update `apps/companion/src/jobs/crawl-queue.ts` inside `runJob(id)`:
+  Update `apps/backend/src/jobs/crawl-queue.ts` inside `runJob(id)`:
   - Check if `job.cleanedText` exists before calling `crawl`.
   - Pass `cleanedText` to `markAnalyzing(id, cleanedText, now())`.
   - Retain `crawledAt` in `markReady` via `currentJob.crawledAt || result?.extractedAt || now()`.
@@ -222,14 +222,14 @@
   *Note: Make sure to update any mock repository setup or references in `crawl-queue.ts` to accommodate the new signature of `markAnalyzing`.*
 
 - [ ] **Step 4: Run tests to verify they pass**
-  Run command: `pnpm --filter @open-resume/companion test crawl-queue.test.ts`
+  Run command: `pnpm --filter @open-resume/backend test crawl-queue.test.ts`
   Expected: PASS
 
 - [ ] **Step 5: Commit**
   Run command:
   ```bash
-  git add apps/companion/src/jobs/crawl-queue.ts apps/companion/src/jobs/crawl-queue.test.ts
-  git commit -m "feat(companion): bypass crawl step in runJob if cleanedText is non-empty"
+  git add apps/backend/src/jobs/crawl-queue.ts apps/backend/src/jobs/crawl-queue.test.ts
+  git commit -m "feat(backend): bypass crawl step in runJob if cleanedText is non-empty"
   ```
 
 ---
@@ -237,42 +237,42 @@
 ### Task 3: API Route changes and OpenAPI regeneration
 
 **Files:**
-- Modify: `apps/companion/src/routes/job-routes.ts`
-- Modify: `apps/companion/src/server.test.ts`
-- Modify: `apps/companion/openapi.json`
+- Modify: `apps/backend/src/routes/job-routes.ts`
+- Modify: `apps/backend/src/server.test.ts`
+- Modify: `apps/backend/openapi.json`
 
 - [ ] **Step 1: Write test for the new endpoint in `server.test.ts`**
   Add a test verifying `POST /jobs/:id/retry-analyze` resets the job state to analyzing, keeps `cleanedText`, and enqueues the job.
   
   ```typescript
-  // Add to apps/companion/src/server.test.ts
+  // Add to apps/backend/src/server.test.ts
   // You will find retry-crawl tests around line 180. Add similar for retry-analyze.
   ```
 
 - [ ] **Step 2: Run tests to verify they fail**
-  Run command: `pnpm --filter @open-resume/companion test server.test.ts`
+  Run command: `pnpm --filter @open-resume/backend test server.test.ts`
   Expected: Failing test (404 on endpoint `/jobs/:id/retry-analyze`).
 
 - [ ] **Step 3: Register `retry-analyze` route**
-  In `apps/companion/src/routes/job-routes.ts`, register the POST route `/jobs/:id/retry-analyze`.
+  In `apps/backend/src/routes/job-routes.ts`, register the POST route `/jobs/:id/retry-analyze`.
 
 - [ ] **Step 4: Run tests to verify they pass**
-  Run command: `pnpm --filter @open-resume/companion test server.test.ts`
+  Run command: `pnpm --filter @open-resume/backend test server.test.ts`
   Expected: PASS
 
 - [ ] **Step 5: Regenerate and lint OpenAPI Spec**
   Run commands:
   ```bash
-  pnpm companion:openapi
-  pnpm --filter @open-resume/companion openapi:lint
+  pnpm backend:openapi
+  pnpm --filter @open-resume/backend openapi:lint
   ```
   Expected: Schema generates successfully and contains the new endpoint, passing redocly lint checks.
 
 - [ ] **Step 6: Commit**
   Run command:
   ```bash
-  git add apps/companion/src/routes/job-routes.ts apps/companion/src/server.test.ts apps/companion/openapi.json
-  git commit -m "feat(companion): add retry-analyze endpoint and regenerate OpenAPI spec"
+  git add apps/backend/src/routes/job-routes.ts apps/backend/src/server.test.ts apps/backend/openapi.json
+  git commit -m "feat(backend): add retry-analyze endpoint and regenerate OpenAPI spec"
   ```
 
 ---
@@ -280,28 +280,28 @@
 ### Task 4: Web Client SDK changes
 
 **Files:**
-- Modify: `apps/web/src/lib/local-companion-client.ts`
-- Modify: `apps/web/src/lib/local-companion-client.test.ts`
+- Modify: `apps/web/src/lib/local-backend-client.ts`
+- Modify: `apps/web/src/lib/local-backend-client.test.ts`
 
-- [ ] **Step 1: Write failing test in `local-companion-client.test.ts`**
-  Add `retryCompanionJobAnalyze` to testing import list and write a test case mock similar to `retryCompanionJobCrawl`.
+- [ ] **Step 1: Write failing test in `local-backend-client.test.ts`**
+  Add `retryBackendJobAnalyze` to testing import list and write a test case mock similar to `retryBackendJobCrawl`.
 
 - [ ] **Step 2: Run tests to verify they fail**
-  Run command: `pnpm --filter web test local-companion-client.test.ts`
+  Run command: `pnpm --filter web test local-backend-client.test.ts`
   Expected: Fail (function not defined).
 
 - [ ] **Step 3: Implement client method**
-  In `apps/web/src/lib/local-companion-client.ts`, implement and export `retryCompanionJobAnalyze(id)`.
+  In `apps/web/src/lib/local-backend-client.ts`, implement and export `retryBackendJobAnalyze(id)`.
 
 - [ ] **Step 4: Run tests to verify they pass**
-  Run command: `pnpm --filter web test local-companion-client.test.ts`
+  Run command: `pnpm --filter web test local-backend-client.test.ts`
   Expected: PASS
 
 - [ ] **Step 5: Commit**
   Run command:
   ```bash
-  git add apps/web/src/lib/local-companion-client.ts apps/web/src/lib/local-companion-client.test.ts
-  git commit -m "feat(web): add retryCompanionJobAnalyze helper to client SDK"
+  git add apps/web/src/lib/local-backend-client.ts apps/web/src/lib/local-backend-client.test.ts
+  git commit -m "feat(web): add retryBackendJobAnalyze helper to client SDK"
   ```
 
 ---
@@ -309,39 +309,39 @@
 ### Task 5: UI Card and Tracker updates
 
 **Files:**
-- Modify: `apps/web/src/components/jobs/CompanionJobCard.tsx`
-- Modify: `apps/web/src/components/jobs/CompanionJobCard.test.tsx`
+- Modify: `apps/web/src/components/jobs/BackendJobCard.tsx`
+- Modify: `apps/web/src/components/jobs/BackendJobCard.test.tsx`
 - Modify: `apps/web/src/routes/jobs.tsx`
 
-- [ ] **Step 1: Write tests in `CompanionJobCard.test.tsx`**
+- [ ] **Step 1: Write tests in `BackendJobCard.test.tsx`**
   Update tests to cover:
   1. `failed` crawl status with empty `cleanedText` renders `FAILED (SCRAPE)` and `Retry Scrape` button.
   2. `failed` crawl status with non-empty `cleanedText` renders `FAILED (ANALYSIS)` and both `Retry Scrape` and `Retry AI Analysis` buttons.
   3. Clicking the buttons calls the correct prop callbacks.
 
 - [ ] **Step 2: Run tests to verify they fail**
-  Run command: `pnpm --filter web test CompanionJobCard.test.ts`
+  Run command: `pnpm --filter web test BackendJobCard.test.ts`
   Expected: Failure (props missing / buttons not rendered / status badge mismatch).
 
 - [ ] **Step 3: Implement UI Card changes**
-  Modify `apps/web/src/components/jobs/CompanionJobCard.tsx`:
+  Modify `apps/web/src/components/jobs/BackendJobCard.tsx`:
   - Show step-by-step progress feedback for `pending`, `crawling`, and `analyzing` in the description block.
   - Render separate status badges and labels when failed.
   - Render appropriate action buttons.
   
 - [ ] **Step 4: Implement Jobs Dashboard changes**
   Modify `apps/web/src/routes/jobs.tsx`:
-  - Add `handleRetryAnalyze` callback calling `retryCompanionJobAnalyze`.
-  - Pass the callback to `CompanionJobCard`.
+  - Add `handleRetryAnalyze` callback calling `retryBackendJobAnalyze`.
+  - Pass the callback to `BackendJobCard`.
 
 - [ ] **Step 5: Run tests to verify they pass**
-  Run command: `pnpm --filter web test CompanionJobCard.test.ts`
+  Run command: `pnpm --filter web test BackendJobCard.test.ts`
   Expected: PASS
 
 - [ ] **Step 6: Commit**
   Run command:
   ```bash
-  git add apps/web/src/components/jobs/CompanionJobCard.tsx apps/web/src/components/jobs/CompanionJobCard.test.tsx apps/web/src/routes/jobs.tsx
+  git add apps/web/src/components/jobs/BackendJobCard.tsx apps/web/src/components/jobs/BackendJobCard.test.tsx apps/web/src/routes/jobs.tsx
   git commit -m "feat(web): update job card UI to support separate scrape/analysis retry states"
   ```
 
@@ -357,10 +357,10 @@ pnpm verify
 Expected: All package builds, typecheck, and unit tests pass successfully.
 
 ### Manual Verification
-1. Run `pnpm dev` to start both the companion server and the Vite app.
+1. Run `pnpm dev` to start both the backend server and the Vite app.
 2. Add a job URL to crawl.
 3. Simulate a crawl failure by disconnecting local internet (renders Scrape failure).
 4. Connect internet and retry scrape.
-5. Simulate an AI analysis failure by clearing `OPENAI_API_KEY` (or relevant key) in the companion `.env`, then running.
+5. Simulate an AI analysis failure by clearing `OPENAI_API_KEY` (or relevant key) in the backend `.env`, then running.
 6. Verify card shows `FAILED (ANALYSIS)` with the AI error.
 7. Restore key, click **Retry AI Analysis**, and verify it successfully completes and skips crawling.

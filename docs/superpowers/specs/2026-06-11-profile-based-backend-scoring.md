@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Connect the crawled raw job postings to the active job application pipeline. Instead of requiring manual input or client-side parsing, the local companion backend will own the AI interpretation and scoring. Once a job posting is crawled, the companion will use a candidate profile (`profile.json`) and the user's default resume to automatically extract job details, analyze match fit, and calculate a compatibility score. 
+Connect the crawled raw job postings to the active job application pipeline. Instead of requiring manual input or client-side parsing, the local backend will own the AI interpretation and scoring. Once a job posting is crawled, the backend will use a candidate profile (`profile.json`) and the user's default resume to automatically extract job details, analyze match fit, and calculate a compatibility score. 
 
 The candidate profile will be fully configurable via a rich, interactive graphical user interface (GUI) on the web frontend. The backend will support OpenAI, Gemini, Anthropic, and **DeepSeek API** as providers, using prompts that mirror the Career-Ops job evaluation rubric.
 
@@ -13,7 +13,7 @@ sequenceDiagram
     autonumber
     actor User
     participant Web as Web Frontend (apps/web)
-    participant Comp as Companion Backend (apps/companion)
+    participant Comp as Backend (apps/backend)
     participant DB as SQLite Database
     participant LLM as LLM Provider (DeepSeek/OpenAI/Gemini/etc.)
 
@@ -52,7 +52,7 @@ sequenceDiagram
 
 ## 1. Candidate Profile Configuration GUI
 
-The candidate profile is stored as a structured JSON file locally at `apps/companion/config/profile.json` (or cached in SQLite) and is updated via a tabbed frontend configuration dashboard.
+The candidate profile is stored as a structured JSON file locally at `apps/backend/config/profile.json` (or cached in SQLite) and is updated via a tabbed frontend configuration dashboard.
 
 ### Profile Structure:
 - **`candidate`**: Full Name, Email, Phone, Location, Portfolio, LinkedIn, GitHub.
@@ -64,7 +64,7 @@ The candidate profile is stored as a structured JSON file locally at `apps/compa
 
 ---
 
-## 2. Companion API & Data Storage
+## 2. Backend API & Data Storage
 
 ### SQLite Schema Extensions
 We extend the `jobs` table in the SQLite database to store the parsed details, score, and generated fit brief:
@@ -82,7 +82,7 @@ ALTER TABLE jobs ADD COLUMN fit_brief_json TEXT;
 - **`GET /profile`**: Returns the candidate profile JSON.
 - **`PUT /profile`**: Saves the updated candidate profile.
 - **`GET /profile/resume`**: Returns the currently synced default resume.
-- **`PUT /profile/resume`**: Syncs the default resume from the web frontend to the companion backend.
+- **`PUT /profile/resume`**: Syncs the default resume from the web frontend to the backend.
 
 ---
 
@@ -91,7 +91,7 @@ ALTER TABLE jobs ADD COLUMN fit_brief_json TEXT;
 Once crawling finishes, the queue schedules the AI parsing task and updates the status to `analyzing`. 
 
 ### AI Provider Selection
-The companion backend reads the default provider and credentials from its environment variables (`apps/companion/.env`) or from the synced settings:
+The backend reads the default provider and credentials from its environment variables (`apps/backend/.env`) or from the synced settings:
 - **DeepSeek API** (`DEEPSEEK_API_KEY`, using model `deepseek-chat`) is fully supported as a first-class provider.
 - OpenAI, Google (Gemini), and Anthropic are also supported.
 
@@ -111,7 +111,7 @@ The system prompt in the backend analyzer mirrors the multi-dimensional Career-O
 ### Restoring the Job Pipeline
 Modify `apps/web/src/routes/jobs.tsx` to display:
 1. **Job Applications Grid**: Restore the active list of saved, tailoring, and applied jobs, including status filters and the pipeline integrity panel.
-2. **Companion Queue Panel**: Show the local crawler queue at the top of the page.
+2. **Backend Queue Panel**: Show the local crawler queue at the top of the page.
 
 ### Enhanced Queue Cards
 Ready cards in the crawler queue will display:

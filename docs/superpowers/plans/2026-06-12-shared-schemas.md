@@ -115,15 +115,15 @@ Create the split files inside the new package and migrate the Zod validation sch
       }
     }, "URL must use http or https");
 
-  export const companionErrorResponseSchema = z
+  export const backendErrorResponseSchema = z
     .object({
       error: z.string(),
       details: z.string().optional(),
     })
     .strict();
 
-  export type CompanionErrorResponse = z.infer<
-    typeof companionErrorResponseSchema
+  export type BackendErrorResponse = z.infer<
+    typeof backendErrorResponseSchema
   >;
 
   export const okResponseSchema = z
@@ -207,7 +207,7 @@ Create the split files inside the new package and migrate the Zod validation sch
 
   export type JobIdParams = z.infer<typeof jobIdParamsSchema>;
 
-  export const companionJobSchema = z
+  export const backendJobSchema = z
     .object({
       id: z.string().min(1),
       sourceUrl: httpUrlSchema,
@@ -231,15 +231,15 @@ Create the split files inside the new package and migrate the Zod validation sch
     })
     .strict();
 
-  export type CompanionJob = z.infer<typeof companionJobSchema>;
+  export type BackendJob = z.infer<typeof backendJobSchema>;
 
-  export const companionJobsResponseSchema = z
+  export const backendJobsResponseSchema = z
     .object({
-      jobs: z.array(companionJobSchema),
+      jobs: z.array(backendJobSchema),
     })
     .strict();
 
-  export type CompanionJobsResponse = z.infer<typeof companionJobsResponseSchema>;
+  export type BackendJobsResponse = z.infer<typeof backendJobsResponseSchema>;
 
   export const deleteJobResponseSchema = z
     .object({
@@ -415,13 +415,13 @@ Create the split files inside the new package and migrate the Zod validation sch
   ```typescript
   import { z } from "zod";
   import {
-    companionErrorResponseSchema,
+    backendErrorResponseSchema,
     healthResponseSchema,
     okResponseSchema,
   } from "./common.js";
   import {
-    companionJobSchema,
-    companionJobsResponseSchema,
+    backendJobSchema,
+    backendJobsResponseSchema,
     crawlStatusSchema,
     createJobRequestSchema,
     deleteJobResponseSchema,
@@ -451,15 +451,15 @@ Create the split files inside the new package and migrate the Zod validation sch
   z.globalRegistry.add(healthResponseSchema, { id: "HealthResponse" });
   z.globalRegistry.add(extractJobRequestSchema, { id: "ExtractJobRequest" });
   z.globalRegistry.add(jobExtractionResultSchema, { id: "JobExtractionResult" });
-  z.globalRegistry.add(companionErrorResponseSchema, {
-    id: "CompanionErrorResponse",
+  z.globalRegistry.add(backendErrorResponseSchema, {
+    id: "BackendErrorResponse",
   });
   z.globalRegistry.add(crawlStatusSchema, { id: "CrawlStatus" });
   z.globalRegistry.add(createJobRequestSchema, { id: "CreateJobRequest" });
   z.globalRegistry.add(jobIdParamsSchema, { id: "JobIdParams" });
-  z.globalRegistry.add(companionJobSchema, { id: "CompanionJob" });
-  z.globalRegistry.add(companionJobsResponseSchema, {
-    id: "CompanionJobsResponse",
+  z.globalRegistry.add(backendJobSchema, { id: "BackendJob" });
+  z.globalRegistry.add(backendJobsResponseSchema, {
+    id: "BackendJobsResponse",
   });
   z.globalRegistry.add(deleteJobResponseSchema, { id: "DeleteJobResponse" });
   z.globalRegistry.add(resumeContentSchema, { id: "ResumeContent" });
@@ -483,18 +483,18 @@ Create the split files inside the new package and migrate the Zod validation sch
 
 ---
 
-### Task 3: Integrate Companion Backend
+### Task 3: Integrate Backend
 
 Hook up the backend to use the contracts package.
 
 **Files:**
-- Modify: `apps/companion/package.json`
-- Modify: `apps/companion/src/schema.ts`
+- Modify: `apps/backend/package.json`
+- Modify: `apps/backend/src/schema.ts`
 
 - [ ] **Step 1: Add workspace dependency to backend**
-  Add `"@open-resume/contracts": "workspace:*"` to `dependencies` in `apps/companion/package.json`.
+  Add `"@open-resume/contracts": "workspace:*"` to `dependencies` in `apps/backend/package.json`.
   
-  File: `apps/companion/package.json` (partial)
+  File: `apps/backend/package.json` (partial)
   ```json
   "dependencies": {
     ...
@@ -506,29 +506,29 @@ Hook up the backend to use the contracts package.
 
 - [ ] **Step 2: Update dependencies lockfile**
   Run: `pnpm install`
-  Expected: Link generated for `@open-resume/contracts` inside `apps/companion/node_modules/`.
+  Expected: Link generated for `@open-resume/contracts` inside `apps/backend/node_modules/`.
 
-- [ ] **Step 3: Update apps/companion/src/schema.ts to re-export**
-  Replace all content in `apps/companion/src/schema.ts` with:
+- [ ] **Step 3: Update apps/backend/src/schema.ts to re-export**
+  Replace all content in `apps/backend/src/schema.ts` with:
   
-  File: `apps/companion/src/schema.ts`
+  File: `apps/backend/src/schema.ts`
   ```typescript
   export * from "@open-resume/contracts";
   ```
 
 - [ ] **Step 4: Run backend tests to verify**
-  Run: `pnpm --filter @open-resume/companion test`
-  Expected: All 12 companion tests pass successfully.
+  Run: `pnpm --filter @open-resume/backend test`
+  Expected: All 12 backend tests pass successfully.
 
 - [ ] **Step 5: Run typecheck on backend**
-  Run: `pnpm --filter @open-resume/companion typecheck`
+  Run: `pnpm --filter @open-resume/backend typecheck`
   Expected: Command exits successfully with no type errors.
 
 - [ ] **Step 6: Commit**
   Run:
   ```bash
-  git add apps/companion/package.json apps/companion/src/schema.ts pnpm-lock.yaml
-  git commit -m "feat(companion): re-export schemas from shared contracts package"
+  git add apps/backend/package.json apps/backend/src/schema.ts pnpm-lock.yaml
+  git commit -m "feat(backend): re-export schemas from shared contracts package"
   ```
 
 ---
@@ -539,7 +539,7 @@ Hook up the frontend to use the contracts package and delete duplicated schemas.
 
 **Files:**
 - Modify: `apps/web/package.json`
-- Modify: `apps/web/src/lib/local-companion-client.ts`
+- Modify: `apps/web/src/lib/local-backend-client.ts`
 
 - [ ] **Step 1: Add workspace dependency to frontend**
   Add `"@open-resume/contracts": "workspace:*"` to `dependencies` in `apps/web/package.json`.
@@ -558,15 +558,15 @@ Hook up the frontend to use the contracts package and delete duplicated schemas.
   Run: `pnpm install`
   Expected: Link generated for `@open-resume/contracts` inside `apps/web/node_modules/`.
 
-- [ ] **Step 3: Update local-companion-client.ts to import from contracts**
-  Modify [local-companion-client.ts](file:///Users/ben/ghq/github.com/Benjaminlooi/resume-builder/.worktrees/job-application-ai-helper/apps/web/src/lib/local-companion-client.ts) by removing lines 5 to 159 (the duplicate schemas and type declarations) and importing them from `@open-resume/contracts`.
+- [ ] **Step 3: Update local-backend-client.ts to import from contracts**
+  Modify [local-backend-client.ts](file:///Users/ben/ghq/github.com/Benjaminlooi/resume-builder/.worktrees/job-application-ai-helper/apps/web/src/lib/local-backend-client.ts) by removing lines 5 to 159 (the duplicate schemas and type declarations) and importing them from `@open-resume/contracts`.
   
-  File: `apps/web/src/lib/local-companion-client.ts` (partial)
+  File: `apps/web/src/lib/local-backend-client.ts` (partial)
   ```typescript
   import { z } from "zod";
   import {
-    companionJobSchema,
-    companionJobsResponseSchema,
+    backendJobSchema,
+    backendJobsResponseSchema,
     deleteJobResponseSchema,
     resumeContentSchema,
     resumeSummarySchema,
@@ -577,7 +577,7 @@ Hook up the frontend to use the contracts package and delete duplicated schemas.
     candidateProfileSchema,
     resumeSyncRequestSchema,
     okResponseSchema,
-    type CompanionJob as LocalCompanionJob,
+    type BackendJob as LocalBackendJob,
     type TargetRoleArchetype,
     type CandidateProfile,
     type ResumeSyncRequest,
@@ -589,7 +589,7 @@ Hook up the frontend to use the contracts package and delete duplicated schemas.
     type UpdateResumeRequest,
   } from "@open-resume/contracts";
 
-  const companionBaseUrl = "http://127.0.0.1:47321";
+  const backendBaseUrl = "http://127.0.0.1:47321";
   ...
   ```
 
@@ -604,8 +604,8 @@ Hook up the frontend to use the contracts package and delete duplicated schemas.
 - [ ] **Step 6: Commit**
   Run:
   ```bash
-  git add apps/web/package.json apps/web/src/lib/local-companion-client.ts pnpm-lock.yaml
-  git commit -m "feat(web): use shared contracts package for companion client"
+  git add apps/web/package.json apps/web/src/lib/local-backend-client.ts pnpm-lock.yaml
+  git commit -m "feat(web): use shared contracts package for backend client"
   ```
 
 ---

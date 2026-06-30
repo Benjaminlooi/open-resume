@@ -5,10 +5,10 @@ import {
 	deleteResume,
 	listResumes,
 	setDefaultResume,
-} from "./local-companion-client";
+} from "./local-backend-client";
 import { useRootStore } from "./root-store";
 
-vi.mock("./local-companion-client", () => ({
+vi.mock("./local-backend-client", () => ({
 	clearDefaultResume: vi.fn(),
 	createResume: vi.fn(),
 	deleteResume: vi.fn(),
@@ -49,7 +49,7 @@ describe("resumeIndex slice", () => {
 		expect(state.defaultResumeId).toBeNull();
 	});
 
-	it("loads resume summaries from the companion and derives the default ID", async () => {
+	it("loads resume summaries from the backend and derives the default ID", async () => {
 		listResumesMock.mockResolvedValue([
 			{
 				id: "resume-1",
@@ -90,7 +90,7 @@ describe("resumeIndex slice", () => {
 		expect(getIndexState().resumes[0]).not.toHaveProperty("isDefault");
 	});
 
-	it("creates a companion resume with blank content and stores the returned summary", async () => {
+	it("creates a backend resume with blank content and stores the returned summary", async () => {
 		createResumeMock.mockResolvedValue({
 			id: "resume-1",
 			name: "My Resume",
@@ -248,7 +248,7 @@ describe("resumeIndex slice", () => {
 		expect(sentContent).not.toHaveProperty("templateId");
 	});
 
-	it("sets and clears the default resume through the companion", async () => {
+	it("sets and clears the default resume through the backend", async () => {
 		setDefaultResumeMock.mockResolvedValue({
 			id: "resume-1",
 			name: "Resume 1",
@@ -268,7 +268,7 @@ describe("resumeIndex slice", () => {
 		expect(getIndexState().defaultResumeId).toBeNull();
 	});
 
-	it("deletes a companion resume and clears the default when needed", async () => {
+	it("deletes a backend resume and clears the default when needed", async () => {
 		deleteResumeMock.mockResolvedValue({ deleted: true });
 		useRootStore.setState((prev) => ({
 			resumeIndex: {

@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
-import { getResume } from "./local-companion-client";
+import { getResume } from "./local-backend-client";
 import type { EditorState } from "./resume-schema";
 import {
 	createResumeSlice,

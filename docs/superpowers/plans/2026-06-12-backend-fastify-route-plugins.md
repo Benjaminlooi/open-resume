@@ -1,8 +1,8 @@
-# Companion Fastify Route Plugins Implementation Plan
+# Backend Fastify Route Plugins Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Refactor the companion Fastify server so endpoint registration lives in focused route plugins and app infrastructure lives in named Fastify plugins.
+**Goal:** Refactor the backend Fastify server so endpoint registration lives in focused route plugins and app infrastructure lives in named Fastify plugins.
 
 **Architecture:** Keep `createServer(options)` as the composition root. Add `fastify-plugin` for infrastructure plugins that should apply at the app level, and use explicit route plugin factories for `system`, `profile`, `resumes`, and `jobs`. Preserve all URLs, response contracts, OpenAPI operation IDs, startup recovery, and repository ownership behavior.
 
@@ -12,34 +12,34 @@
 
 ## File Structure
 
-- Modify: `apps/companion/package.json`
+- Modify: `apps/backend/package.json`
   - Add `fastify-plugin` as a runtime dependency.
 - Modify: `pnpm-lock.yaml`
-  - Updated by `pnpm --filter @open-resume/companion add fastify-plugin`.
-- Create: `apps/companion/src/plugins/cors.ts`
+  - Updated by `pnpm --filter @open-resume/backend add fastify-plugin`.
+- Create: `apps/backend/src/plugins/cors.ts`
   - Registers the current localhost-only CORS policy.
-- Create: `apps/companion/src/plugins/error-handler.ts`
+- Create: `apps/backend/src/plugins/error-handler.ts`
   - Registers the current Zod-aware error handler and generic error response behavior.
-- Create: `apps/companion/src/plugins/openapi.ts`
+- Create: `apps/backend/src/plugins/openapi.ts`
   - Keeps validator/serializer setup, Swagger registration, Swagger UI registration, and adds missing `Profile` and `Resumes` tag metadata.
-- Modify then delete: `apps/companion/src/openapi.ts`
+- Modify then delete: `apps/backend/src/openapi.ts`
   - Temporarily re-export from `plugins/openapi.ts` so intermediate commits typecheck, then remove after `server.ts` imports the plugin path directly.
-- Create: `apps/companion/src/routes/context.ts`
+- Create: `apps/backend/src/routes/context.ts`
   - Defines the typed route context passed from `server.ts` into route plugins.
-- Create: `apps/companion/src/routes/system-routes.ts`
+- Create: `apps/backend/src/routes/system-routes.ts`
   - Registers `/health` and `/openapi.json`.
-- Create: `apps/companion/src/routes/profile-routes.ts`
+- Create: `apps/backend/src/routes/profile-routes.ts`
   - Registers `/profile` and `/profile/resume`.
-- Create: `apps/companion/src/routes/resume-routes.ts`
+- Create: `apps/backend/src/routes/resume-routes.ts`
   - Registers `/resumes` CRUD and default resume endpoints.
-- Create: `apps/companion/src/routes/job-routes.ts`
+- Create: `apps/backend/src/routes/job-routes.ts`
   - Registers `/jobs` CRUD and crawl retry endpoints.
-- Create: `apps/companion/src/profile/default-profile.ts`
+- Create: `apps/backend/src/profile/default-profile.ts`
   - Exports the current default candidate profile object.
-- Modify: `apps/companion/src/server.ts`
+- Modify: `apps/backend/src/server.ts`
   - Remove inline route registration and infrastructure setup.
   - Create dependencies, register app plugins, assemble `CompanionRouteContext`, register route plugins, preserve startup recovery, and return the server.
-- Modify if needed: `apps/companion/src/openapi.test.ts`
+- Modify if needed: `apps/backend/src/openapi.test.ts`
   - Update import path if it imports `registerOpenApi` from the old location.
 
 ---
@@ -47,7 +47,7 @@
 ### Task 1: Add `fastify-plugin`
 
 **Files:**
-- Modify: `apps/companion/package.json`
+- Modify: `apps/backend/package.json`
 - Modify: `pnpm-lock.yaml`
 
 - [x] **Step 1: Add the dependency**
@@ -55,12 +55,12 @@
 Run:
 
 ```bash
-pnpm --filter @open-resume/companion add fastify-plugin
+pnpm --filter @open-resume/backend add fastify-plugin
 ```
 
 Expected:
 
-- `apps/companion/package.json` includes `"fastify-plugin": "^5.x.x"` or the current compatible version selected by pnpm.
+- `apps/backend/package.json` includes `"fastify-plugin": "^5.x.x"` or the current compatible version selected by pnpm.
 - `pnpm-lock.yaml` is updated.
 - The command exits with code 0.
 
@@ -69,7 +69,7 @@ Expected:
 Run:
 
 ```bash
-pnpm --filter @open-resume/companion list fastify-plugin
+pnpm --filter @open-resume/backend list fastify-plugin
 ```
 
 Expected output includes:
@@ -83,8 +83,8 @@ fastify-plugin
 Run:
 
 ```bash
-git add apps/companion/package.json pnpm-lock.yaml
-git commit -m "chore(companion): add fastify plugin helper"
+git add apps/backend/package.json pnpm-lock.yaml
+git commit -m "chore(backend): add fastify plugin helper"
 ```
 
 Expected: commit succeeds.
@@ -94,14 +94,14 @@ Expected: commit succeeds.
 ### Task 2: Extract App Infrastructure Plugins
 
 **Files:**
-- Create: `apps/companion/src/plugins/cors.ts`
-- Create: `apps/companion/src/plugins/error-handler.ts`
-- Create: `apps/companion/src/plugins/openapi.ts`
-- Modify: `apps/companion/src/openapi.ts`
+- Create: `apps/backend/src/plugins/cors.ts`
+- Create: `apps/backend/src/plugins/error-handler.ts`
+- Create: `apps/backend/src/plugins/openapi.ts`
+- Modify: `apps/backend/src/openapi.ts`
 
 - [x] **Step 1: Create the CORS plugin**
 
-Create `apps/companion/src/plugins/cors.ts`:
+Create `apps/backend/src/plugins/cors.ts`:
 
 ```ts
 import cors from "@fastify/cors";
@@ -117,7 +117,7 @@ export const registerCors = fp(async (server) => {
 
 - [x] **Step 2: Create the error handler plugin**
 
-Create `apps/companion/src/plugins/error-handler.ts`:
+Create `apps/backend/src/plugins/error-handler.ts`:
 
 ```ts
 import type { FastifyError } from "fastify";
@@ -129,10 +129,10 @@ export const registerErrorHandler = fp(async (server) => {
 		if (hasZodFastifySchemaValidationErrors(err)) {
 			request.log.warn(
 				{ details: JSON.stringify(err.validation) },
-				"invalid companion request",
+				"invalid backend request",
 			);
 			return reply.status(400).send({
-				error: "Invalid companion request",
+				error: "Invalid backend request",
 				details: JSON.stringify(err.validation),
 			});
 		}
@@ -151,7 +151,7 @@ export const registerErrorHandler = fp(async (server) => {
 
 - [x] **Step 3: Create OpenAPI registration plugin**
 
-Create `apps/companion/src/plugins/openapi.ts`:
+Create `apps/backend/src/plugins/openapi.ts`:
 
 ```ts
 import swagger from "@fastify/swagger";
@@ -173,13 +173,13 @@ export const registerOpenApi = fp(async (server) => {
 		openapi: {
 			openapi: "3.0.3",
 			info: {
-				title: "Open Resume Companion API",
+				title: "Open Resume Backend API",
 				version: "0.1.0",
 				description:
-					"Local companion service for extracting job details from pasted job URLs.",
+					"Local backend service for extracting job details from pasted job URLs.",
 			},
 			tags: [
-				{ name: "System", description: "Operational companion endpoints." },
+				{ name: "System", description: "Operational backend endpoints." },
 				{
 					name: "Profile",
 					description: "Candidate profile and synced default resume endpoints.",
@@ -190,7 +190,7 @@ export const registerOpenApi = fp(async (server) => {
 				},
 				{
 					name: "Jobs",
-					description: "Companion job intake and crawl lifecycle endpoints.",
+					description: "Backend job intake and crawl lifecycle endpoints.",
 				},
 			],
 		},
@@ -210,7 +210,7 @@ export const registerOpenApi = fp(async (server) => {
 
 - [x] **Step 4: Keep the old OpenAPI import path working temporarily**
 
-Replace `apps/companion/src/openapi.ts` with:
+Replace `apps/backend/src/openapi.ts` with:
 
 ```ts
 export { registerOpenApi } from "./plugins/openapi.js";
@@ -221,7 +221,7 @@ export { registerOpenApi } from "./plugins/openapi.js";
 Run:
 
 ```bash
-pnpm --filter @open-resume/companion typecheck
+pnpm --filter @open-resume/backend typecheck
 ```
 
 Expected: PASS.
@@ -231,8 +231,8 @@ Expected: PASS.
 Run:
 
 ```bash
-git add apps/companion/src/plugins/cors.ts apps/companion/src/plugins/error-handler.ts apps/companion/src/plugins/openapi.ts apps/companion/src/openapi.ts
-git commit -m "refactor(companion): extract app plugins"
+git add apps/backend/src/plugins/cors.ts apps/backend/src/plugins/error-handler.ts apps/backend/src/plugins/openapi.ts apps/backend/src/openapi.ts
+git commit -m "refactor(backend): extract app plugins"
 ```
 
 Expected: commit succeeds.
@@ -242,12 +242,12 @@ Expected: commit succeeds.
 ### Task 3: Create Shared Route Context And Default Profile
 
 **Files:**
-- Create: `apps/companion/src/routes/context.ts`
-- Create: `apps/companion/src/profile/default-profile.ts`
+- Create: `apps/backend/src/routes/context.ts`
+- Create: `apps/backend/src/profile/default-profile.ts`
 
 - [x] **Step 1: Create route context type**
 
-Create `apps/companion/src/routes/context.ts`:
+Create `apps/backend/src/routes/context.ts`:
 
 ```ts
 import type { CrawlQueue } from "../jobs/crawl-queue.js";
@@ -262,7 +262,7 @@ export interface CompanionRouteContext {
 
 - [x] **Step 2: Extract the default profile**
 
-Create `apps/companion/src/profile/default-profile.ts`:
+Create `apps/backend/src/profile/default-profile.ts`:
 
 ```ts
 export const defaultProfile = {
@@ -315,8 +315,8 @@ export const defaultProfile = {
 Run:
 
 ```bash
-git add apps/companion/src/routes/context.ts apps/companion/src/profile/default-profile.ts
-git commit -m "refactor(companion): add route context"
+git add apps/backend/src/routes/context.ts apps/backend/src/profile/default-profile.ts
+git commit -m "refactor(backend): add route context"
 ```
 
 Expected: commit succeeds.
@@ -326,14 +326,14 @@ Expected: commit succeeds.
 ### Task 4: Extract Route Plugins
 
 **Files:**
-- Create: `apps/companion/src/routes/system-routes.ts`
-- Create: `apps/companion/src/routes/profile-routes.ts`
-- Create: `apps/companion/src/routes/resume-routes.ts`
-- Create: `apps/companion/src/routes/job-routes.ts`
+- Create: `apps/backend/src/routes/system-routes.ts`
+- Create: `apps/backend/src/routes/profile-routes.ts`
+- Create: `apps/backend/src/routes/resume-routes.ts`
+- Create: `apps/backend/src/routes/job-routes.ts`
 
 - [x] **Step 1: Create system routes**
 
-Create `apps/companion/src/routes/system-routes.ts`:
+Create `apps/backend/src/routes/system-routes.ts`:
 
 ```ts
 import type { FastifyPluginAsync } from "fastify";
@@ -353,7 +353,7 @@ export function createSystemRoutes(
 				schema: {
 					operationId: "getHealth",
 					tags: ["System"],
-					summary: "Check companion health",
+					summary: "Check backend health",
 					response: {
 						200: healthResponseSchema,
 					},
@@ -361,7 +361,7 @@ export function createSystemRoutes(
 			},
 			async () => ({
 				ok: true,
-				service: "open-resume-companion",
+				service: "open-resume-backend",
 			}),
 		);
 
@@ -380,7 +380,7 @@ export function createSystemRoutes(
 
 - [x] **Step 2: Create profile routes**
 
-Create `apps/companion/src/routes/profile-routes.ts`:
+Create `apps/backend/src/routes/profile-routes.ts`:
 
 ```ts
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -390,7 +390,7 @@ import type { ZodTypeProvider } from "fastify-type-provider-zod";
 import { defaultProfile } from "../profile/default-profile.js";
 import {
 	candidateProfileSchema,
-	companionErrorResponseSchema,
+	backendErrorResponseSchema,
 	okResponseSchema,
 	resumeSyncRequestSchema,
 	syncedResumeResponseSchema,
@@ -415,7 +415,7 @@ export function createProfileRoutes(
 					summary: "Get candidate profile",
 					response: {
 						200: candidateProfileSchema,
-						500: companionErrorResponseSchema,
+						500: backendErrorResponseSchema,
 					},
 				},
 			},
@@ -445,7 +445,7 @@ export function createProfileRoutes(
 					body: candidateProfileSchema,
 					response: {
 						200: candidateProfileSchema,
-						500: companionErrorResponseSchema,
+						500: backendErrorResponseSchema,
 					},
 				},
 			},
@@ -472,8 +472,8 @@ export function createProfileRoutes(
 					summary: "Get synced default resume",
 					response: {
 						200: syncedResumeResponseSchema,
-						404: companionErrorResponseSchema,
-						500: companionErrorResponseSchema,
+						404: backendErrorResponseSchema,
+						500: backendErrorResponseSchema,
 					},
 				},
 			},
@@ -496,7 +496,7 @@ export function createProfileRoutes(
 					body: resumeSyncRequestSchema,
 					response: {
 						200: okResponseSchema,
-						500: companionErrorResponseSchema,
+						500: backendErrorResponseSchema,
 					},
 				},
 			},
@@ -527,13 +527,13 @@ export function createProfileRoutes(
 
 - [x] **Step 3: Create resume routes**
 
-Create `apps/companion/src/routes/resume-routes.ts`:
+Create `apps/backend/src/routes/resume-routes.ts`:
 
 ```ts
 import type { FastifyPluginAsync } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
 import {
-	companionErrorResponseSchema,
+	backendErrorResponseSchema,
 	createResumeRequestSchema,
 	deleteJobResponseSchema,
 	jobIdParamsSchema,
@@ -581,8 +581,8 @@ export function createResumeRoutes(
 					body: createResumeRequestSchema,
 					response: {
 						201: resumeDetailsSchema,
-						400: companionErrorResponseSchema,
-						500: companionErrorResponseSchema,
+						400: backendErrorResponseSchema,
+						500: backendErrorResponseSchema,
 					},
 				},
 			},
@@ -605,7 +605,7 @@ export function createResumeRoutes(
 					params: routeResumeIdParamsSchema,
 					response: {
 						200: resumeDetailsSchema,
-						404: companionErrorResponseSchema,
+						404: backendErrorResponseSchema,
 					},
 				},
 			},
@@ -629,7 +629,7 @@ export function createResumeRoutes(
 					body: updateResumeRequestSchema,
 					response: {
 						200: resumeDetailsSchema,
-						404: companionErrorResponseSchema,
+						404: backendErrorResponseSchema,
 					},
 				},
 			},
@@ -655,7 +655,7 @@ export function createResumeRoutes(
 					params: routeResumeIdParamsSchema,
 					response: {
 						200: resumeDetailsSchema,
-						404: companionErrorResponseSchema,
+						404: backendErrorResponseSchema,
 					},
 				},
 			},
@@ -712,16 +712,16 @@ export function createResumeRoutes(
 
 - [x] **Step 4: Create job routes**
 
-Create `apps/companion/src/routes/job-routes.ts`:
+Create `apps/backend/src/routes/job-routes.ts`:
 
 ```ts
 import { randomUUID } from "node:crypto";
 import type { FastifyPluginAsync } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
 import {
-	companionErrorResponseSchema,
-	companionJobSchema,
-	companionJobsResponseSchema,
+	backendErrorResponseSchema,
+	backendJobSchema,
+	backendJobsResponseSchema,
 	createJobRequestSchema,
 	deleteJobResponseSchema,
 	jobIdParamsSchema,
@@ -744,12 +744,12 @@ export function createJobRoutes(
 				schema: {
 					operationId: "createJob",
 					tags: ["Jobs"],
-					summary: "Create a companion job and enqueue crawling",
+					summary: "Create a backend job and enqueue crawling",
 					body: createJobRequestSchema,
 					response: {
-						201: companionJobSchema,
-						400: companionErrorResponseSchema,
-						500: companionErrorResponseSchema,
+						201: backendJobSchema,
+						400: backendErrorResponseSchema,
+						500: backendErrorResponseSchema,
 					},
 				},
 			},
@@ -770,9 +770,9 @@ export function createJobRoutes(
 				schema: {
 					operationId: "listJobs",
 					tags: ["Jobs"],
-					summary: "List companion jobs",
+					summary: "List backend jobs",
 					response: {
-						200: companionJobsResponseSchema,
+						200: backendJobsResponseSchema,
 					},
 				},
 			},
@@ -787,11 +787,11 @@ export function createJobRoutes(
 				schema: {
 					operationId: "getJob",
 					tags: ["Jobs"],
-					summary: "Get a companion job",
+					summary: "Get a backend job",
 					params: routeJobIdParamsSchema,
 					response: {
-						200: companionJobSchema,
-						404: companionErrorResponseSchema,
+						200: backendJobSchema,
+						404: backendErrorResponseSchema,
 					},
 				},
 			},
@@ -810,11 +810,11 @@ export function createJobRoutes(
 				schema: {
 					operationId: "retryJobCrawl",
 					tags: ["Jobs"],
-					summary: "Retry crawling a companion job",
+					summary: "Retry crawling a backend job",
 					params: routeJobIdParamsSchema,
 					response: {
-						200: companionJobSchema,
-						404: companionErrorResponseSchema,
+						200: backendJobSchema,
+						404: backendErrorResponseSchema,
 					},
 				},
 			},
@@ -834,7 +834,7 @@ export function createJobRoutes(
 				schema: {
 					operationId: "deleteJob",
 					tags: ["Jobs"],
-					summary: "Delete a companion job",
+					summary: "Delete a backend job",
 					params: routeJobIdParamsSchema,
 					response: {
 						200: deleteJobResponseSchema,
@@ -854,8 +854,8 @@ export function createJobRoutes(
 Run:
 
 ```bash
-git add apps/companion/src/routes/system-routes.ts apps/companion/src/routes/profile-routes.ts apps/companion/src/routes/resume-routes.ts apps/companion/src/routes/job-routes.ts
-git commit -m "refactor(companion): extract route plugins"
+git add apps/backend/src/routes/system-routes.ts apps/backend/src/routes/profile-routes.ts apps/backend/src/routes/resume-routes.ts apps/backend/src/routes/job-routes.ts
+git commit -m "refactor(backend): extract route plugins"
 ```
 
 Expected: commit succeeds.
@@ -865,12 +865,12 @@ Expected: commit succeeds.
 ### Task 5: Wire Plugins From `server.ts`
 
 **Files:**
-- Modify: `apps/companion/src/server.ts`
-- Delete: `apps/companion/src/openapi.ts`
+- Modify: `apps/backend/src/server.ts`
+- Delete: `apps/backend/src/openapi.ts`
 
 - [x] **Step 1: Replace imports at the top of `server.ts`**
 
-Change the top of `apps/companion/src/server.ts` to:
+Change the top of `apps/backend/src/server.ts` to:
 
 ```ts
 import { mkdirSync } from "node:fs";
@@ -940,27 +940,27 @@ After the `crawlQueue` definition, use:
 Delete the temporary compatibility re-export:
 
 ```bash
-git rm apps/companion/src/openapi.ts
+git rm apps/backend/src/openapi.ts
 ```
 
-Expected: `apps/companion/src/openapi.ts` is staged for deletion.
+Expected: `apps/backend/src/openapi.ts` is staged for deletion.
 
 - [x] **Step 4: Run typecheck**
 
 Run:
 
 ```bash
-pnpm --filter @open-resume/companion typecheck
+pnpm --filter @open-resume/backend typecheck
 ```
 
 Expected: PASS.
 
-- [x] **Step 5: Run companion tests**
+- [x] **Step 5: Run backend tests**
 
 Run:
 
 ```bash
-pnpm --filter @open-resume/companion test
+pnpm --filter @open-resume/backend test
 ```
 
 Expected: PASS.
@@ -970,31 +970,31 @@ Expected: PASS.
 Run:
 
 ```bash
-git add apps/companion/src/server.ts apps/companion/src/openapi.ts
-git commit -m "refactor(companion): wire route plugins"
+git add apps/backend/src/server.ts apps/backend/src/openapi.ts
+git commit -m "refactor(backend): wire route plugins"
 ```
 
 Expected: commit succeeds.
 
 ---
 
-### Task 6: Verify OpenAPI And Full Companion Behavior
+### Task 6: Verify OpenAPI And Full Backend Behavior
 
 **Files:**
-- Modify if generated output changes: `apps/companion/openapi.json`
+- Modify if generated output changes: `apps/backend/openapi.json`
 
 - [x] **Step 1: Regenerate OpenAPI**
 
 Run:
 
 ```bash
-pnpm --filter @open-resume/companion openapi
+pnpm --filter @open-resume/backend openapi
 ```
 
 Expected:
 
 - Command exits with code 0.
-- `apps/companion/openapi.json` is generated.
+- `apps/backend/openapi.json` is generated.
 - Existing route paths remain `/health`, `/profile`, `/profile/resume`, `/resumes`, `/resumes/{id}`, `/jobs`, `/jobs/{id}`, and `/jobs/{id}/retry-crawl`.
 - No `/api` route prefix appears.
 
@@ -1003,18 +1003,18 @@ Expected:
 Run:
 
 ```bash
-pnpm --filter @open-resume/companion openapi:lint
+pnpm --filter @open-resume/backend openapi:lint
 ```
 
 Expected: PASS.
 
-- [x] **Step 3: Run final companion verification**
+- [x] **Step 3: Run final backend verification**
 
 Run:
 
 ```bash
-pnpm --filter @open-resume/companion typecheck
-pnpm --filter @open-resume/companion test
+pnpm --filter @open-resume/backend typecheck
+pnpm --filter @open-resume/backend test
 ```
 
 Expected: both commands PASS.
@@ -1024,7 +1024,7 @@ Expected: both commands PASS.
 Run:
 
 ```bash
-git diff -- apps/companion/openapi.json
+git diff -- apps/backend/openapi.json
 ```
 
 Expected:
@@ -1035,14 +1035,14 @@ Expected:
 
 - [x] **Step 5: Commit generated OpenAPI if it changed**
 
-If `apps/companion/openapi.json` changed only because of expected metadata updates, run:
+If `apps/backend/openapi.json` changed only because of expected metadata updates, run:
 
 ```bash
-git add apps/companion/openapi.json
-git commit -m "docs(companion): refresh openapi metadata"
+git add apps/backend/openapi.json
+git commit -m "docs(backend): refresh openapi metadata"
 ```
 
-If `apps/companion/openapi.json` did not change, skip this commit.
+If `apps/backend/openapi.json` did not change, skip this commit.
 
 ---
 
@@ -1066,7 +1066,7 @@ Expected: no unstaged or uncommitted files unless intentionally left for user re
 Run:
 
 ```bash
-sed -n '1,240p' apps/companion/src/server.ts
+sed -n '1,240p' apps/backend/src/server.ts
 ```
 
 Expected:
@@ -1080,10 +1080,10 @@ Expected:
 Run:
 
 ```bash
-sed -n '1,260p' apps/companion/src/routes/job-routes.ts
-sed -n '1,260p' apps/companion/src/routes/resume-routes.ts
-sed -n '1,260p' apps/companion/src/routes/profile-routes.ts
-sed -n '1,160p' apps/companion/src/routes/system-routes.ts
+sed -n '1,260p' apps/backend/src/routes/job-routes.ts
+sed -n '1,260p' apps/backend/src/routes/resume-routes.ts
+sed -n '1,260p' apps/backend/src/routes/profile-routes.ts
+sed -n '1,160p' apps/backend/src/routes/system-routes.ts
 ```
 
 Expected:
@@ -1098,8 +1098,8 @@ Expected:
 If review required fixes, commit them:
 
 ```bash
-git add apps/companion/src apps/companion/openapi.json
-git commit -m "fix(companion): polish route plugin refactor"
+git add apps/backend/src apps/backend/openapi.json
+git commit -m "fix(backend): polish route plugin refactor"
 ```
 
 If no fixes were needed, skip this commit.

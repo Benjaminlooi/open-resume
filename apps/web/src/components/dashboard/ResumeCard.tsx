@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { Star } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { getResume } from "#/lib/local-companion-client";
+import { getResume } from "#/lib/local-backend-client";
 import { useRootStore } from "#/lib/root-store";
 import type { EditorState } from "#/lib/resume-schema";
 import { cn } from "#/lib/utils";

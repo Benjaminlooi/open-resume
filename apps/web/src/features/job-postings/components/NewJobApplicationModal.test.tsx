@@ -3,7 +3,7 @@
 import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import * as localCompanion from "#/lib/local-companion-client";
+import * as localBackend from "#/lib/local-backend-client";
 import NewJobApplicationModal from "./NewJobApplicationModal";
 
 (
@@ -28,7 +28,7 @@ vi.mock("#/lib/root-store", () => ({
 	},
 }));
 
-vi.mock("#/lib/local-companion-client", () => ({
+vi.mock("#/lib/local-backend-client", () => ({
 	createJobPosting: vi.fn(),
 }));
 
@@ -68,8 +68,8 @@ describe("NewJobApplicationModal", () => {
 		});
 	});
 
-	it("submits only a URL to the local companion in Crawl tab", async () => {
-		const mockCreateJobPosting = vi.mocked(localCompanion.createJobPosting);
+	it("submits only a URL to the local backend in Crawl tab", async () => {
+		const mockCreateJobPosting = vi.mocked(localBackend.createJobPosting);
 		mockCreateJobPosting.mockResolvedValue({
 			id: "job-1",
 			sourceUrl: "https://example.com/job",

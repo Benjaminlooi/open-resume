@@ -15,8 +15,8 @@ import {
 	DialogTitle,
 } from "#/components/ui/dialog";
 import { useRootStore } from "#/lib/root-store";
-import type { LocalJobPosting } from "#/lib/local-companion-client";
-import { companionBaseUrl } from "#/lib/local-companion-client";
+import type { LocalJobPosting } from "#/lib/local-backend-client";
+import { backendBaseUrl } from "#/lib/local-backend-client";
 
 interface JobPostingDetailsDialogProps {
 	job: LocalJobPosting;
@@ -408,7 +408,7 @@ export default function JobPostingDetailsDialog({
 							{!screenshotError ? (
 								<div className="flex-1 min-h-[400px] rounded-base border-2 border-border p-2 bg-gray-50 flex justify-center shadow-light">
 									<img
-										src={`${companionBaseUrl}/job-postings/${job.id}/screenshot`}
+										src={`${backendBaseUrl}/job-postings/${job.id}/screenshot`}
 										alt="Crawl Screenshot"
 										onError={() => setScreenshotError(true)}
 										className="max-w-full h-auto object-contain border border-border rounded-base"

@@ -6,7 +6,7 @@
 
 ## OVERVIEW
 
-Resume builder with AI-powered job tracking. Frontend SSR on Cloudflare Workers, local companion daemon for job scraping/AI analysis.
+Resume builder with AI-powered job tracking. Frontend SSR on Cloudflare Workers, local backend daemon for job scraping/AI analysis.
 
 ## STRUCTURE
 
@@ -17,9 +17,9 @@ Resume builder with AI-powered job tracking. Frontend SSR on Cloudflare Workers,
 │   │       ├── routes/           # File-based routing (TanStack Router)
 │   │       ├── components/       # editor/, ui/ (Shadcn), dashboard/
 │   │       ├── features/         # job-postings/ (tracking + AI)
-│   │       ├── lib/              # Zustand stores, schemas, companion client
+│   │       ├── lib/              # Zustand stores, schemas, backend client
 │   │       └── integrations/     # posthog/
-│   └── companion/         # Fastify 5 daemon (port 47321)
+│   └── backend/          # Fastify 5 daemon (port 47321)
 │       └── src/
 │           ├── routes/           # System, job, profile, resume API routes
 │           ├── job-postings/     # SQLite repo + crawl queue + AI analyzer
@@ -39,10 +39,10 @@ Resume builder with AI-powered job tracking. Frontend SSR on Cloudflare Workers,
 | Résumé templates | `apps/web/src/components/editor/{DemoTemplate,ModernTemplate}.tsx` | React components |
 | Job posting management | `apps/web/src/features/job-postings/` | Store + AI pipeline + components |
 | AI fit analysis | `apps/web/src/features/job-postings/job-ai.ts` | Multi-provider (OpenAI, Anthropic, etc.) |
-| Companion API client | `apps/web/src/lib/local-companion-client.ts` | Zod-validated fetch wrapper |
-| Companion crawl pipeline | `apps/companion/src/job-postings/` | Queue + repository |
-| Scraping engine | `apps/companion/src/extract/` | Playwright + HTML/JSON-LD parsers |
-| OpenAPI spec | `apps/companion/src/routes/` + `apps/companion/src/openapi.ts` | Swagger UI at /docs |
+| Backend API client | `apps/web/src/lib/local-backend-client.ts` | Zod-validated fetch wrapper |
+| Backend crawl pipeline | `apps/backend/src/job-postings/` | Queue + repository |
+| Scraping engine | `apps/backend/src/extract/` | Playwright + HTML/JSON-LD parsers |
+| OpenAPI spec | `apps/backend/src/routes/` + `apps/backend/src/openapi.ts` | Swagger UI at /docs |
 | Route definitions | `apps/web/src/routes/` | File-based, TanStack Router |
 
 ## CODE MAP
@@ -50,16 +50,16 @@ Resume builder with AI-powered job tracking. Frontend SSR on Cloudflare Workers,
 | Symbol | Type | Location | Refs | Role |
 |--------|------|----------|------|------|
 | `useResumeStore` | hook (store) | `resume-store.ts` | 10+ | Core resume CRUD + persistence |
-| `useJobPostingStore` | hook (store) | `job-posting-store.ts` | 8+ | Job posting CRUD + companion sync |
+| `useJobPostingStore` | hook (store) | `job-posting-store.ts` | 8+ | Job posting CRUD + backend sync |
 | `useJobApplicationStore` | hook (store) | `job-application-store.ts` | 6+ | Job application lifecycle |
-| `local-companion-client` | module | `local-companion-client.ts` | 12+ | Typed fetch wrapper for companion API |
-| `companionFetch` | function | `local-companion-client.ts` | 15+ | Base fetch with error handling |
+| `local-backend-client` | module | `local-backend-client.ts` | 12+ | Typed fetch wrapper for backend API |
+| `backendFetch` | function | `local-backend-client.ts` | 15+ | Base fetch with error handling |
 | `getModel` | function | `features/job-postings/job-ai.ts` | 3+ | AI provider factory (OpenAI, Anthropic, Google, Ollama, etc.) |
 | `generateJobFitBrief` | function | `features/job-postings/job-ai.ts` | 2+ | AI job fit analysis |
 | `resumeSchema` | Zod schema | `resume-schema.ts` | 5+ | Resume data validation |
 | `resume-markdown` | module | `resume-markdown.ts` | 3+ | Resume ←→ Markdown conversion |
-| `server.ts` (companion) | module | `companion/src/server.ts` | 1+ | Fastify app factory with route registry |
-| `crawl-queue.ts` | module | `companion/src/job-postings/` | 2+ | Background crawl job manager |
+| `server.ts` (backend) | module | `backend/src/server.ts` | 1+ | Fastify app factory with route registry |
+| `crawl-queue.ts` | module | `backend/src/job-postings/` | 2+ | Background crawl job manager |
 
 ## CONVENTIONS
 
@@ -82,21 +82,21 @@ Resume builder with AI-powered job tracking. Frontend SSR on Cloudflare Workers,
 ## COMMANDS
 
 ```bash
-pnpm dev              # Web (3000) + Companion (47321)
+pnpm dev              # Web (3000) + Backend (47321)
 pnpm web:dev          # Web only
-pnpm companion:dev    # Companion only
+pnpm backend:dev      # Backend only
 pnpm build            # Build all
 pnpm test             # Vitest across workspace
 pnpm typecheck        # tsc --noEmit
 pnpm verify           # typecheck + test + build
 pnpm lint / format    # Biome
 pnpm deploy           # Cloudflare Workers
-pnpm companion:openapi  # Export OpenAPI JSON
+pnpm backend:openapi  # Export OpenAPI JSON
 ```
 
 ## NOTES
 
-- Companion is OPTIONAL — app works without it (manual paste fallback).
-- Companion SQLite DB at `apps/companion/.open-resume-companion/jobs.sqlite` (gitignored).
+- Backend is OPTIONAL — app works without it (manual paste fallback).
+- Backend SQLite DB at `apps/backend/.open-resume-backend/jobs.sqlite` (gitignored).
 - Local dev needs `pnpm install` at root (workspace-aware).
 - Worktrees exist at `.worktrees/` for parallel feature branches — ignore them for main dev.

@@ -2,19 +2,19 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Allow users to view the raw crawled job description and AI fit analysis for any companion job queue card in a clean tabbed modal before converting it to an application.
+**Goal:** Allow users to view the raw crawled job description and AI fit analysis for any backend job queue card in a clean tabbed modal before converting it to an application.
 
-**Architecture:** Create a new dialog component `<CompanionJobDetailsDialog>` that imports `<Dialog>` from Shadcn UI. State tracks the active tab ('ai' | 'scraped'). Integrate this dialog in `<CompanionJobCard>` and expose a "View Details" button.
+**Architecture:** Create a new dialog component `<BackendJobDetailsDialog>` that imports `<Dialog>` from Shadcn UI. State tracks the active tab ('ai' | 'scraped'). Integrate this dialog in `<BackendJobCard>` and expose a "View Details" button.
 
 **Tech Stack:** React 19, Lucide React, Shadcn UI (Dialog), Tailwind CSS
 
 ---
 
-### Task 1: Create [CompanionJobDetailsDialog](file:///Users/ben/ghq/github.com/Benjaminlooi/resume-builder/.worktrees/job-application-ai-helper/apps/web/src/components/jobs/CompanionJobDetailsDialog.tsx)
+### Task 1: Create [BackendJobDetailsDialog](file:///Users/ben/ghq/github.com/Benjaminlooi/resume-builder/.worktrees/job-application-ai-helper/apps/web/src/components/jobs/BackendJobDetailsDialog.tsx)
 
 **Files:**
-- Create: `apps/web/src/components/jobs/CompanionJobDetailsDialog.tsx`
-- Test: `apps/web/src/components/jobs/CompanionJobDetailsDialog.test.tsx`
+- Create: `apps/web/src/components/jobs/BackendJobDetailsDialog.tsx`
+- Test: `apps/web/src/components/jobs/BackendJobDetailsDialog.test.tsx`
 
 - [ ] **Step 1: Write the details dialog component**
 
@@ -36,25 +36,25 @@ import {
 	ArrowRight,
 	ExternalLink,
 } from "lucide-react";
-import type { LocalCompanionJob } from "#/lib/local-companion-client";
+import type { LocalBackendJob } from "#/lib/local-backend-client";
 
-interface CompanionJobDetailsDialogProps {
-	job: LocalCompanionJob;
+interface BackendJobDetailsDialogProps {
+	job: LocalBackendJob;
 	isOpen: boolean;
 	onClose: () => void;
-	onConvert?: (job: LocalCompanionJob) => void;
+	onConvert?: (job: LocalBackendJob) => void;
 	onRetry?: (id: string) => void;
 	onRetryAnalyze?: (id: string) => void;
 }
 
-export default function CompanionJobDetailsDialog({
+export default function BackendJobDetailsDialog({
 	job,
 	isOpen,
 	onClose,
 	onConvert,
 	onRetry,
 	onRetryAnalyze,
-}: CompanionJobDetailsDialogProps) {
+}: BackendJobDetailsDialogProps) {
 	const [activeTab, setActiveTab] = useState<"ai" | "scraped">("ai");
 
 	// Reset default tab when job changes
@@ -389,14 +389,14 @@ export default function CompanionJobDetailsDialog({
 
 - [ ] **Step 2: Write basic tests for the details dialog**
 
-Write `apps/web/src/components/jobs/CompanionJobDetailsDialog.test.tsx`:
+Write `apps/web/src/components/jobs/BackendJobDetailsDialog.test.tsx`:
 
 ```tsx
 // @vitest-environment jsdom
 
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import CompanionJobDetailsDialog from "./CompanionJobDetailsDialog";
+import BackendJobDetailsDialog from "./BackendJobDetailsDialog";
 
 const mockJob = {
 	id: "job-1",
@@ -423,10 +423,10 @@ const mockJob = {
 	}),
 };
 
-describe("CompanionJobDetailsDialog", () => {
+describe("BackendJobDetailsDialog", () => {
 	it("renders details correctly when open", () => {
 		render(
-			<CompanionJobDetailsDialog
+			<BackendJobDetailsDialog
 				job={mockJob}
 				isOpen={true}
 				onClose={() => {}}
@@ -443,40 +443,40 @@ describe("CompanionJobDetailsDialog", () => {
 
 - [ ] **Step 3: Run web tests**
 
-Run: `pnpm --filter @open-resume/web test run CompanionJobDetailsDialog`
+Run: `pnpm --filter @open-resume/web test run BackendJobDetailsDialog`
 Expected: PASS
 
 - [ ] **Step 4: Commit new component**
 
 ```bash
-git add apps/web/src/components/jobs/CompanionJobDetailsDialog.tsx apps/web/src/components/jobs/CompanionJobDetailsDialog.test.tsx
-git commit -m "feat: add CompanionJobDetailsDialog component and test"
+git add apps/web/src/components/jobs/BackendJobDetailsDialog.tsx apps/web/src/components/jobs/BackendJobDetailsDialog.test.tsx
+git commit -m "feat: add BackendJobDetailsDialog component and test"
 ```
 
 ---
 
-### Task 2: Integrate Dialog into [CompanionJobCard](file:///Users/ben/ghq/github.com/Benjaminlooi/resume-builder/.worktrees/job-application-ai-helper/apps/web/src/components/jobs/CompanionJobCard.tsx)
+### Task 2: Integrate Dialog into [BackendJobCard](file:///Users/ben/ghq/github.com/Benjaminlooi/resume-builder/.worktrees/job-application-ai-helper/apps/web/src/components/jobs/BackendJobCard.tsx)
 
 **Files:**
-- Modify: `apps/web/src/components/jobs/CompanionJobCard.tsx`
-- Modify: `apps/web/src/components/jobs/CompanionJobCard.test.tsx`
+- Modify: `apps/web/src/components/jobs/BackendJobCard.tsx`
+- Modify: `apps/web/src/components/jobs/BackendJobCard.test.tsx`
 
 - [ ] **Step 1: Modify card component to support details modal**
 
-Replace the contents of `apps/web/src/components/jobs/CompanionJobCard.tsx` with:
+Replace the contents of `apps/web/src/components/jobs/BackendJobCard.tsx` with:
 
 ```tsx
 import { RotateCcw, Trash2, Eye } from "lucide-react";
 import { useState } from "react";
-import type { LocalCompanionJob } from "#/lib/local-companion-client";
-import CompanionJobDetailsDialog from "./CompanionJobDetailsDialog";
+import type { LocalBackendJob } from "#/lib/local-backend-client";
+import BackendJobDetailsDialog from "./BackendJobDetailsDialog";
 
-interface CompanionJobCardProps {
-	job: LocalCompanionJob;
+interface BackendJobCardProps {
+	job: LocalBackendJob;
 	onRetry: (id: string) => void;
 	onRetryAnalyze: (id: string) => void;
 	onDelete: (id: string) => void;
-	onConvert?: (job: LocalCompanionJob) => void;
+	onConvert?: (job: LocalBackendJob) => void;
 }
 
 function getHostname(sourceUrl: string) {
@@ -491,13 +491,13 @@ function getPreview(text: string) {
 	return text.length > 180 ? `${text.slice(0, 180)}...` : text;
 }
 
-export default function CompanionJobCard({
+export default function BackendJobCard({
 	job,
 	onRetry,
 	onRetryAnalyze,
 	onDelete,
 	onConvert,
-}: CompanionJobCardProps) {
+}: BackendJobCardProps) {
 	const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 	const hostname = getHostname(job.sourceUrl);
 	const isReady = job.crawlStatus === "ready";
@@ -629,7 +629,7 @@ export default function CompanionJobCard({
 			</article>
 
 			{isDetailsOpen && (
-				<CompanionJobDetailsDialog
+				<BackendJobDetailsDialog
 					job={job}
 					isOpen={isDetailsOpen}
 					onClose={() => setIsDetailsOpen(false)}
@@ -645,11 +645,11 @@ export default function CompanionJobCard({
 
 - [ ] **Step 2: Update card component tests**
 
-Modify `apps/web/src/components/jobs/CompanionJobCard.test.tsx` to:
+Modify `apps/web/src/components/jobs/BackendJobCard.test.tsx` to:
 1. Include `Eye` in the mocked `lucide-react` functions.
 2. Add a new test verification checking the "View Details" button behavior.
 
-Here are the target changes for `apps/web/src/components/jobs/CompanionJobCard.test.tsx`:
+Here are the target changes for `apps/web/src/components/jobs/BackendJobCard.test.tsx`:
 
 Lines 12-15 target content:
 ```typescript
@@ -702,14 +702,14 @@ And add the following test case at the end of the file:
 
 - [ ] **Step 3: Run web tests**
 
-Run: `pnpm --filter @open-resume/web test run CompanionJobCard`
+Run: `pnpm --filter @open-resume/web test run BackendJobCard`
 Expected: PASS
 
 - [ ] **Step 4: Commit changes**
 
 ```bash
-git add apps/web/src/components/jobs/CompanionJobCard.tsx apps/web/src/components/jobs/CompanionJobCard.test.tsx
-git commit -m "feat: integrate CompanionJobDetailsDialog into CompanionJobCard"
+git add apps/web/src/components/jobs/BackendJobCard.tsx apps/web/src/components/jobs/BackendJobCard.test.tsx
+git commit -m "feat: integrate BackendJobDetailsDialog into BackendJobCard"
 ```
 
 ---

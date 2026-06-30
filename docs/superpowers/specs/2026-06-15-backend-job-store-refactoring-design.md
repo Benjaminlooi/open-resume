@@ -1,10 +1,10 @@
-# Design: Companion Job Store Refactoring & Feature-Based Folder Structure
+# Design: Backend Job Store Refactoring & Feature-Based Folder Structure
 
-This document details the refactoring of companion job queue management to use a new Zustand store, resolving callback prop drilling across `CompanionJobCard` and `CompanionJobDetailsDialog`, and the migration of jobs-related files to a self-contained feature directory (`src/features/jobs`).
+This document details the refactoring of backend job queue management to use a new Zustand store, resolving callback prop drilling across `BackendJobCard` and `BackendJobDetailsDialog`, and the migration of jobs-related files to a self-contained feature directory (`src/features/jobs`).
 
 ## Objectives
-- Introduce a new Zustand store (`useCompanionJobStore`) to manage companion job state and actions.
-- Resolve callback prop-drilling (`onConvert`, `onRetry`, `onRetryAnalyze`, `onDelete`) into `CompanionJobCard` and `CompanionJobDetailsDialog`.
+- Introduce a new Zustand store (`useBackendJobStore`) to manage backend job state and actions.
+- Resolve callback prop-drilling (`onConvert`, `onRetry`, `onRetryAnalyze`, `onDelete`) into `BackendJobCard` and `BackendJobDetailsDialog`.
 - Reorganize the codebase by migrating all jobs-related code from `src/components/jobs/` and `src/lib/` to `src/features/jobs/` (introducing the Feature-Based layout).
 - Clean up duplicate state and event handlers in `JobsDashboard` (`apps/web/src/routes/jobs.tsx`).
 - Keep Zustand stores aligned with TypeScript best practices (using curried `create<T>()`).
@@ -18,8 +18,8 @@ All jobs-related state, logic, schemas, and UI components will be colocated in a
 apps/web/src/features/jobs/
 ├── components/                       # UI components (moved from src/components/jobs/)
 │   ├── ApplicationTrackerStep.tsx
-│   ├── CompanionJobCard.tsx
-│   ├── CompanionJobDetailsDialog.tsx
+│   ├── BackendJobCard.tsx
+│   ├── BackendJobDetailsDialog.tsx
 │   ├── CoverLetterStep.tsx
 │   ├── FitBriefStep.tsx
 │   ├── JobApplicationCard.tsx
@@ -28,8 +28,8 @@ apps/web/src/features/jobs/
 │   ├── PipelineIntegrityPanel.tsx
 │   ├── ResumeTailoringStep.tsx
 │   └── TailoredResumePreview.tsx
-├── companion-job-store.ts            # [NEW] Zustand store for companion jobs
-├── companion-job-store.test.ts       # [NEW] Tests for companion jobs store
+├── backend-job-store.ts            # [NEW] Zustand store for backend jobs
+├── backend-job-store.test.ts       # [NEW] Tests for backend jobs store
 ├── job-application-store.ts          # Zustand store for job applications (moved from src/lib/)
 ├── job-application-store.test.ts     # Tests for job application store (moved from src/lib/)
 ├── job-application-schema.ts         # Zod schemas (moved from src/lib/)
@@ -49,43 +49,43 @@ apps/web/src/features/jobs/
 - Update internal imports within `src/features/jobs/` to use relative paths (e.g. `./job-application-schema` instead of `#/lib/job-application-schema`).
 - Update external imports in `routes/jobs.tsx` and other pages to point to `#/features/jobs/components/...` or `#/features/jobs/...`.
 
-### 2. New Store: [companion-job-store.ts](file:///Users/ben/ghq/github.com/Benjaminlooi/resume-builder/.worktrees/job-application-ai-helper/apps/web/src/features/jobs/companion-job-store.ts)
+### 2. New Store: [backend-job-store.ts](file:///Users/ben/ghq/github.com/Benjaminlooi/resume-builder/.worktrees/job-application-ai-helper/apps/web/src/features/jobs/backend-job-store.ts)
 
 Create a typed Zustand store to manage the queue cache, loading/error states, and async actions:
 - **State**:
-  - `companionJobs`: `LocalCompanionJob[]`
+  - `backendJobs`: `LocalBackendJob[]`
   - `isLoading`: `boolean`
   - `error`: `string | null`
 - **Actions**:
-  - `fetchJobs()`: Calls `listCompanionJobs()` and updates store state.
-  - `retryJobCrawl(id: string)`: Calls `retryCompanionJobCrawl(id)` and calls `fetchJobs()`.
-  - `retryJobAnalyze(id: string)`: Calls `retryCompanionJobAnalyze(id)` and calls `fetchJobs()`.
-  - `deleteJob(id: string)`: Calls `deleteCompanionJob(id)` and calls `fetchJobs()`.
-  - `convertJobToApplication(job: LocalCompanionJob)`:
+  - `fetchJobs()`: Calls `listBackendJobs()` and updates store state.
+  - `retryJobCrawl(id: string)`: Calls `retryBackendJobCrawl(id)` and calls `fetchJobs()`.
+  - `retryJobAnalyze(id: string)`: Calls `retryBackendJobAnalyze(id)` and calls `fetchJobs()`.
+  - `deleteJob(id: string)`: Calls `deleteBackendJob(id)` and calls `fetchJobs()`.
+  - `convertJobToApplication(job: LocalBackendJob)`:
     - Invokes `createJobApplication` and `saveFitBrief` from `./job-application-store` directly.
-    - Deletes the companion job using `deleteCompanionJob(job.id)`.
+    - Deletes the backend job using `deleteBackendJob(job.id)`.
     - Refreshes the local queue (`fetchJobs()`).
     - Returns the newly created `appId` for navigation.
 
-### 3. Modify: [CompanionJobDetailsDialog.tsx](file:///Users/ben/ghq/github.com/Benjaminlooi/resume-builder/.worktrees/job-application-ai-helper/apps/web/src/features/jobs/components/CompanionJobDetailsDialog.tsx)
+### 3. Modify: [BackendJobDetailsDialog.tsx](file:///Users/ben/ghq/github.com/Benjaminlooi/resume-builder/.worktrees/job-application-ai-helper/apps/web/src/features/jobs/components/BackendJobDetailsDialog.tsx)
 
-- Remove the following callback props from `CompanionJobDetailsDialogProps`:
+- Remove the following callback props from `BackendJobDetailsDialogProps`:
   - `onConvert`, `onRetry`, `onRetryAnalyze`
-- Import `useCompanionJobStore` and `useNavigate`.
+- Import `useBackendJobStore` and `useNavigate`.
 - Update the dialog action buttons to call store actions.
 
-### 4. Modify: [CompanionJobCard.tsx](file:///Users/ben/ghq/github.com/Benjaminlooi/resume-builder/.worktrees/job-application-ai-helper/apps/web/src/features/jobs/components/CompanionJobCard.tsx)
+### 4. Modify: [BackendJobCard.tsx](file:///Users/ben/ghq/github.com/Benjaminlooi/resume-builder/.worktrees/job-application-ai-helper/apps/web/src/features/jobs/components/BackendJobCard.tsx)
 
-- Remove all callback props from `CompanionJobCardProps`.
-- Import `useCompanionJobStore`.
+- Remove all callback props from `BackendJobCardProps`.
+- Import `useBackendJobStore`.
 - Update the card action buttons and details dialog portal to call store actions directly.
 
 ### 5. Modify: [jobs.tsx](file:///Users/ben/ghq/github.com/Benjaminlooi/resume-builder/.worktrees/job-application-ai-helper/apps/web/src/routes/jobs.tsx)
 
-- Remove local state: `companionJobs`, `loadError`.
+- Remove local state: `backendJobs`, `loadError`.
 - Remove local handler methods: `handleRetry`, `handleRetryAnalyze`, `handleDelete`, `handleConvert`.
-- Use selectors to bind to `companionJobs`, `fetchJobs`, and `error` from `useCompanionJobStore`.
-- Update the `useEffect` polling and rendering logic to render `<CompanionJobCard key={job.id} job={job} />` without any action props.
+- Use selectors to bind to `backendJobs`, `fetchJobs`, and `error` from `useBackendJobStore`.
+- Update the `useEffect` polling and rendering logic to render `<BackendJobCard key={job.id} job={job} />` without any action props.
 
 ---
 
@@ -98,7 +98,7 @@ Create a typed Zustand store to manage the queue cache, loading/error states, an
 
 ### Manual Verification
 1. Access the jobs dashboard.
-2. Verify companion jobs are listed and successfully polled.
+2. Verify backend jobs are listed and successfully polled.
 3. Click "Retry Scrape" or "Retry AI Analysis" on failed jobs.
 4. Click "View Details" to open a dialog.
 5. Click "Convert to Application" and verify redirection to the new job page.

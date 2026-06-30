@@ -21,7 +21,7 @@ import {
 	updateJobApplication,
 	updateProfile,
 	updateResume,
-} from "./local-companion-client";
+} from "./local-backend-client";
 
 const mockProfile = {
 	candidate: {
@@ -103,7 +103,7 @@ const mockJobApplication = {
 	updatedAt: 1791571200000,
 };
 
-describe("local companion client", () => {
+describe("local backend client", () => {
 	afterEach(() => {
 		vi.restoreAllMocks();
 		vi.unstubAllGlobals();
@@ -400,11 +400,11 @@ describe("local companion client", () => {
 		);
 
 		await expect(getResume("missing")).rejects.toThrow(
-			"Local companion could not retrieve this resume.",
+			"Local backend could not retrieve this resume.",
 		);
 	});
 
-	it("returns a user-facing error when the companion is unavailable", async () => {
+	it("returns a user-facing error when the backend is unavailable", async () => {
 		vi.stubGlobal(
 			"fetch",
 			vi.fn(async () => {
@@ -413,7 +413,7 @@ describe("local companion client", () => {
 		);
 
 		await expect(listJobPostings()).rejects.toThrow(
-			"Local companion is not reachable",
+			"Local backend is not reachable",
 		);
 	});
 

@@ -12,7 +12,7 @@ export function createSystemRoutes(): FastifyPluginAsync {
 				schema: {
 					operationId: "getHealth",
 					tags: ["System"],
-					summary: "Check companion health",
+					summary: "Check backend health",
 					response: {
 						200: healthResponseSchema,
 					},
@@ -20,7 +20,7 @@ export function createSystemRoutes(): FastifyPluginAsync {
 			},
 			async () => ({
 				ok: true,
-				service: "open-resume-companion",
+				service: "open-resume-backend",
 			}),
 		);
 

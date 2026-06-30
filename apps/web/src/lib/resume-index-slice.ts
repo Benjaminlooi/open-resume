@@ -7,7 +7,7 @@ import {
 	deleteResume,
 	listResumes,
 	setDefaultResume,
-} from "./local-companion-client";
+} from "./local-backend-client";
 import { toResumeContent } from "./resume-slice";
 
 export interface ResumeIndexEntry {

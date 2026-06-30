@@ -25,7 +25,7 @@ import {
 	syncResume,
 	type TargetRoleArchetype,
 	updateProfile,
-} from "#/lib/local-companion-client";
+} from "#/lib/local-backend-client";
 import { useRootStore } from "#/lib/root-store";
 import { getResumeData } from "#/lib/root-store";
 

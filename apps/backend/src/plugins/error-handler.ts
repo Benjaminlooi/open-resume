@@ -7,10 +7,10 @@ export const registerErrorHandler = fp(async (server) => {
 		if (hasZodFastifySchemaValidationErrors(err)) {
 			request.log.warn(
 				{ details: JSON.stringify(err.validation) },
-				"invalid companion request",
+				"invalid backend request",
 			);
 			return reply.status(400).send({
-				error: "Invalid companion request",
+				error: "Invalid backend request",
 				details: JSON.stringify(err.validation),
 			});
 		}

@@ -95,11 +95,11 @@ export interface ResolvedConfig {
 }
 
 const EnvSchema = z.object({
-	OPEN_RESUME_COMPANION_DB_PATH: z.string().optional(),
-	OPEN_RESUME_COMPANION_LOG_LEVEL: LogLevelSchema.default("info"),
-	OPEN_RESUME_COMPANION_LOG_SCRAPED_DATA: z.string().optional(),
-	OPEN_RESUME_COMPANION_HEADLESS: z.string().optional(),
-	OPEN_RESUME_COMPANION_AI_PROVIDER: AIProviderSchema.default("openai"),
+	OPEN_RESUME_BACKEND_DB_PATH: z.string().optional(),
+	OPEN_RESUME_BACKEND_LOG_LEVEL: LogLevelSchema.default("info"),
+	OPEN_RESUME_BACKEND_LOG_SCRAPED_DATA: z.string().optional(),
+	OPEN_RESUME_BACKEND_HEADLESS: z.string().optional(),
+	OPEN_RESUME_BACKEND_AI_PROVIDER: AIProviderSchema.default("openai"),
 	OPENAI_API_KEY: z.string().optional(),
 	OPENAI_MODEL: z.string().default("gpt-4o-mini"),
 	GEMINI_API_KEY: z.string().optional(),
@@ -125,23 +125,23 @@ export function resolveConfig(options: CreateServerOptions): ResolvedConfig {
 
 	const databasePath =
 		parsedOptions.databasePath ??
-		parsedEnv.OPEN_RESUME_COMPANION_DB_PATH ??
-		resolve(process.cwd(), ".open-resume-companion/jobs.sqlite");
+		parsedEnv.OPEN_RESUME_BACKEND_DB_PATH ??
+		resolve(process.cwd(), ".open-resume-backend/jobs.sqlite");
 
 	const logLevel =
-		parsedOptions.logLevel ?? parsedEnv.OPEN_RESUME_COMPANION_LOG_LEVEL;
+		parsedOptions.logLevel ?? parsedEnv.OPEN_RESUME_BACKEND_LOG_LEVEL;
 
 	const logScrapedData =
 		parsedOptions.logScrapedData ??
 		isScrapedDataLoggingEnabled(
-			parsedEnv.OPEN_RESUME_COMPANION_LOG_SCRAPED_DATA,
+			parsedEnv.OPEN_RESUME_BACKEND_LOG_SCRAPED_DATA,
 		);
 
 	const headless =
 		parsedOptions.headless ??
-		isHeadlessEnabled(parsedEnv.OPEN_RESUME_COMPANION_HEADLESS);
+		isHeadlessEnabled(parsedEnv.OPEN_RESUME_BACKEND_HEADLESS);
 
-	const provider = parsedEnv.OPEN_RESUME_COMPANION_AI_PROVIDER;
+	const provider = parsedEnv.OPEN_RESUME_BACKEND_AI_PROVIDER;
 	let apiKey: string | undefined;
 	let modelName: string | undefined;
 

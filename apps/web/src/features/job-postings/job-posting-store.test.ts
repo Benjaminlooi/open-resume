@@ -6,7 +6,7 @@ import {
 	listJobApplications,
 	retryJobPostingAnalyze,
 	retryJobPostingCrawl,
-} from "#/lib/local-companion-client";
+} from "#/lib/local-backend-client";
 import { useRootStore } from "#/lib/root-store";
 
 const useJobPostingStore = {
@@ -27,7 +27,7 @@ const useJobApplicationStore = {
 	},
 };
 
-vi.mock("#/lib/local-companion-client", () => ({
+vi.mock("#/lib/local-backend-client", () => ({
 	listJobPostings: vi.fn(),
 	deleteJobPosting: vi.fn(),
 	retryJobPostingCrawl: vi.fn(),
@@ -115,7 +115,7 @@ describe("useJobPostingStore", () => {
 		expect(listJobPostingsMock).toHaveBeenCalled();
 	});
 
-	it("should convert job to application, fetch companion jobs, and load job applications", async () => {
+	it("should convert job to application, fetch backend jobs, and load job applications", async () => {
 		const mockJob = {
 			id: "1",
 			sourceUrl: "https://example.com/job",

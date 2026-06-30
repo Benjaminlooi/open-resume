@@ -1,75 +1,75 @@
-# Companion-Owned Job Capture Implementation Plan
+# Backend-Owned Job Capture Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Move URL-first job capture, crawl status, cleaned text, and retry/delete lifecycle into the local companion with SQLite-backed persistence.
+**Goal:** Move URL-first job capture, crawl status, cleaned text, and retry/delete lifecycle into the local backend with SQLite-backed persistence.
 
-**Architecture:** The companion becomes the owner of intake jobs and exposes `/jobs` APIs. The web app submits a URL, renders companion-owned pending/ready/failed jobs, and stops blocking job creation on Playwright extraction. Crawling remains generic and stores cleaned text only; AI parsing is explicitly deferred.
+**Architecture:** The backend becomes the owner of intake jobs and exposes `/jobs` APIs. The web app submits a URL, renders backend-owned pending/ready/failed jobs, and stops blocking job creation on Playwright extraction. Crawling remains generic and stores cleaned text only; AI parsing is explicitly deferred.
 
 **Tech Stack:** Fastify 5, Zod 4, `fastify-type-provider-zod`, Node 22 `node:sqlite`, Playwright, React 19, TanStack Router, Vitest, TypeScript.
 
-`node:sqlite` is available in the local Node runtime and avoids adding a native SQLite dependency. It currently emits Node's experimental SQLite warning; keep that warning acceptable for this local companion unless verification shows TypeScript or runtime incompatibility.
+`node:sqlite` is available in the local Node runtime and avoids adding a native SQLite dependency. It currently emits Node's experimental SQLite warning; keep that warning acceptable for this local backend unless verification shows TypeScript or runtime incompatibility.
 
 ---
 
 ## File Structure
 
-- Modify `apps/companion/src/schema.ts`
-  - Add `CompanionJob`, crawl status, create-job request, route params, and delete response schemas.
-- Create `apps/companion/src/jobs/repository.ts`
-  - Own SQLite schema initialization and CRUD operations for companion jobs.
-- Create `apps/companion/src/jobs/crawl-queue.ts`
+- Modify `apps/backend/src/schema.ts`
+  - Add `BackendJob`, crawl status, create-job request, route params, and delete response schemas.
+- Create `apps/backend/src/jobs/repository.ts`
+  - Own SQLite schema initialization and CRUD operations for backend jobs.
+- Create `apps/backend/src/jobs/crawl-queue.ts`
   - Own in-process crawl scheduling, status transitions, retry behavior, and stale startup recovery.
-- Create `apps/companion/src/jobs/repository.test.ts`
+- Create `apps/backend/src/jobs/repository.test.ts`
   - Test durable SQLite persistence and row mapping.
-- Create `apps/companion/src/jobs/crawl-queue.test.ts`
+- Create `apps/backend/src/jobs/crawl-queue.test.ts`
   - Test crawl success, failure, retry, and deleted-job behavior with mocked crawler.
-- Modify `apps/companion/src/extract/playwright.ts`
+- Modify `apps/backend/src/extract/playwright.ts`
   - Return generic cleaned text instead of semantic job fields for the new crawl queue.
-- Modify `apps/companion/src/extract/playwright.test.ts`
+- Modify `apps/backend/src/extract/playwright.test.ts`
   - Assert generic cleanup output, not company/title/location extraction.
-- Modify `apps/companion/src/server.ts`
+- Modify `apps/backend/src/server.ts`
   - Register `/jobs`, `/jobs/:id`, `/jobs/:id/retry-crawl`, and `DELETE /jobs/:id`.
-- Modify `apps/companion/src/server.test.ts`
-  - Add route tests for companion-owned jobs and update OpenAPI assertions.
-- Modify `apps/companion/src/openapi.test.ts`
+- Modify `apps/backend/src/server.test.ts`
+  - Add route tests for backend-owned jobs and update OpenAPI assertions.
+- Modify `apps/backend/src/openapi.test.ts`
   - Assert new job schemas and endpoints are present in generated OpenAPI.
-- Regenerate `apps/companion/openapi.json`.
-- Modify `apps/web/src/lib/local-companion-client.ts`
-  - Replace extract-only client with companion job client functions.
-- Modify `apps/web/src/lib/local-companion-client.test.ts`
+- Regenerate `apps/backend/openapi.json`.
+- Modify `apps/web/src/lib/local-backend-client.ts`
+  - Replace extract-only client with backend job client functions.
+- Modify `apps/web/src/lib/local-backend-client.test.ts`
   - Cover create/list/retry/delete and service-unavailable errors.
 - Modify `apps/web/src/components/jobs/NewJobApplicationModal.tsx`
   - Replace full form with URL-only submission.
-- Create `apps/web/src/components/jobs/CompanionJobCard.tsx`
-  - Render pending, ready, and failed companion jobs.
+- Create `apps/web/src/components/jobs/BackendJobCard.tsx`
+  - Render pending, ready, and failed backend jobs.
 - Modify `apps/web/src/routes/jobs.tsx`
-  - Use companion jobs for intake dashboard and polling.
+  - Use backend jobs for intake dashboard and polling.
 - Modify `apps/web/src/components/jobs/NewJobApplicationModal.test.tsx`
-  - Assert the modal submits only a URL to the companion client.
-- Create `apps/web/src/components/jobs/CompanionJobCard.test.tsx`
+  - Assert the modal submits only a URL to the backend client.
+- Create `apps/web/src/components/jobs/BackendJobCard.test.tsx`
   - Assert pending, ready, and failed crawl states render correctly.
 
-## Task 1: Add Companion Job Schemas
+## Task 1: Add Backend Job Schemas
 
 **Files:**
-- Modify: `apps/companion/src/schema.ts`
-- Test: `apps/companion/src/schema.test.ts`
+- Modify: `apps/backend/src/schema.ts`
+- Test: `apps/backend/src/schema.test.ts`
 
 - [ ] **Step 1: Extend schema tests first**
 
-Add tests to `apps/companion/src/schema.test.ts`:
+Add tests to `apps/backend/src/schema.test.ts`:
 
 ```ts
 import {
-	companionJobSchema,
+	backendJobSchema,
 	createJobRequestSchema,
 	deleteJobResponseSchema,
 	jobIdParamsSchema,
 } from "./schema.js";
 
-it("accepts a companion job with pending crawl state", () => {
-	const parsed = companionJobSchema.parse({
+it("accepts a backend job with pending crawl state", () => {
+	const parsed = backendJobSchema.parse({
 		id: "job-1",
 		sourceUrl: "https://example.com/jobs/1",
 		crawlStatus: "pending",
@@ -99,7 +99,7 @@ it("registers job schemas for OpenAPI component generation", () => {
 	expect(z.globalRegistry.get(createJobRequestSchema)?.id).toBe(
 		"CreateJobRequest",
 	);
-	expect(z.globalRegistry.get(companionJobSchema)?.id).toBe("CompanionJob");
+	expect(z.globalRegistry.get(backendJobSchema)?.id).toBe("BackendJob");
 	expect(z.globalRegistry.get(deleteJobResponseSchema)?.id).toBe(
 		"DeleteJobResponse",
 	);
@@ -111,14 +111,14 @@ it("registers job schemas for OpenAPI component generation", () => {
 Run:
 
 ```bash
-pnpm --filter @open-resume/companion test -- src/schema.test.ts
+pnpm --filter @open-resume/backend test -- src/schema.test.ts
 ```
 
 Expected: FAIL because the new schemas are not exported yet.
 
 - [ ] **Step 3: Add the Zod schemas**
 
-Add this to `apps/companion/src/schema.ts` after the existing extraction schemas:
+Add this to `apps/backend/src/schema.ts` after the existing extraction schemas:
 
 ```ts
 export const crawlStatusSchema = z.enum([
@@ -146,7 +146,7 @@ export const jobIdParamsSchema = z
 
 export type JobIdParams = z.infer<typeof jobIdParamsSchema>;
 
-export const companionJobSchema = z
+export const backendJobSchema = z
 	.object({
 		id: z.string(),
 		sourceUrl: httpUrlSchema,
@@ -162,15 +162,15 @@ export const companionJobSchema = z
 	})
 	.strict();
 
-export type CompanionJob = z.infer<typeof companionJobSchema>;
+export type BackendJob = z.infer<typeof backendJobSchema>;
 
-export const companionJobsResponseSchema = z
+export const backendJobsResponseSchema = z
 	.object({
-		jobs: z.array(companionJobSchema),
+		jobs: z.array(backendJobSchema),
 	})
 	.strict();
 
-export type CompanionJobsResponse = z.infer<typeof companionJobsResponseSchema>;
+export type BackendJobsResponse = z.infer<typeof backendJobsResponseSchema>;
 
 export const deleteJobResponseSchema = z
 	.object({
@@ -182,9 +182,9 @@ export type DeleteJobResponse = z.infer<typeof deleteJobResponseSchema>;
 
 z.globalRegistry.add(createJobRequestSchema, { id: "CreateJobRequest" });
 z.globalRegistry.add(jobIdParamsSchema, { id: "JobIdParams" });
-z.globalRegistry.add(companionJobSchema, { id: "CompanionJob" });
-z.globalRegistry.add(companionJobsResponseSchema, {
-	id: "CompanionJobsResponse",
+z.globalRegistry.add(backendJobSchema, { id: "BackendJob" });
+z.globalRegistry.add(backendJobsResponseSchema, {
+	id: "BackendJobsResponse",
 });
 z.globalRegistry.add(deleteJobResponseSchema, { id: "DeleteJobResponse" });
 ```
@@ -194,7 +194,7 @@ z.globalRegistry.add(deleteJobResponseSchema, { id: "DeleteJobResponse" });
 Run:
 
 ```bash
-pnpm --filter @open-resume/companion test -- src/schema.test.ts
+pnpm --filter @open-resume/backend test -- src/schema.test.ts
 ```
 
 Expected: PASS.
@@ -202,19 +202,19 @@ Expected: PASS.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add apps/companion/src/schema.ts apps/companion/src/schema.test.ts
-git commit -m "feat(companion): add job intake schemas"
+git add apps/backend/src/schema.ts apps/backend/src/schema.test.ts
+git commit -m "feat(backend): add job intake schemas"
 ```
 
 ## Task 2: Add SQLite Job Repository
 
 **Files:**
-- Create: `apps/companion/src/jobs/repository.ts`
-- Create: `apps/companion/src/jobs/repository.test.ts`
+- Create: `apps/backend/src/jobs/repository.ts`
+- Create: `apps/backend/src/jobs/repository.test.ts`
 
 - [ ] **Step 1: Write repository tests**
 
-Create `apps/companion/src/jobs/repository.test.ts`:
+Create `apps/backend/src/jobs/repository.test.ts`:
 
 ```ts
 import { afterEach, describe, expect, it } from "vitest";
@@ -324,18 +324,18 @@ describe("job repository", () => {
 Run:
 
 ```bash
-pnpm --filter @open-resume/companion test -- src/jobs/repository.test.ts
+pnpm --filter @open-resume/backend test -- src/jobs/repository.test.ts
 ```
 
 Expected: FAIL because `repository.ts` does not exist.
 
 - [ ] **Step 3: Implement repository**
 
-Create `apps/companion/src/jobs/repository.ts`:
+Create `apps/backend/src/jobs/repository.ts`:
 
 ```ts
 import { DatabaseSync } from "node:sqlite";
-import type { CompanionJob, CrawlStatus } from "../schema.js";
+import type { BackendJob, CrawlStatus } from "../schema.js";
 
 interface JobRow {
 	id: string;
@@ -348,7 +348,7 @@ interface JobRow {
 	crawled_at: number | null;
 }
 
-function mapJob(row: JobRow): CompanionJob {
+function mapJob(row: JobRow): BackendJob {
 	return {
 		id: row.id,
 		sourceUrl: row.source_url,
@@ -387,7 +387,7 @@ export function createJobRepository(path: string) {
 					) values (?, ?, 'pending', null, '', ?, ?, null)
 				`)
 				.run(input.id, input.sourceUrl, input.now, input.now);
-			return this.getJob(input.id) as CompanionJob;
+			return this.getJob(input.id) as BackendJob;
 		},
 
 		listJobs() {
@@ -485,7 +485,7 @@ export type JobRepository = ReturnType<typeof createJobRepository>;
 Run:
 
 ```bash
-pnpm --filter @open-resume/companion test -- src/jobs/repository.test.ts
+pnpm --filter @open-resume/backend test -- src/jobs/repository.test.ts
 ```
 
 Expected: PASS.
@@ -493,19 +493,19 @@ Expected: PASS.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add apps/companion/src/jobs/repository.ts apps/companion/src/jobs/repository.test.ts
-git commit -m "feat(companion): persist intake jobs in sqlite"
+git add apps/backend/src/jobs/repository.ts apps/backend/src/jobs/repository.test.ts
+git commit -m "feat(backend): persist intake jobs in sqlite"
 ```
 
 ## Task 3: Convert Playwright Extraction To Generic Cleaned Text
 
 **Files:**
-- Modify: `apps/companion/src/extract/playwright.ts`
-- Modify: `apps/companion/src/extract/playwright.test.ts`
+- Modify: `apps/backend/src/extract/playwright.ts`
+- Modify: `apps/backend/src/extract/playwright.test.ts`
 
 - [ ] **Step 1: Update Playwright tests**
 
-Replace semantic assertions in `apps/companion/src/extract/playwright.test.ts` with:
+Replace semantic assertions in `apps/backend/src/extract/playwright.test.ts` with:
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -572,14 +572,14 @@ describe("crawlCleanedTextWithPlaywright", () => {
 Run:
 
 ```bash
-pnpm --filter @open-resume/companion test -- src/extract/playwright.test.ts
+pnpm --filter @open-resume/backend test -- src/extract/playwright.test.ts
 ```
 
 Expected: FAIL because `crawlCleanedTextWithPlaywright` and `normalizePlaywrightCrawl` are not exported.
 
 - [ ] **Step 3: Implement generic crawl result**
 
-Update `apps/companion/src/extract/playwright.ts` to export:
+Update `apps/backend/src/extract/playwright.ts` to export:
 
 ```ts
 import { chromium } from "playwright";
@@ -667,7 +667,7 @@ export async function crawlCleanedTextWithPlaywright(
 Run:
 
 ```bash
-pnpm --filter @open-resume/companion test -- src/extract/playwright.test.ts
+pnpm --filter @open-resume/backend test -- src/extract/playwright.test.ts
 ```
 
 Expected: PASS.
@@ -675,19 +675,19 @@ Expected: PASS.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add apps/companion/src/extract/playwright.ts apps/companion/src/extract/playwright.test.ts
-git commit -m "refactor(companion): crawl generic cleaned text"
+git add apps/backend/src/extract/playwright.ts apps/backend/src/extract/playwright.test.ts
+git commit -m "refactor(backend): crawl generic cleaned text"
 ```
 
-## Task 4: Add Companion Crawl Queue
+## Task 4: Add Backend Crawl Queue
 
 **Files:**
-- Create: `apps/companion/src/jobs/crawl-queue.ts`
-- Create: `apps/companion/src/jobs/crawl-queue.test.ts`
+- Create: `apps/backend/src/jobs/crawl-queue.ts`
+- Create: `apps/backend/src/jobs/crawl-queue.test.ts`
 
 - [ ] **Step 1: Write crawl queue tests**
 
-Create `apps/companion/src/jobs/crawl-queue.test.ts`:
+Create `apps/backend/src/jobs/crawl-queue.test.ts`:
 
 ```ts
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -793,14 +793,14 @@ describe("crawl queue", () => {
 Run:
 
 ```bash
-pnpm --filter @open-resume/companion test -- src/jobs/crawl-queue.test.ts
+pnpm --filter @open-resume/backend test -- src/jobs/crawl-queue.test.ts
 ```
 
 Expected: FAIL because `crawl-queue.ts` does not exist.
 
 - [ ] **Step 3: Implement crawl queue**
 
-Create `apps/companion/src/jobs/crawl-queue.ts`:
+Create `apps/backend/src/jobs/crawl-queue.ts`:
 
 ```ts
 import type { CleanedPageCrawlResult } from "../extract/playwright.js";
@@ -875,7 +875,7 @@ export type CrawlQueue = ReturnType<typeof createCrawlQueue>;
 Run:
 
 ```bash
-pnpm --filter @open-resume/companion test -- src/jobs/crawl-queue.test.ts
+pnpm --filter @open-resume/backend test -- src/jobs/crawl-queue.test.ts
 ```
 
 Expected: PASS.
@@ -883,25 +883,25 @@ Expected: PASS.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add apps/companion/src/jobs/crawl-queue.ts apps/companion/src/jobs/crawl-queue.test.ts
-git commit -m "feat(companion): add job crawl queue"
+git add apps/backend/src/jobs/crawl-queue.ts apps/backend/src/jobs/crawl-queue.test.ts
+git commit -m "feat(backend): add job crawl queue"
 ```
 
-## Task 5: Add Companion Job Routes
+## Task 5: Add Backend Job Routes
 
 **Files:**
-- Modify: `apps/companion/src/server.ts`
-- Modify: `apps/companion/src/server.test.ts`
+- Modify: `apps/backend/src/server.ts`
+- Modify: `apps/backend/src/server.test.ts`
 
 - [ ] **Step 1: Update server tests**
 
-Add route tests to `apps/companion/src/server.test.ts` using `createServer({ jobRepository, crawlQueue })`:
+Add route tests to `apps/backend/src/server.test.ts` using `createServer({ jobRepository, crawlQueue })`:
 
 ```ts
 import { createCrawlQueue } from "./jobs/crawl-queue.js";
 import { createJobRepository } from "./jobs/repository.js";
 
-it("creates companion jobs immediately without waiting for crawl completion", async () => {
+it("creates backend jobs immediately without waiting for crawl completion", async () => {
 	const repository = createJobRepository(":memory:");
 	const crawlQueue = createCrawlQueue({
 		repository,
@@ -931,7 +931,7 @@ it("creates companion jobs immediately without waiting for crawl completion", as
 	repository.close();
 });
 
-it("lists, retries, gets, and deletes companion jobs", async () => {
+it("lists, retries, gets, and deletes backend jobs", async () => {
 	const repository = createJobRepository(":memory:");
 	const crawlQueue = createCrawlQueue({
 		repository,
@@ -994,14 +994,14 @@ it("lists, retries, gets, and deletes companion jobs", async () => {
 Run:
 
 ```bash
-pnpm --filter @open-resume/companion test -- src/server.test.ts
+pnpm --filter @open-resume/backend test -- src/server.test.ts
 ```
 
 Expected: FAIL because `createServer` does not accept repository/queue options and `/jobs` routes do not exist.
 
 - [ ] **Step 3: Modify `createServer` options and register job routes**
 
-In `apps/companion/src/server.ts`, extend imports and options:
+In `apps/backend/src/server.ts`, extend imports and options:
 
 ```ts
 import { mkdirSync } from "node:fs";
@@ -1013,8 +1013,8 @@ import {
 	type JobRepository,
 } from "./jobs/repository.js";
 import {
-	companionJobSchema,
-	companionJobsResponseSchema,
+	backendJobSchema,
+	backendJobsResponseSchema,
 	createJobRequestSchema,
 	deleteJobResponseSchema,
 	jobIdParamsSchema,
@@ -1034,8 +1034,8 @@ Create repository/queue before route registration:
 ```ts
 const databasePath =
 	options.databasePath ??
-	process.env.OPEN_RESUME_COMPANION_DB_PATH ??
-	resolve(process.cwd(), ".open-resume-companion/jobs.sqlite");
+	process.env.OPEN_RESUME_BACKEND_DB_PATH ??
+	resolve(process.cwd(), ".open-resume-backend/jobs.sqlite");
 mkdirSync(dirname(databasePath), { recursive: true });
 const jobRepository =
 	options.jobRepository ?? createJobRepository(databasePath);
@@ -1062,9 +1062,9 @@ typedServer.post(
 			summary: "Create a local job intake record and enqueue crawling",
 			body: createJobRequestSchema,
 			response: {
-				201: companionJobSchema,
-				400: companionErrorResponseSchema,
-				500: companionErrorResponseSchema,
+				201: backendJobSchema,
+				400: backendErrorResponseSchema,
+				500: backendErrorResponseSchema,
 			},
 		},
 	},
@@ -1088,9 +1088,9 @@ typedServer.get(
 		schema: {
 			operationId: "listJobs",
 			tags: ["Jobs"],
-			summary: "List local companion jobs",
+			summary: "List local backend jobs",
 			response: {
-				200: companionJobsResponseSchema,
+				200: backendJobsResponseSchema,
 			},
 		},
 	},
@@ -1103,11 +1103,11 @@ typedServer.get(
 		schema: {
 			operationId: "getJob",
 			tags: ["Jobs"],
-			summary: "Get one local companion job",
+			summary: "Get one local backend job",
 			params: jobIdParamsSchema,
 			response: {
-				200: companionJobSchema,
-				404: companionErrorResponseSchema,
+				200: backendJobSchema,
+				404: backendErrorResponseSchema,
 			},
 		},
 	},
@@ -1124,11 +1124,11 @@ typedServer.post(
 		schema: {
 			operationId: "retryJobCrawl",
 			tags: ["Jobs"],
-			summary: "Retry crawling a failed or pending local companion job",
+			summary: "Retry crawling a failed or pending local backend job",
 			params: jobIdParamsSchema,
 			response: {
-				200: companionJobSchema,
-				404: companionErrorResponseSchema,
+				200: backendJobSchema,
+				404: backendErrorResponseSchema,
 			},
 		},
 	},
@@ -1146,7 +1146,7 @@ typedServer.delete(
 		schema: {
 			operationId: "deleteJob",
 			tags: ["Jobs"],
-			summary: "Delete a local companion job",
+			summary: "Delete a local backend job",
 			params: jobIdParamsSchema,
 			response: {
 				200: deleteJobResponseSchema,
@@ -1166,7 +1166,7 @@ Add `Jobs` to the OpenAPI tag list in `openapi.ts`.
 Run:
 
 ```bash
-pnpm --filter @open-resume/companion test -- src/server.test.ts
+pnpm --filter @open-resume/backend test -- src/server.test.ts
 ```
 
 Expected: PASS.
@@ -1174,25 +1174,25 @@ Expected: PASS.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add apps/companion/src/server.ts apps/companion/src/server.test.ts apps/companion/src/openapi.ts
-git commit -m "feat(companion): add job intake routes"
+git add apps/backend/src/server.ts apps/backend/src/server.test.ts apps/backend/src/openapi.ts
+git commit -m "feat(backend): add job intake routes"
 ```
 
 ## Task 6: Update OpenAPI Contract
 
 **Files:**
-- Modify: `apps/companion/src/openapi.test.ts`
-- Modify: `apps/companion/openapi.json`
+- Modify: `apps/backend/src/openapi.test.ts`
+- Modify: `apps/backend/openapi.json`
 
 - [ ] **Step 1: Extend OpenAPI tests**
 
-Update required schemas in `apps/companion/src/openapi.test.ts` to include:
+Update required schemas in `apps/backend/src/openapi.test.ts` to include:
 
 ```ts
 "CreateJobRequest",
 "JobIdParams",
-"CompanionJob",
-"CompanionJobsResponse",
+"BackendJob",
+"BackendJobsResponse",
 "DeleteJobResponse",
 ```
 
@@ -1241,28 +1241,28 @@ Add required operations:
 Run:
 
 ```bash
-pnpm --filter @open-resume/companion test -- src/openapi.test.ts
+pnpm --filter @open-resume/backend test -- src/openapi.test.ts
 ```
 
-Expected: FAIL until `apps/companion/openapi.json` is regenerated.
+Expected: FAIL until `apps/backend/openapi.json` is regenerated.
 
 - [ ] **Step 3: Regenerate OpenAPI**
 
 Run:
 
 ```bash
-pnpm companion:openapi
+pnpm backend:openapi
 ```
 
-Expected: `apps/companion/openapi.json` updates with `/jobs` paths and new schemas.
+Expected: `apps/backend/openapi.json` updates with `/jobs` paths and new schemas.
 
 - [ ] **Step 4: Run OpenAPI tests and lint**
 
 Run:
 
 ```bash
-pnpm --filter @open-resume/companion test -- src/openapi.test.ts
-pnpm --filter @open-resume/companion openapi:lint
+pnpm --filter @open-resume/backend test -- src/openapi.test.ts
+pnpm --filter @open-resume/backend openapi:lint
 ```
 
 Expected: PASS.
@@ -1270,36 +1270,36 @@ Expected: PASS.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add apps/companion/src/openapi.test.ts apps/companion/openapi.json
-git commit -m "test(companion): cover job intake openapi contract"
+git add apps/backend/src/openapi.test.ts apps/backend/openapi.json
+git commit -m "test(backend): cover job intake openapi contract"
 ```
 
-## Task 7: Replace Web Companion Client
+## Task 7: Replace Web Backend Client
 
 **Files:**
-- Modify: `apps/web/src/lib/local-companion-client.ts`
-- Modify: `apps/web/src/lib/local-companion-client.test.ts`
+- Modify: `apps/web/src/lib/local-backend-client.ts`
+- Modify: `apps/web/src/lib/local-backend-client.test.ts`
 
 - [ ] **Step 1: Replace client tests**
 
-Update `apps/web/src/lib/local-companion-client.test.ts` to cover:
+Update `apps/web/src/lib/local-backend-client.test.ts` to cover:
 
 ```ts
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
-	createCompanionJob,
-	deleteCompanionJob,
-	listCompanionJobs,
-	retryCompanionJobCrawl,
-} from "./local-companion-client";
+	createBackendJob,
+	deleteBackendJob,
+	listBackendJobs,
+	retryBackendJobCrawl,
+} from "./local-backend-client";
 
-describe("local companion client", () => {
+describe("local backend client", () => {
 	afterEach(() => {
 		vi.restoreAllMocks();
 		vi.unstubAllGlobals();
 	});
 
-	it("creates a companion job", async () => {
+	it("creates a backend job", async () => {
 		vi.stubGlobal(
 			"fetch",
 			vi.fn(async () => ({
@@ -1317,7 +1317,7 @@ describe("local companion client", () => {
 			})),
 		);
 
-		const result = await createCompanionJob("https://example.com/job");
+		const result = await createBackendJob("https://example.com/job");
 
 		expect(result).toMatchObject({
 			id: "job-1",
@@ -1329,7 +1329,7 @@ describe("local companion client", () => {
 		);
 	});
 
-	it("lists companion jobs", async () => {
+	it("lists backend jobs", async () => {
 		vi.stubGlobal(
 			"fetch",
 			vi.fn(async () => ({
@@ -1338,10 +1338,10 @@ describe("local companion client", () => {
 			})),
 		);
 
-		await expect(listCompanionJobs()).resolves.toEqual([]);
+		await expect(listBackendJobs()).resolves.toEqual([]);
 	});
 
-	it("retries and deletes companion jobs", async () => {
+	it("retries and deletes backend jobs", async () => {
 		vi.stubGlobal(
 			"fetch",
 			vi.fn(async () => ({
@@ -1359,15 +1359,15 @@ describe("local companion client", () => {
 			})),
 		);
 
-		await expect(retryCompanionJobCrawl("job-1")).resolves.toMatchObject({
+		await expect(retryBackendJobCrawl("job-1")).resolves.toMatchObject({
 			id: "job-1",
 		});
-		await expect(deleteCompanionJob("job-1")).resolves.toEqual({
+		await expect(deleteBackendJob("job-1")).resolves.toEqual({
 			deleted: true,
 		});
 	});
 
-	it("returns a user-facing error when the companion is unavailable", async () => {
+	it("returns a user-facing error when the backend is unavailable", async () => {
 		vi.stubGlobal(
 			"fetch",
 			vi.fn(async () => {
@@ -1375,8 +1375,8 @@ describe("local companion client", () => {
 			}),
 		);
 
-		await expect(listCompanionJobs()).rejects.toThrow(
-			"Local companion is not reachable",
+		await expect(listBackendJobs()).rejects.toThrow(
+			"Local backend is not reachable",
 		);
 	});
 });
@@ -1387,21 +1387,21 @@ describe("local companion client", () => {
 Run:
 
 ```bash
-pnpm --filter @open-resume/web test -- src/lib/local-companion-client.test.ts
+pnpm --filter @open-resume/web test -- src/lib/local-backend-client.test.ts
 ```
 
 Expected: FAIL because the new functions do not exist.
 
-- [ ] **Step 3: Implement companion job client**
+- [ ] **Step 3: Implement backend job client**
 
-Replace `apps/web/src/lib/local-companion-client.ts` with:
+Replace `apps/web/src/lib/local-backend-client.ts` with:
 
 ```ts
 import { z } from "zod";
 
-const companionBaseUrl = "http://127.0.0.1:47321";
+const backendBaseUrl = "http://127.0.0.1:47321";
 
-const companionJobSchema = z.object({
+const backendJobSchema = z.object({
 	id: z.string(),
 	sourceUrl: z.string().url(),
 	crawlStatus: z.enum(["pending", "crawling", "ready", "failed"]),
@@ -1412,27 +1412,27 @@ const companionJobSchema = z.object({
 	crawledAt: z.number().nullable(),
 });
 
-const companionJobsResponseSchema = z.object({
-	jobs: z.array(companionJobSchema),
+const backendJobsResponseSchema = z.object({
+	jobs: z.array(backendJobSchema),
 });
 
 const deleteJobResponseSchema = z.object({
 	deleted: z.boolean(),
 });
 
-export type LocalCompanionJob = z.infer<typeof companionJobSchema>;
+export type LocalBackendJob = z.infer<typeof backendJobSchema>;
 
-async function companionFetch(path: string, init?: RequestInit): Promise<Response> {
+async function backendFetch(path: string, init?: RequestInit): Promise<Response> {
 	try {
-		return await fetch(`${companionBaseUrl}${path}`, init);
+		return await fetch(`${backendBaseUrl}${path}`, init);
 	} catch {
 		throw new Error(
-			"Local companion is not reachable. Start it with pnpm companion:dev.",
+			"Local backend is not reachable. Start it with pnpm backend:dev.",
 		);
 	}
 }
 
-async function parseCompanionResponse<T>(
+async function parseBackendResponse<T>(
 	response: Response,
 	schema: z.ZodType<T>,
 	fallbackMessage: string,
@@ -1443,56 +1443,56 @@ async function parseCompanionResponse<T>(
 	return schema.parse(await response.json());
 }
 
-export async function createCompanionJob(
+export async function createBackendJob(
 	sourceUrl: string,
-): Promise<LocalCompanionJob> {
-	const response = await companionFetch("/jobs", {
+): Promise<LocalBackendJob> {
+	const response = await backendFetch("/jobs", {
 		method: "POST",
 		headers: {
 			"content-type": "application/json",
 		},
 		body: JSON.stringify({ sourceUrl }),
 	});
-	return parseCompanionResponse(
+	return parseBackendResponse(
 		response,
-		companionJobSchema,
-		"Local companion could not create this job.",
+		backendJobSchema,
+		"Local backend could not create this job.",
 	);
 }
 
-export async function listCompanionJobs(): Promise<LocalCompanionJob[]> {
-	const response = await companionFetch("/jobs");
-	const parsed = await parseCompanionResponse(
+export async function listBackendJobs(): Promise<LocalBackendJob[]> {
+	const response = await backendFetch("/jobs");
+	const parsed = await parseBackendResponse(
 		response,
-		companionJobsResponseSchema,
-		"Local companion could not list jobs.",
+		backendJobsResponseSchema,
+		"Local backend could not list jobs.",
 	);
 	return parsed.jobs;
 }
 
-export async function retryCompanionJobCrawl(
+export async function retryBackendJobCrawl(
 	id: string,
-): Promise<LocalCompanionJob> {
-	const response = await companionFetch(`/jobs/${id}/retry-crawl`, {
+): Promise<LocalBackendJob> {
+	const response = await backendFetch(`/jobs/${id}/retry-crawl`, {
 		method: "POST",
 	});
-	return parseCompanionResponse(
+	return parseBackendResponse(
 		response,
-		companionJobSchema,
-		"Local companion could not retry this crawl.",
+		backendJobSchema,
+		"Local backend could not retry this crawl.",
 	);
 }
 
-export async function deleteCompanionJob(
+export async function deleteBackendJob(
 	id: string,
 ): Promise<{ deleted: boolean }> {
-	const response = await companionFetch(`/jobs/${id}`, {
+	const response = await backendFetch(`/jobs/${id}`, {
 		method: "DELETE",
 	});
-	return parseCompanionResponse(
+	return parseBackendResponse(
 		response,
 		deleteJobResponseSchema,
-		"Local companion could not delete this job.",
+		"Local backend could not delete this job.",
 	);
 }
 ```
@@ -1502,7 +1502,7 @@ export async function deleteCompanionJob(
 Run:
 
 ```bash
-pnpm --filter @open-resume/web test -- src/lib/local-companion-client.test.ts
+pnpm --filter @open-resume/web test -- src/lib/local-backend-client.test.ts
 ```
 
 Expected: PASS.
@@ -1510,8 +1510,8 @@ Expected: PASS.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add apps/web/src/lib/local-companion-client.ts apps/web/src/lib/local-companion-client.test.ts
-git commit -m "feat(web): add companion job client"
+git add apps/web/src/lib/local-backend-client.ts apps/web/src/lib/local-backend-client.test.ts
+git commit -m "feat(web): add backend job client"
 ```
 
 ## Task 8: Simplify New Job Modal
@@ -1525,9 +1525,9 @@ git commit -m "feat(web): add companion job client"
 Modify `apps/web/src/components/jobs/NewJobApplicationModal.test.tsx` to assert:
 
 ```ts
-it("submits only a URL to the local companion", async () => {
-	const createCompanionJob = vi.mocked(localCompanion.createCompanionJob);
-	createCompanionJob.mockResolvedValue({
+it("submits only a URL to the local backend", async () => {
+	const createBackendJob = vi.mocked(localBackend.createBackendJob);
+	createBackendJob.mockResolvedValue({
 		id: "job-1",
 		sourceUrl: "https://example.com/job",
 		crawlStatus: "pending",
@@ -1543,7 +1543,7 @@ it("submits only a URL to the local companion", async () => {
 	await userEvent.type(screen.getByLabelText(/job url/i), "https://example.com/job");
 	await userEvent.click(screen.getByRole("button", { name: /add job/i }));
 
-	expect(createCompanionJob).toHaveBeenCalledWith("https://example.com/job");
+	expect(createBackendJob).toHaveBeenCalledWith("https://example.com/job");
 	expect(onCreated).toHaveBeenCalled();
 	expect(onClose).toHaveBeenCalled();
 });
@@ -1565,7 +1565,7 @@ Update `apps/web/src/components/jobs/NewJobApplicationModal.tsx` to:
 
 ```tsx
 import { type FormEvent, useState } from "react";
-import { createCompanionJob } from "#/lib/local-companion-client";
+import { createBackendJob } from "#/lib/local-backend-client";
 
 interface NewJobApplicationModalProps {
 	onClose: () => void;
@@ -1600,7 +1600,7 @@ export default function NewJobApplicationModal({
 		setError("");
 		setIsSubmitting(true);
 		try {
-			await createCompanionJob(trimmedUrl);
+			await createBackendJob(trimmedUrl);
 			onCreated?.();
 			onClose();
 		} catch (err) {
@@ -1674,21 +1674,21 @@ git add apps/web/src/components/jobs/NewJobApplicationModal.tsx apps/web/src/com
 git commit -m "feat(web): simplify job creation to url capture"
 ```
 
-## Task 9: Add Companion Job Dashboard Cards
+## Task 9: Add Backend Job Dashboard Cards
 
 **Files:**
-- Create: `apps/web/src/components/jobs/CompanionJobCard.tsx`
-- Create: `apps/web/src/components/jobs/CompanionJobCard.test.tsx`
+- Create: `apps/web/src/components/jobs/BackendJobCard.tsx`
+- Create: `apps/web/src/components/jobs/BackendJobCard.test.tsx`
 - Modify: `apps/web/src/routes/jobs.tsx`
 
 - [ ] **Step 1: Write card tests**
 
-Create `apps/web/src/components/jobs/CompanionJobCard.test.tsx`:
+Create `apps/web/src/components/jobs/BackendJobCard.test.tsx`:
 
 ```tsx
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import CompanionJobCard from "./CompanionJobCard";
+import BackendJobCard from "./BackendJobCard";
 
 const baseJob = {
 	id: "job-1",
@@ -1701,10 +1701,10 @@ const baseJob = {
 	crawledAt: null,
 };
 
-describe("CompanionJobCard", () => {
+describe("BackendJobCard", () => {
 	it("renders pending jobs without company or title", () => {
 		render(
-			<CompanionJobCard
+			<BackendJobCard
 				job={baseJob}
 				onRetry={vi.fn()}
 				onDelete={vi.fn()}
@@ -1717,7 +1717,7 @@ describe("CompanionJobCard", () => {
 
 	it("renders ready text previews", () => {
 		render(
-			<CompanionJobCard
+			<BackendJobCard
 				job={{
 					...baseJob,
 					crawlStatus: "ready",
@@ -1734,7 +1734,7 @@ describe("CompanionJobCard", () => {
 
 	it("renders failed crawl retry action", () => {
 		render(
-			<CompanionJobCard
+			<BackendJobCard
 				job={{
 					...baseJob,
 					crawlStatus: "failed",
@@ -1756,21 +1756,21 @@ describe("CompanionJobCard", () => {
 Run:
 
 ```bash
-pnpm --filter @open-resume/web test -- src/components/jobs/CompanionJobCard.test.tsx
+pnpm --filter @open-resume/web test -- src/components/jobs/BackendJobCard.test.tsx
 ```
 
 Expected: FAIL because the card component does not exist.
 
 - [ ] **Step 3: Implement card**
 
-Create `apps/web/src/components/jobs/CompanionJobCard.tsx`:
+Create `apps/web/src/components/jobs/BackendJobCard.tsx`:
 
 ```tsx
 import { RotateCcw, Trash2 } from "lucide-react";
-import type { LocalCompanionJob } from "#/lib/local-companion-client";
+import type { LocalBackendJob } from "#/lib/local-backend-client";
 
-interface CompanionJobCardProps {
-	job: LocalCompanionJob;
+interface BackendJobCardProps {
+	job: LocalBackendJob;
 	onRetry: (id: string) => void;
 	onDelete: (id: string) => void;
 }
@@ -1787,11 +1787,11 @@ function getPreview(text: string) {
 	return text.length > 180 ? `${text.slice(0, 180)}...` : text;
 }
 
-export default function CompanionJobCard({
+export default function BackendJobCard({
 	job,
 	onRetry,
 	onDelete,
-}: CompanionJobCardProps) {
+}: BackendJobCardProps) {
 	return (
 		<article className="flex min-h-52 flex-col gap-3 rounded-base border-2 border-border bg-white p-4 shadow-shadow">
 			<div className="flex items-start justify-between gap-3">
@@ -1820,7 +1820,7 @@ export default function CompanionJobCard({
 
 			{(job.crawlStatus === "pending" || job.crawlStatus === "crawling") && (
 				<p className="text-muted-foreground text-sm">
-					Crawl is queued locally. This card will update when the companion
+					Crawl is queued locally. This card will update when the backend
 					finishes.
 				</p>
 			)}
@@ -1855,30 +1855,30 @@ export default function CompanionJobCard({
 Run:
 
 ```bash
-pnpm --filter @open-resume/web test -- src/components/jobs/CompanionJobCard.test.tsx
+pnpm --filter @open-resume/web test -- src/components/jobs/BackendJobCard.test.tsx
 ```
 
 Expected: PASS.
 
-- [ ] **Step 5: Wire dashboard to companion jobs**
+- [ ] **Step 5: Wire dashboard to backend jobs**
 
-In `apps/web/src/routes/jobs.tsx`, fetch jobs with `listCompanionJobs`, poll every 2 seconds while mounted, group by status, and render `CompanionJobCard`. Keep the old local `JobApplicationCard` import out of the first screen.
+In `apps/web/src/routes/jobs.tsx`, fetch jobs with `listBackendJobs`, poll every 2 seconds while mounted, group by status, and render `BackendJobCard`. Keep the old local `JobApplicationCard` import out of the first screen.
 
 Use this state shape:
 
 ```ts
-const [companionJobs, setCompanionJobs] = useState<LocalCompanionJob[]>([]);
+const [backendJobs, setBackendJobs] = useState<LocalBackendJob[]>([]);
 const [loadError, setLoadError] = useState("");
 ```
 
 Use this grouping:
 
 ```ts
-const pendingJobs = companionJobs.filter((job) =>
+const pendingJobs = backendJobs.filter((job) =>
 	["pending", "crawling"].includes(job.crawlStatus),
 );
-const readyJobs = companionJobs.filter((job) => job.crawlStatus === "ready");
-const failedJobs = companionJobs.filter((job) => job.crawlStatus === "failed");
+const readyJobs = backendJobs.filter((job) => job.crawlStatus === "ready");
+const failedJobs = backendJobs.filter((job) => job.crawlStatus === "failed");
 ```
 
 - [ ] **Step 6: Run typecheck**
@@ -1894,8 +1894,8 @@ Expected: PASS.
 - [ ] **Step 7: Commit**
 
 ```bash
-git add apps/web/src/components/jobs/CompanionJobCard.tsx apps/web/src/components/jobs/CompanionJobCard.test.tsx apps/web/src/routes/jobs.tsx
-git commit -m "feat(web): show companion job intake queue"
+git add apps/web/src/components/jobs/BackendJobCard.tsx apps/web/src/components/jobs/BackendJobCard.test.tsx apps/web/src/routes/jobs.tsx
+git commit -m "feat(web): show backend job intake queue"
 ```
 
 ## Task 10: Full Verification
@@ -1903,12 +1903,12 @@ git commit -m "feat(web): show companion job intake queue"
 **Files:**
 - No source files.
 
-- [ ] **Step 1: Run companion tests**
+- [ ] **Step 1: Run backend tests**
 
 Run:
 
 ```bash
-pnpm --filter @open-resume/companion test
+pnpm --filter @open-resume/backend test
 ```
 
 Expected: PASS.
@@ -1965,10 +1965,10 @@ Then open `http://localhost:3000/jobs` and verify:
 
 - adding `https://example.com` creates a job immediately
 - the job appears in Pending Jobs
-- the companion eventually moves it to Ready or Failed
+- the backend eventually moves it to Ready or Failed
 - failed jobs can be retried
 - jobs can be deleted
-- refreshing the browser does not delete companion jobs
+- refreshing the browser does not delete backend jobs
 
 - [ ] **Step 7: Commit verification fixes if any files changed**
 
@@ -1978,11 +1978,11 @@ If verification required fixes, inspect the changed files:
 git status --short
 ```
 
-Then commit the specific files that changed. For example, if the only fix was in the companion server:
+Then commit the specific files that changed. For example, if the only fix was in the backend server:
 
 ```bash
-git add apps/companion/src/server.ts apps/companion/src/server.test.ts
-git commit -m "fix: stabilize companion job capture"
+git add apps/backend/src/server.ts apps/backend/src/server.test.ts
+git commit -m "fix: stabilize backend job capture"
 ```
 
 Expected: no uncommitted implementation changes remain.

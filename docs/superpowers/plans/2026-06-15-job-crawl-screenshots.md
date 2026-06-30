@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Capture full-page PNG screenshots of crawled job pages (on both success and failure), store them on disk, serve them via a new Fastify endpoint, and show a screenshot preview tab in the companion jobs details dialog in the frontend.
+**Goal:** Capture full-page PNG screenshots of crawled job pages (on both success and failure), store them on disk, serve them via a new Fastify endpoint, and show a screenshot preview tab in the backend jobs details dialog in the frontend.
 
-**Architecture:** Playwright will save a `.png` screenshot of the job URL under `.open-resume-companion/screenshots/<job-id>.png`. Fastify will host a `GET /jobs/:id/screenshot` endpoint to stream this file as `image/png`. The React web app details dialog will render this image in a dedicated "Screenshot" tab.
+**Architecture:** Playwright will save a `.png` screenshot of the job URL under `.open-resume-backend/screenshots/<job-id>.png`. Fastify will host a `GET /jobs/:id/screenshot` endpoint to stream this file as `image/png`. The React web app details dialog will render this image in a dedicated "Screenshot" tab.
 
 **Tech Stack:** Playwright (Chromium), Fastify 5, React 19 (TanStack Start), Tailwind CSS v4, Biome, Vitest.
 
@@ -13,31 +13,31 @@
 ### Task 1: Add configuration for screenshot path
 
 **Files:**
-- Modify: `apps/companion/src/config.ts`
-- Modify: `apps/companion/src/server.ts`
-- Modify: `apps/companion/src/config.test.ts`
+- Modify: `apps/backend/src/config.ts`
+- Modify: `apps/backend/src/server.ts`
+- Modify: `apps/backend/src/config.test.ts`
 
 - [ ] **Step 1: Write config test**
 
-  Modify `apps/companion/src/config.test.ts` to add a test asserting that `screenshotsPath` resolves.
+  Modify `apps/backend/src/config.test.ts` to add a test asserting that `screenshotsPath` resolves.
   
   ```typescript
-  // In apps/companion/src/config.test.ts:
+  // In apps/backend/src/config.test.ts:
   // Add in the first "resolves default database and file paths when no options are provided" test:
-  expect(config.screenshotsPath).toContain(".open-resume-companion/screenshots");
+  expect(config.screenshotsPath).toContain(".open-resume-backend/screenshots");
   ```
 
 - [ ] **Step 2: Run tests to verify failure**
 
-  Run: `pnpm --filter @open-resume/companion test`
+  Run: `pnpm --filter @open-resume/backend test`
   Expected: FAIL with compilation error (property `screenshotsPath` does not exist on type `ResolvedConfig`).
 
 - [ ] **Step 3: Implement `screenshotsPath` config**
 
-  Modify `apps/companion/src/config.ts` to add `screenshotsPath` to `ResolvedConfig` and resolve it.
+  Modify `apps/backend/src/config.ts` to add `screenshotsPath` to `ResolvedConfig` and resolve it.
   
   ```typescript
-  // In apps/companion/src/config.ts:
+  // In apps/backend/src/config.ts:
   // Add to ResolvedConfig interface:
   export interface ResolvedConfig {
   	// ... existing fields ...
@@ -56,25 +56,25 @@
 
 - [ ] **Step 4: Initialize the screenshots directory on server startup**
 
-  Modify `apps/companion/src/server.ts` to create the screenshots directory.
+  Modify `apps/backend/src/server.ts` to create the screenshots directory.
   
   ```typescript
-  // In apps/companion/src/server.ts:
+  // In apps/backend/src/server.ts:
   // Inside createServer function, after resolving databasePath:
   mkdirSync(config.screenshotsPath, { recursive: true });
   ```
 
 - [ ] **Step 5: Run tests to verify success**
 
-  Run: `pnpm --filter @open-resume/companion test`
+  Run: `pnpm --filter @open-resume/backend test`
   Expected: PASS
 
 - [ ] **Step 6: Commit changes**
 
   Run:
   ```bash
-  git add apps/companion/src/config.ts apps/companion/src/server.ts apps/companion/src/config.test.ts
-  git commit -m "feat(companion): resolve and initialize screenshots directory"
+  git add apps/backend/src/config.ts apps/backend/src/server.ts apps/backend/src/config.test.ts
+  git commit -m "feat(backend): resolve and initialize screenshots directory"
   ```
 
 ---
@@ -82,15 +82,15 @@
 ### Task 2: Playwright Screenshot Capture on Success & Failure
 
 **Files:**
-- Modify: `apps/companion/src/extract/playwright.ts`
-- Modify: `apps/companion/src/extract/playwright.test.ts`
+- Modify: `apps/backend/src/extract/playwright.ts`
+- Modify: `apps/backend/src/extract/playwright.test.ts`
 
 - [ ] **Step 1: Write test verifying screenshot file is created**
 
-  Modify `apps/companion/src/extract/playwright.test.ts` to add a test that runs `crawlCleanedTextWithPlaywright` with a test screenshot path.
+  Modify `apps/backend/src/extract/playwright.test.ts` to add a test that runs `crawlCleanedTextWithPlaywright` with a test screenshot path.
   
   ```typescript
-  // In apps/companion/src/extract/playwright.test.ts:
+  // In apps/backend/src/extract/playwright.test.ts:
   import { existsSync, unlinkSync } from "node:fs";
   import { join } from "node:path";
   
@@ -117,15 +117,15 @@
 
 - [ ] **Step 2: Run test to verify it fails**
 
-  Run: `pnpm --filter @open-resume/companion test`
+  Run: `pnpm --filter @open-resume/backend test`
   Expected: FAIL (argument of type `{ screenshotPath: string; }` is not assignable to parameter of type `PlaywrightCrawlOptions`).
 
 - [ ] **Step 3: Implement screenshot option and capture logic**
 
-  Modify `apps/companion/src/extract/playwright.ts` to support `screenshotPath` in `ExtractionLogOptions` and implement screenshot taking on both success and failure states.
+  Modify `apps/backend/src/extract/playwright.ts` to support `screenshotPath` in `ExtractionLogOptions` and implement screenshot taking on both success and failure states.
   
   ```typescript
-  // In apps/companion/src/extract/playwright.ts:
+  // In apps/backend/src/extract/playwright.ts:
   // Add to ExtractionLogOptions interface:
   interface ExtractionLogOptions {
   	logger?: ExtractionLogger;
@@ -198,15 +198,15 @@
 
 - [ ] **Step 4: Run test to verify it passes**
 
-  Run: `pnpm --filter @open-resume/companion test`
+  Run: `pnpm --filter @open-resume/backend test`
   Expected: PASS
 
 - [ ] **Step 5: Commit changes**
 
   Run:
   ```bash
-  git add apps/companion/src/extract/playwright.ts apps/companion/src/extract/playwright.test.ts
-  git commit -m "feat(companion): capture screenshots on page crawl success and failure"
+  git add apps/backend/src/extract/playwright.ts apps/backend/src/extract/playwright.test.ts
+  git commit -m "feat(backend): capture screenshots on page crawl success and failure"
   ```
 
 ---
@@ -214,15 +214,15 @@
 ### Task 3: Crawl Queue Parameter update
 
 **Files:**
-- Modify: `apps/companion/src/jobs/crawl-queue.ts`
-- Modify: `apps/companion/src/server.ts`
+- Modify: `apps/backend/src/jobs/crawl-queue.ts`
+- Modify: `apps/backend/src/server.ts`
 
 - [ ] **Step 1: Write test or modify crawl queue test signature**
 
-  Update type definitions in `apps/companion/src/jobs/crawl-queue.ts` to pass `jobId` to the crawl function.
+  Update type definitions in `apps/backend/src/jobs/crawl-queue.ts` to pass `jobId` to the crawl function.
   
   ```typescript
-  // In apps/companion/src/jobs/crawl-queue.ts:
+  // In apps/backend/src/jobs/crawl-queue.ts:
   // Modify CrawlQueueOptions interface:
   interface CrawlQueueOptions {
   	repository: JobRepository;
@@ -246,13 +246,13 @@
   Modify `crawl-queue.ts` and `server.ts` to pass the job ID and resolve the screenshot output path.
   
   ```typescript
-  // In apps/companion/src/jobs/crawl-queue.ts:
+  // In apps/backend/src/jobs/crawl-queue.ts:
   // Inside runJob(id: string), where crawl is called (line 43):
   result = await crawl(job.sourceUrl, id);
   ```
   
   ```typescript
-  // In apps/companion/src/server.ts:
+  // In apps/backend/src/server.ts:
   // Inside createServer function, where crawlQueue is configured:
   const crawlQueue =
   	config.crawlQueue ??
@@ -285,15 +285,15 @@
 
 - [ ] **Step 5: Run tests to verify correctness**
 
-  Run: `pnpm --filter @open-resume/companion test`
+  Run: `pnpm --filter @open-resume/backend test`
   Expected: PASS
 
 - [ ] **Step 6: Commit changes**
 
   Run:
   ```bash
-  git add apps/companion/src/jobs/crawl-queue.ts apps/companion/src/server.ts
-  git commit -m "feat(companion): connect job ID to playwright crawler to name screenshots"
+  git add apps/backend/src/jobs/crawl-queue.ts apps/backend/src/server.ts
+  git commit -m "feat(backend): connect job ID to playwright crawler to name screenshots"
   ```
 
 ---
@@ -301,17 +301,17 @@
 ### Task 4: API Endpoint to serve screenshots
 
 **Files:**
-- Modify: `apps/companion/src/routes/context.ts`
-- Modify: `apps/companion/src/routes/job-routes.ts`
-- Modify: `apps/companion/src/server.ts`
-- Modify: `apps/companion/src/server.test.ts`
+- Modify: `apps/backend/src/routes/context.ts`
+- Modify: `apps/backend/src/routes/job-routes.ts`
+- Modify: `apps/backend/src/server.ts`
+- Modify: `apps/backend/src/server.test.ts`
 
 - [ ] **Step 1: Write test for GET /jobs/:id/screenshot**
 
-  Modify `apps/companion/src/server.test.ts` to test retrieving a screenshot.
+  Modify `apps/backend/src/server.test.ts` to test retrieving a screenshot.
   
   ```typescript
-  // In apps/companion/src/server.test.ts:
+  // In apps/backend/src/server.test.ts:
   // Inside describe("Server tests"), write a test case for GET /jobs/:id/screenshot:
   it("GET /jobs/:id/screenshot returns 404 if screenshot does not exist", async () => {
   	const response = await app.inject({
@@ -324,15 +324,15 @@
 
 - [ ] **Step 2: Run test to verify failure**
 
-  Run: `pnpm --filter @open-resume/companion test`
+  Run: `pnpm --filter @open-resume/backend test`
   Expected: FAIL with status code 404 (or 404 with route not found if Fastify doesn't have the route at all).
 
 - [ ] **Step 3: Define Context and Route for Screenshot serving and deletion**
 
-  Modify `apps/companion/src/routes/context.ts` to include `screenshotsPath`.
+  Modify `apps/backend/src/routes/context.ts` to include `screenshotsPath`.
   
   ```typescript
-  // In apps/companion/src/routes/context.ts:
+  // In apps/backend/src/routes/context.ts:
   export interface JobRouteContext {
   	jobRepository: JobRepository;
   	crawlQueue: CrawlQueue;
@@ -340,10 +340,10 @@
   }
   ```
   
-  Modify `apps/companion/src/routes/job-routes.ts` to add the screenshot route, and delete the screenshot file on job deletion.
+  Modify `apps/backend/src/routes/job-routes.ts` to add the screenshot route, and delete the screenshot file on job deletion.
   
   ```typescript
-  // In apps/companion/src/routes/job-routes.ts:
+  // In apps/backend/src/routes/job-routes.ts:
   import { existsSync, createReadStream, unlinkSync } from "node:fs";
   import { join } from "node:path";
   
@@ -358,7 +358,7 @@
   			params: routeJobIdParamsSchema,
   			response: {
   				200: z.any().describe("The captured screenshot PNG image."),
-  				404: companionErrorResponseSchema,
+  				404: backendErrorResponseSchema,
   			},
   		},
   	},
@@ -385,7 +385,7 @@
   		schema: {
   			operationId: "deleteJob",
   			tags: ["Jobs"],
-  			summary: "Delete a companion job",
+  			summary: "Delete a backend job",
   			params: routeJobIdParamsSchema,
   			response: {
   				200: deleteJobResponseSchema,
@@ -412,31 +412,31 @@
 
 - [ ] **Step 4: Update server initialization of Job Routes**
 
-  Modify `apps/companion/src/server.ts` to pass `screenshotsPath: config.screenshotsPath` into `createJobRoutes`.
+  Modify `apps/backend/src/server.ts` to pass `screenshotsPath: config.screenshotsPath` into `createJobRoutes`.
   
   ```typescript
-  // In apps/companion/src/server.ts:
+  // In apps/backend/src/server.ts:
   // Inside the server.after registration of job routes:
   server.register(createJobRoutes({ jobRepository, crawlQueue, screenshotsPath: config.screenshotsPath }));
   ```
 
 - [ ] **Step 5: Run tests to verify success**
 
-  Run: `pnpm --filter @open-resume/companion test`
+  Run: `pnpm --filter @open-resume/backend test`
   Expected: PASS
 
 - [ ] **Step 6: Export OpenAPI specification & verify**
 
-  Run: `pnpm companion:openapi`
-  Run: `pnpm --filter @open-resume/companion openapi:lint`
+  Run: `pnpm backend:openapi`
+  Run: `pnpm --filter @open-resume/backend openapi:lint`
   Expected: PASS without redocly/Swagger validation errors.
 
 - [ ] **Step 7: Commit changes**
 
   Run:
   ```bash
-  git add apps/companion/src/routes/context.ts apps/companion/src/routes/job-routes.ts apps/companion/src/server.ts apps/companion/src/server.test.ts apps/companion/openapi.json
-  git commit -m "feat(companion): serve screenshot route and cleanup on deletion"
+  git add apps/backend/src/routes/context.ts apps/backend/src/routes/job-routes.ts apps/backend/src/server.ts apps/backend/src/server.test.ts apps/backend/openapi.json
+  git commit -m "feat(backend): serve screenshot route and cleanup on deletion"
   ```
 
 ---
@@ -444,14 +444,14 @@
 ### Task 5: Frontend Preview Dialog Tab
 
 **Files:**
-- Modify: `apps/web/src/components/jobs/CompanionJobDetailsDialog.tsx`
+- Modify: `apps/web/src/components/jobs/BackendJobDetailsDialog.tsx`
 
 - [ ] **Step 1: Implement the Screenshot preview tab**
 
-  Modify `apps/web/src/components/jobs/CompanionJobDetailsDialog.tsx` to add `screenshot` as an allowed active tab, import `Camera`, and display the screenshot preview when selected.
+  Modify `apps/web/src/components/jobs/BackendJobDetailsDialog.tsx` to add `screenshot` as an allowed active tab, import `Camera`, and display the screenshot preview when selected.
   
   ```typescript
-  // In apps/web/src/components/jobs/CompanionJobDetailsDialog.tsx:
+  // In apps/web/src/components/jobs/BackendJobDetailsDialog.tsx:
   // Add Camera to lucide-react imports:
   import {
   	Loader2,
@@ -463,7 +463,7 @@
   	Camera, // <--- add this
   } from "lucide-react";
   
-  // Inside CompanionJobDetailsDialog component:
+  // Inside BackendJobDetailsDialog component:
   // Update state type:
   const [activeTab, setActiveTab] = useState<"ai" | "scraped" | "screenshot">("ai");
   const [screenshotError, setScreenshotError] = useState(false);
@@ -534,6 +534,6 @@
 
   Run:
   ```bash
-  git add apps/web/src/components/jobs/CompanionJobDetailsDialog.tsx
+  git add apps/web/src/components/jobs/BackendJobDetailsDialog.tsx
   git commit -m "feat(web): add Screenshot preview tab to job details dialog"
   ```

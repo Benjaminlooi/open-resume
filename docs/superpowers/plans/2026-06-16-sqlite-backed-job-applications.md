@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Move job applications storage and conversion logic from frontend-only local storage to the companion backend SQLite database.
+**Goal:** Move job applications storage and conversion logic from frontend-only local storage to the backend SQLite database.
 
-**Architecture:** We will declare Zod contracts for job applications in `@open-resume/contracts`, create a `job_applications` table in the SQLite database, expose Fastify REST CRUD routes and a conversion endpoint `/jobs/:id/convert` in `apps/companion`, and update the web frontend client and Zustand store to talk to the backend.
+**Architecture:** We will declare Zod contracts for job applications in `@open-resume/contracts`, create a `job_applications` table in the SQLite database, expose Fastify REST CRUD routes and a conversion endpoint `/jobs/:id/convert` in `apps/backend`, and update the web frontend client and Zustand store to talk to the backend.
 
 **Tech Stack:** Fastify, node:sqlite, Zustand, TanStack Start, Zod, Vitest.
 
@@ -154,11 +154,11 @@
 ### Task 2: SQLite Schema Migration & Repository CRUD
 
 **Files:**
-- Modify: `apps/companion/src/schema.ts`
-- Modify: `apps/companion/src/jobs/repository.ts`
-- Modify: `apps/companion/src/jobs/repository.test.ts`
+- Modify: `apps/backend/src/schema.ts`
+- Modify: `apps/backend/src/jobs/repository.ts`
+- Modify: `apps/backend/src/jobs/repository.test.ts`
 
-- [ ] **Step 1: Re-export from `apps/companion/src/schema.ts`**
+- [ ] **Step 1: Re-export from `apps/backend/src/schema.ts`**
   Add any exports/imports for Job Applications if necessary. Since `src/schema.ts` does `export * from "@open-resume/contracts"`, it will automatically export the new schemas.
 
 - [ ] **Step 2: Add table and CRUD methods to `repository.ts`**
@@ -290,22 +290,22 @@
   Add unit tests for creating, getting, listing, updating, deleting job applications, and converting.
 
 - [ ] **Step 4: Run Tests**
-  Run: `pnpm companion:test`
+  Run: `pnpm backend:test`
   Expected: PASS
 
 - [ ] **Step 5: Commit**
-  Run: `git commit -am "feat(companion): add sqlite storage for job applications"`
+  Run: `git commit -am "feat(backend): add sqlite storage for job applications"`
 
 ---
 
-### Task 3: Companion API Routes
+### Task 3: Backend API Routes
 
 **Files:**
-- Create: `apps/companion/src/routes/job-application-routes.ts`
-- Modify: `apps/companion/src/routes/job-routes.ts`
-- Modify: `apps/companion/src/routes/context.ts`
-- Modify: `apps/companion/src/server.ts`
-- Modify: `apps/companion/src/server.test.ts`
+- Create: `apps/backend/src/routes/job-application-routes.ts`
+- Modify: `apps/backend/src/routes/job-routes.ts`
+- Modify: `apps/backend/src/routes/context.ts`
+- Modify: `apps/backend/src/server.ts`
+- Modify: `apps/backend/src/server.test.ts`
 
 - [ ] **Step 1: Update Context types in `routes/context.ts`**
   Define context interface `JobApplicationRouteContext` and include it in routes initialization context.
@@ -328,27 +328,27 @@
   Test conversion and CRUD routes.
 
 - [ ] **Step 6: Run Tests**
-  Run: `pnpm companion:test`
+  Run: `pnpm backend:test`
   Expected: PASS
 
 - [ ] **Step 7: Re-generate OpenAPI Spec**
-  Run: `pnpm companion:openapi`
+  Run: `pnpm backend:openapi`
 
 - [ ] **Step 8: Commit**
-  Run: `git add . && git commit -m "feat(companion): add api endpoints for job applications and conversion"`
+  Run: `git add . && git commit -m "feat(backend): add api endpoints for job applications and conversion"`
 
 ---
 
-### Task 4: Frontend Local Companion Client
+### Task 4: Frontend Local Backend Client
 
 **Files:**
-- Modify: `apps/web/src/lib/local-companion-client.ts`
-- Modify: `apps/web/src/lib/local-companion-client.test.ts`
+- Modify: `apps/web/src/lib/local-backend-client.ts`
+- Modify: `apps/web/src/lib/local-backend-client.test.ts`
 
-- [ ] **Step 1: Expose API helpers in `local-companion-client.ts`**
+- [ ] **Step 1: Expose API helpers in `local-backend-client.ts`**
   Add CRUD wrappers and `convertJobToApplication(id)`.
 
-- [ ] **Step 2: Mock and verify in `local-companion-client.test.ts`**
+- [ ] **Step 2: Mock and verify in `local-backend-client.test.ts`**
   Update tests to test client methods.
 
 - [ ] **Step 3: Run Tests**
@@ -356,7 +356,7 @@
   Expected: PASS
 
 - [ ] **Step 4: Commit**
-  Run: `git commit -am "feat(web): update local companion client for job applications"`
+  Run: `git commit -am "feat(web): update local backend client for job applications"`
 
 ---
 
@@ -364,24 +364,24 @@
 
 **Files:**
 - Modify: `apps/web/src/features/jobs/job-application-store.ts`
-- Modify: `apps/web/src/features/jobs/companion-job-store.ts`
+- Modify: `apps/web/src/features/jobs/backend-job-store.ts`
 - Modify: `apps/web/src/features/jobs/job-application-store.test.ts`
 
 - [ ] **Step 1: Refactor `job-application-store.ts`**
-  Update store actions to call `local-companion-client` endpoints, mutating client state, and removing localStorage subscription.
+  Update store actions to call `local-backend-client` endpoints, mutating client state, and removing localStorage subscription.
 
-- [ ] **Step 2: Refactor `companion-job-store.ts`**
+- [ ] **Step 2: Refactor `backend-job-store.ts`**
   Call client `convertJobToApplication(job.id)` in `convertJobToApplication` action.
 
 - [ ] **Step 3: Refactor `job-application-store.test.ts`**
-  Mock local companion client methods and verify store behavior.
+  Mock local backend client methods and verify store behavior.
 
 - [ ] **Step 4: Run Tests**
   Run: `pnpm web:test`
   Expected: PASS
 
 - [ ] **Step 5: Commit**
-  Run: `git commit -am "feat(web): connect job application store to companion backend"`
+  Run: `git commit -am "feat(web): connect job application store to backend"`
 
 ---
 

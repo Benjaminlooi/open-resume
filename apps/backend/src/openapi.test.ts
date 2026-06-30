@@ -6,7 +6,7 @@ const spec = JSON.parse(readFileSync(specUrl, "utf8"));
 
 const requiredSchemas = [
 	"HealthResponse",
-	"CompanionErrorResponse",
+	"BackendErrorResponse",
 	"CreateJobPostingRequest",
 	"JobIdParams",
 	"JobPosting",

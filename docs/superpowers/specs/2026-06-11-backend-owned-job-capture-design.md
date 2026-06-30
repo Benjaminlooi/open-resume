@@ -1,8 +1,8 @@
-# Companion-Owned Job Capture Design
+# Backend-Owned Job Capture Design
 
 ## Purpose
 
-Simplify the job tracker so creating a job is instant and URL-first. The user should paste a job posting URL, see the job appear immediately, and let the local companion crawl and clean the page in the background. The first version stores cleaned page text as the source of truth. It does not infer company, title, location, seniority, fit, or suitability; those interpretation steps belong to a later AI workflow inspired by Career-Ops.
+Simplify the job tracker so creating a job is instant and URL-first. The user should paste a job posting URL, see the job appear immediately, and let the local backend crawl and clean the page in the background. The first version stores cleaned page text as the source of truth. It does not infer company, title, location, seniority, fit, or suitability; those interpretation steps belong to a later AI workflow inspired by Career-Ops.
 
 ## Product Direction
 
@@ -10,7 +10,7 @@ The current job creation flow asks for company, title, location, URL, and descri
 
 1. User pastes a URL.
 2. The job is saved immediately.
-3. The companion crawls the page outside the browser flow.
+3. The backend crawls the page outside the browser flow.
 4. The dashboard shows pending, ready, and failed jobs.
 5. Later AI analysis turns cleaned text into structured job details and suitability artifacts.
 
@@ -18,9 +18,9 @@ This keeps the user moving and creates a cleaner boundary between crawling, stor
 
 ## Architecture
 
-Move job capture, crawl status, and cleaned text storage into the local companion. The web app becomes a client of the companion instead of the owner of the job queue.
+Move job capture, crawl status, and cleaned text storage into the local backend. The web app becomes a client of the backend instead of the owner of the job queue.
 
-The companion will own:
+The backend will own:
 
 - local job records
 - crawl queue state
@@ -32,10 +32,10 @@ The web app will own:
 
 - URL submission UI
 - dashboard rendering
-- polling or refresh of companion-owned jobs
+- polling or refresh of backend-owned jobs
 - later AI workflow surfaces
 
-The first durable storage should be SQLite inside the companion. SQLite is enough for local-first durability without adding accounts, cloud sync, or hosted infrastructure. It lets jobs survive browser refreshes, tab closes, and different browsers while keeping sensitive career data local.
+The first durable storage should be SQLite inside the backend. SQLite is enough for local-first durability without adding accounts, cloud sync, or hosted infrastructure. It lets jobs survive browser refreshes, tab closes, and different browsers while keeping sensitive career data local.
 
 ## Database Model
 
@@ -57,15 +57,15 @@ create table jobs (
 Valid `crawl_status` values:
 
 - `pending`: job was created and is waiting for crawl work
-- `crawling`: companion is actively crawling the URL
+- `crawling`: backend is actively crawling the URL
 - `ready`: cleaned text is stored and ready for AI analysis
 - `failed`: crawl failed and `crawl_error` explains why
 
 Do not store AI-derived company, title, location, fit, or suitability in this table. Those belong in a later analysis table or artifact model.
 
-## Companion API
+## Backend API
 
-Add companion-owned job endpoints:
+Add backend-owned job endpoints:
 
 - `POST /jobs`
   - Request: `{ "sourceUrl": "https://example.com/job" }`
@@ -73,7 +73,7 @@ Add companion-owned job endpoints:
   - Behavior: validate the URL, insert a job row immediately, enqueue crawl work, and return without waiting for crawl completion.
 
 - `GET /jobs`
-  - Response: list of companion-owned jobs, newest first.
+  - Response: list of backend-owned jobs, newest first.
 
 - `GET /jobs/:id`
   - Response: one job record, including cleaned text when ready.
@@ -99,7 +99,7 @@ The crawler should remain generic:
 The output source of truth is cleaned text:
 
 ```ts
-interface CompanionJob {
+interface BackendJob {
 	id: string;
 	sourceUrl: string;
 	crawlStatus: "pending" | "crawling" | "ready" | "failed";
@@ -113,7 +113,7 @@ interface CompanionJob {
 
 If the crawler cannot produce useful text, mark the job `failed` with an actionable error. Do not fabricate job details.
 
-The first queue can be in-process inside the companion: `POST /jobs` inserts a durable row, then schedules crawl work without waiting for it. On companion startup, any `pending` or stale `crawling` rows should be eligible to run again. This avoids a separate worker framework while keeping the database as the durable source of truth.
+The first queue can be in-process inside the backend: `POST /jobs` inserts a durable row, then schedules crawl work without waiting for it. On backend startup, any `pending` or stale `crawling` rows should be eligible to run again. This avoids a separate worker framework while keeping the database as the durable source of truth.
 
 ## Frontend UX
 
@@ -122,12 +122,12 @@ Replace the full new job form with a URL-only modal:
 - one URL input
 - submit button
 - inline invalid URL error
-- companion connectivity error when the local service is unavailable
+- backend connectivity error when the local service is unavailable
 
 On submit:
 
 1. Call `POST /jobs`.
-2. Close the modal once the companion creates the job.
+2. Close the modal once the backend creates the job.
 3. Show the new job immediately in the pending list.
 4. Continue polling `GET /jobs` so the card updates when crawl status changes.
 
@@ -146,21 +146,21 @@ The current web `job-application-store` can remain for resume tailoring and late
 
 For the first implementation slice:
 
-- Add a companion client for `POST /jobs`, `GET /jobs`, and retry.
-- Add companion client support for deleting intake jobs.
-- Add a companion-backed dashboard view for intake jobs.
+- Add a backend client for `POST /jobs`, `GET /jobs`, and retry.
+- Add backend client support for deleting intake jobs.
+- Add a backend-backed dashboard view for intake jobs.
 - Stop requiring company and title during URL capture.
 - Keep existing job application routes/components available while the analysis bridge is not built.
 
-Later, when AI analysis is added, a ready companion job can become or hydrate a full application workspace. That bridge should be explicit and reviewable.
+Later, when AI analysis is added, a ready backend job can become or hydrate a full application workspace. That bridge should be explicit and reviewable.
 
 ## Error Handling
 
 Handle these cases distinctly:
 
 - invalid URL before submission
-- companion service unavailable
-- companion database write failure
+- backend service unavailable
+- backend database write failure
 - crawl timeout or blocked page
 - crawl completes but cleaned text is empty
 
@@ -168,7 +168,7 @@ Failed crawls must stay visible and retryable. The system should never silently 
 
 ## Testing
 
-Companion tests:
+Backend tests:
 
 - URL validation rejects non-HTTP URLs.
 - `POST /jobs` creates a pending job immediately.
@@ -179,11 +179,11 @@ Companion tests:
 
 Frontend tests:
 
-- URL-only modal submits to the companion client.
+- URL-only modal submits to the backend client.
 - pending jobs render without company or title.
 - ready jobs render cleaned text previews.
 - failed jobs expose retry.
-- companion unavailable produces a clear error.
+- backend unavailable produces a clear error.
 
 ## Out Of Scope
 
@@ -198,7 +198,7 @@ Frontend tests:
 ## Acceptance Criteria
 
 - A user can paste a job URL and the job appears immediately.
-- The crawl continues under companion ownership instead of a blocking modal request.
+- The crawl continues under backend ownership instead of a blocking modal request.
 - Jobs persist outside browser localStorage.
 - Pending, ready, and failed crawl states are visible.
 - Cleaned text is stored as the source of truth.

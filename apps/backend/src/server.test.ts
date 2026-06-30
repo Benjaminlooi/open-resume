@@ -15,7 +15,7 @@ function parseJsonLogs(output: string) {
 		.map((line) => JSON.parse(line));
 }
 
-describe("companion server", () => {
+describe("backend server", () => {
 	const servers: FastifyInstance[] = [];
 	const repositories: JobRepository[] = [];
 	const tempFiles: string[] = [];
@@ -72,15 +72,15 @@ describe("companion server", () => {
 
 		const testDbDir = resolve(
 			process.cwd(),
-			`.open-resume-companion/test-db-${randomUUID()}`,
+			`.open-resume-backend/test-db-${randomUUID()}`,
 		);
 		const profilePath = resolve(
 			process.cwd(),
-			`.open-resume-companion/profile-${randomUUID()}.json`,
+			`.open-resume-backend/profile-${randomUUID()}.json`,
 		);
 		const resumePath = resolve(
 			process.cwd(),
-			`.open-resume-companion/resume-${randomUUID()}.json`,
+			`.open-resume-backend/resume-${randomUUID()}.json`,
 		);
 		tempFiles.push(testDbDir, profilePath, resumePath);
 
@@ -107,7 +107,7 @@ describe("companion server", () => {
 		expect(response.statusCode).toBe(200);
 		expect(response.json()).toEqual({
 			ok: true,
-			service: "open-resume-companion",
+			service: "open-resume-backend",
 		});
 	});
 
@@ -121,7 +121,7 @@ describe("companion server", () => {
 
 		expect(response.statusCode).toBe(400);
 		expect(response.json()).toMatchObject({
-			error: "Invalid companion request",
+			error: "Invalid backend request",
 		});
 	});
 
@@ -135,7 +135,7 @@ describe("companion server", () => {
 
 		expect(response.statusCode).toBe(400);
 		expect(response.json()).toMatchObject({
-			error: "Invalid companion request",
+			error: "Invalid backend request",
 		});
 	});
 
@@ -189,7 +189,7 @@ describe("companion server", () => {
 		);
 	});
 
-	it("creates companion jobs immediately without waiting for crawl completion", async () => {
+	it("creates backend jobs immediately without waiting for crawl completion", async () => {
 		const { crawlQueue, server } = createTestServer();
 		vi.spyOn(crawlQueue, "enqueue");
 
@@ -208,7 +208,7 @@ describe("companion server", () => {
 		expect(crawlQueue.enqueue).toHaveBeenCalledWith(response.json().id);
 	});
 
-	it("lists, retries, gets, and deletes companion jobs", async () => {
+	it("lists, retries, gets, and deletes backend jobs", async () => {
 		const { crawlQueue, repository, server } = createTestServer();
 		vi.spyOn(crawlQueue, "enqueue");
 		const created = repository.createJobPosting({
@@ -241,7 +241,7 @@ describe("companion server", () => {
 		expect(deleteResponse.json()).toEqual({ deleted: true });
 	});
 
-	it("returns not found responses for missing companion jobs", async () => {
+	it("returns not found responses for missing backend jobs", async () => {
 		const { crawlQueue, server } = createTestServer();
 		vi.spyOn(crawlQueue, "enqueue");
 
@@ -593,7 +593,7 @@ describe("companion server", () => {
 		expect(getRes2.json().personalInfo.fullName).toBe("John Doe");
 	});
 
-	it("serves an OpenAPI document with companion route contracts", async () => {
+	it("serves an OpenAPI document with backend route contracts", async () => {
 		const { server } = createTestServer();
 		const response = await server.inject({
 			method: "GET",
@@ -604,7 +604,7 @@ describe("companion server", () => {
 		const document = response.json();
 		expect(document.openapi).toBe("3.0.3");
 		expect(document.info).toMatchObject({
-			title: "Open Resume Companion API",
+			title: "Open Resume Backend API",
 			version: "0.1.0",
 		});
 		expect(document.paths["/health"].get).toMatchObject({
@@ -631,7 +631,7 @@ describe("companion server", () => {
 			JobPosting: expect.any(Object),
 			JobPostingsResponse: expect.any(Object),
 			CreateJobPostingRequest: expect.any(Object),
-			CompanionErrorResponse: expect.any(Object),
+			BackendErrorResponse: expect.any(Object),
 			DeleteJobPostingResponse: expect.any(Object),
 			HealthResponse: expect.any(Object),
 		});
@@ -760,7 +760,7 @@ describe("companion server", () => {
 		expect(getDeletedRes.statusCode).toBe(404);
 	});
 
-	it("converts a companion job to a job application", async () => {
+	it("converts a backend job to a job application", async () => {
 		const { server, repository } = createTestServer();
 
 		// Create a job first
