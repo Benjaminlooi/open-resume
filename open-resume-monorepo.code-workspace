@@ -8,10 +8,10 @@
       "name": "🚀 APP: Web",
       "path": "apps/web"
     },
-    {
-      "name": "🤖 APP: Companion",
-      "path": "apps/companion"
-    },
+		{
+			"name": "🤖 APP: Backend",
+			"path": "apps/backend"
+		},
     {
       "name": "🔌 PKG: Contracts",
       "path": "packages/contracts"

@@ -1,5 +1,5 @@
 {
-	"name": "@open-resume/companion",
+	"name": "@open-resume/backend",
 	"private": true,
 	"type": "module",
 	"tsup": {

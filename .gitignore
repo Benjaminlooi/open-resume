@@ -4,7 +4,7 @@ dist
 dist-ssr
 *.local
 .env
-apps/companion/.env
+apps/backend/.env
 .nitro
 .tanstack
 .wrangler
@@ -27,4 +27,4 @@ __pycache__/
 *.pyc
 
 # Local SQLite database
-apps/companion/.open-resume-companion/
+apps/backend/.open-resume-backend/
