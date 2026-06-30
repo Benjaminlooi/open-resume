@@ -111,7 +111,7 @@ function JobsDashboard() {
 				<div>
 					<h1 className="text-4xl font-heading">Jobs Tracker</h1>
 					<p className="text-muted-foreground mt-1">
-						Manage your job applications pipeline and companion crawler queue.
+						Manage your job applications pipeline and crawler queue.
 					</p>
 				</div>
 				<button

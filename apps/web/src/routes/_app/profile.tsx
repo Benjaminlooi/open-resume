@@ -367,8 +367,7 @@ function ProfileDashboard() {
 			{saveStatus === "error" && (
 				<div className="mb-6 rounded-base border-2 border-border bg-[#FECACA] p-4 font-bold text-red-900 text-sm flex items-center gap-2 shadow-light">
 					<AlertCircle className="size-5 shrink-0" />
-					Failed to save candidate profile. Make sure the local companion
-					backend is running.
+					Failed to save candidate profile. Make sure the backend service is running.
 				</div>
 			)}
 
@@ -377,15 +376,15 @@ function ProfileDashboard() {
 				<div className="mb-8 rounded-base border-4 border-black bg-[#FECACA] p-6 text-[#7F1D1D] shadow-shadow">
 					<h3 className="font-heading text-lg font-bold flex items-center gap-2 mb-2">
 						<AlertCircle className="size-6 text-red-600" />
-						Companion Backend Offline
+						Backend Offline
 					</h3>
 					<p className="text-sm font-base leading-relaxed mb-4">
-						Open Resume companion services are unreachable at{" "}
+						Backend service is unreachable at{" "}
 						<strong>http://127.0.0.1:47321</strong>. Please ensure you have
 						started the backend using the command below, and then click reload.
 					</p>
 					<pre className="bg-white/50 p-2.5 rounded border border-red-300 font-mono text-xs mb-4">
-						pnpm companion:dev
+						pnpm backend:dev
 					</pre>
 					<Button
 						variant="neutral"
