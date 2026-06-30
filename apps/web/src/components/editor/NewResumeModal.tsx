@@ -103,7 +103,7 @@ export default function NewResumeModal({ onClose }: NewResumeModalProps) {
 				<div className="flex justify-end gap-4">
 					<button
 						onClick={onClose}
-						className="px-4 py-2 border-2 border-border rounded-base font-bold hover:bg-main/5"
+						className="px-4 py-2 border-2 border-border rounded-base font-bold shadow-light hover:translate-x-boxShadowX hover:translate-y-boxShadowY hover:shadow-none transition-all hover:bg-main/5"
 					>
 						Cancel
 					</button>

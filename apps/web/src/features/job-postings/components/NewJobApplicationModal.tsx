@@ -173,7 +173,7 @@ export default function NewJobApplicationModal({
 								<button
 									type="button"
 									onClick={onClose}
-									className="cursor-pointer rounded-base border-2 border-border bg-white px-4 py-2 font-bold hover:bg-main/5"
+									className="cursor-pointer rounded-base border-2 border-border bg-white px-4 py-2 font-bold shadow-light transition-all hover:translate-x-boxShadowX hover:translate-y-boxShadowY hover:shadow-none hover:bg-main/5"
 								>
 									Cancel
 								</button>
@@ -275,7 +275,7 @@ export default function NewJobApplicationModal({
 								<button
 									type="button"
 									onClick={onClose}
-									className="cursor-pointer rounded-base border-2 border-border bg-white px-4 py-2 font-bold hover:bg-main/5"
+									className="cursor-pointer rounded-base border-2 border-border bg-white px-4 py-2 font-bold shadow-light transition-all hover:translate-x-boxShadowX hover:translate-y-boxShadowY hover:shadow-none hover:bg-main/5"
 								>
 									Cancel
 								</button>
