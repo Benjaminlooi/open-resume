@@ -27,7 +27,7 @@ export default function PipelineIntegrityPanel() {
 
 	if (appIdsWithWarnings.length === 0) {
 		return (
-			<div className="mb-8 p-4 border-2 border-emerald-200 rounded-base bg-emerald-50/50 text-[#082F49] flex items-center gap-3 shadow-shadow">
+			<div className="mb-8 p-4 border-2 border-emerald-200 rounded-base bg-emerald-50/50 text-[#082F49] flex items-center gap-3 shadow-light">
 				<ShieldCheck className="size-5 text-emerald-600 shrink-0" />
 				<span className="font-bold text-sm">
 					Pipeline Integrity: All systems normal. No issues detected in your
