@@ -158,6 +158,8 @@ export default function NewJobApplicationModal({
 									Job URL
 								</label>
 								<input
+									// biome-ignore lint/a11y/noAutofocus: only input on the default crawl tab, user explicitly opened this modal
+									autoFocus
 									id="job-url"
 									type="url"
 									required
