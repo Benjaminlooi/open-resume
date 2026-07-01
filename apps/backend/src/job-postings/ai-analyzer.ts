@@ -87,7 +87,7 @@ export async function analyzeJobPosting(input: {
 		throw new Error("Synced default resume is empty.");
 	}
 
-	const { provider, apiKey, modelName } = input.aiConfig;
+	const { provider, apiKey, modelName, baseUrl } = input.aiConfig;
 	let modelInstance: any;
 
 	if (provider === "openai") {
@@ -105,6 +105,22 @@ export async function analyzeJobPosting(input: {
 			baseURL: "https://api.deepseek.com/v1",
 		});
 		modelInstance = deepseek(modelName);
+	} else if (provider === "groq") {
+		const groq = createOpenAI({
+			apiKey,
+			baseURL: "https://api.groq.com/openai/v1",
+		});
+		modelInstance = groq(modelName);
+	} else if (provider === "ollama") {
+		const ollama = createOpenAI({
+			baseURL: baseUrl || "http://localhost:11434/v1",
+		});
+		modelInstance = ollama(modelName);
+	} else if (provider === "lmstudio") {
+		const lmstudio = createOpenAI({
+			baseURL: baseUrl || "http://localhost:1234/v1",
+		});
+		modelInstance = lmstudio(modelName);
 	} else {
 		throw new Error(`Unsupported AI provider: ${provider}`);
 	}

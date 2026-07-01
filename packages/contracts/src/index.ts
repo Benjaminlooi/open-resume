@@ -1,4 +1,9 @@
 import { z } from "zod";
+import {
+	aiConfigResponseSchema,
+	updateAiConfigRequestSchema,
+	updateAiConfigResponseSchema,
+} from "./ai-config.js";
 import { backendErrorResponseSchema, okResponseSchema } from "./common.js";
 import {
 	jobApplicationSchema,
@@ -29,6 +34,7 @@ import {
 } from "./resumes.js";
 
 // Re-export modules
+export * from "./ai-config.js";
 export * from "./common.js";
 export * from "./job-applications.js";
 export * from "./job-postings.js";
@@ -66,5 +72,12 @@ if (registry) {
 	registry.add(jobApplicationSchema, { id: "JobApplication" });
 	registry.add(jobApplicationsResponseSchema, {
 		id: "JobApplicationsResponse",
+	});
+	registry.add(aiConfigResponseSchema, { id: "AIConfigResponse" });
+	registry.add(updateAiConfigRequestSchema, {
+		id: "UpdateAiConfigRequest",
+	});
+	registry.add(updateAiConfigResponseSchema, {
+		id: "UpdateAiConfigResponse",
 	});
 }

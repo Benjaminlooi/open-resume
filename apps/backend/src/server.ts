@@ -3,6 +3,10 @@ import { dirname, join } from "node:path";
 import Fastify from "fastify";
 import type { CreateServerOptions } from "./config.js";
 import { resolveConfig } from "./config.js";
+import {
+	loadAIConfig,
+	getAIConfig,
+} from "./config-store.js";
 import { crawlCleanedTextWithPlaywright } from "./extract/playwright.js";
 import { createCrawlQueue } from "./job-postings/crawl-queue.js";
 import { createJobRepository } from "./job-postings/repository.js";
@@ -15,10 +19,14 @@ import { createProfileRoutes } from "./routes/profile-routes.js";
 import { createResumeRoutes } from "./routes/resume-routes.js";
 import { createSystemRoutes } from "./routes/system-routes.js";
 import { createAiRoutes } from "./routes/ai-routes.js";
+import { createAIConfigRoutes } from "./routes/ai-config-routes.js";
 
 export function createServer(options: CreateServerOptions = {}) {
 	const config = resolveConfig(options);
 	mkdirSync(config.screenshotsPath, { recursive: true });
+
+	// Load mutable AI config (stored JSON overrides env defaults)
+	loadAIConfig(config.aiConfigPath, config.ai);
 
 	const server = Fastify({
 		logger: config.logStream
@@ -67,7 +75,7 @@ export function createServer(options: CreateServerOptions = {}) {
 			logger: server.log,
 			profilePath: config.profilePath,
 			resumePath: config.resumePath,
-			aiConfig: config.ai,
+			aiConfig: getAIConfig(),
 		});
 
 	server.addHook("onClose", async () => {
@@ -99,7 +107,12 @@ export function createServer(options: CreateServerOptions = {}) {
 		server.register(createJobApplicationRoutes({ jobRepository }));
 		server.register(
 			createAiRoutes({
-				aiConfig: config.ai,
+				aiConfig: getAIConfig(),
+			}),
+		);
+		server.register(
+			createAIConfigRoutes({
+				aiConfigPath: config.aiConfigPath,
 			}),
 		);
 	});

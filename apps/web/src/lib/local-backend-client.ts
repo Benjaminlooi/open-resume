@@ -1,4 +1,5 @@
 import {
+	aiConfigResponseSchema,
 	candidateProfileSchema,
 	createResumeRequestSchema,
 	deleteJobPostingResponseSchema,
@@ -14,11 +15,16 @@ import {
 	resumeSyncRequestSchema,
 	resumesResponseSchema,
 	targetRoleArchetypeSchema,
+	updateAiConfigRequestSchema,
+	updateAiConfigResponseSchema,
 	updateResumeRequestSchema,
 } from "@open-resume/contracts";
 import type { z } from "zod";
 
 export {
+	aiConfigResponseSchema,
+	updateAiConfigRequestSchema,
+	updateAiConfigResponseSchema,
 	resumeContentSchema,
 	resumeSummarySchema,
 	resumeDetailsSchema,
@@ -33,6 +39,7 @@ export {
 };
 
 import type {
+	AIConfigResponse,
 	CandidateProfile,
 	CreateResumeRequest,
 	JobApplication,
@@ -44,10 +51,13 @@ import type {
 	ResumeSummary,
 	ResumeSyncRequest,
 	TargetRoleArchetype,
+	UpdateAiConfigRequest,
+	UpdateAiConfigResponse,
 	UpdateResumeRequest,
 } from "@open-resume/contracts";
 
 export type {
+	AIConfigResponse,
 	LocalJobPosting,
 	TargetRoleArchetype,
 	CandidateProfile,
@@ -58,6 +68,8 @@ export type {
 	ResumeDetails,
 	CreateResumeRequest,
 	UpdateResumeRequest,
+	UpdateAiConfigRequest,
+	UpdateAiConfigResponse,
 	JobApplication,
 	JobApplicationsResponse,
 };
@@ -376,5 +388,29 @@ export async function convertJobToApplication(
 		response,
 		jobApplicationSchema,
 		"Local backend could not convert this job posting.",
+	);
+}
+
+export async function getAIConfig(): Promise<AIConfigResponse> {
+	const response = await backendFetch("/ai/config");
+	return parseBackendResponse(
+		response,
+		aiConfigResponseSchema,
+		"Local backend could not retrieve AI configuration.",
+	);
+}
+
+export async function updateAIConfig(
+	update: UpdateAiConfigRequest,
+): Promise<UpdateAiConfigResponse> {
+	const response = await backendFetch("/ai/config", {
+		method: "PUT",
+		headers: { "content-type": "application/json" },
+		body: JSON.stringify(update),
+	});
+	return parseBackendResponse(
+		response,
+		updateAiConfigResponseSchema,
+		"Local backend could not update AI configuration.",
 	);
 }

@@ -1,13 +1,5 @@
 import type { StateCreator } from "zustand";
 import type { RootState } from "./root-store";
-export type AIProvider =
-	| "openai"
-	| "anthropic"
-	| "google"
-	| "deepseek"
-	| "groq"
-	| "ollama"
-	| "lmstudio";
 
 export interface Message {
 	role: "user" | "assistant" | "system" | "tool";
@@ -21,7 +13,6 @@ export interface AISlice {
 	input: string;
 	isLoading: boolean;
 	error: string | null;
-	selectedProvider: AIProvider | null;
 	abortController: AbortController | null;
 
 	setIsOpen: (isOpen: boolean) => void;
@@ -29,9 +20,7 @@ export interface AISlice {
 	setInput: (input: string) => void;
 	setIsLoading: (isLoading: boolean) => void;
 	setError: (error: string | null) => void;
-	setSelectedProvider: (provider: AIProvider) => void;
 	setAbortController: (controller: AbortController | null) => void;
-	reset: () => void;
 }
 
 export const createAISlice: StateCreator<RootState, [], [], AISlice> = (set) => ({
@@ -40,7 +29,6 @@ export const createAISlice: StateCreator<RootState, [], [], AISlice> = (set) => 
 	input: "",
 	isLoading: false,
 	error: null,
-	selectedProvider: null,
 	abortController: null,
 
 	setIsOpen: (isOpen) =>
@@ -61,19 +49,6 @@ export const createAISlice: StateCreator<RootState, [], [], AISlice> = (set) => 
 		set((state) => ({ ai: { ...state.ai, isLoading } })),
 	setError: (error) =>
 		set((state) => ({ ai: { ...state.ai, error } })),
-	setSelectedProvider: (selectedProvider) =>
-		set((state) => ({ ai: { ...state.ai, selectedProvider } })),
 	setAbortController: (abortController) =>
 		set((state) => ({ ai: { ...state.ai, abortController } })),
-	reset: () =>
-		set((state) => ({
-			ai: {
-				...state.ai,
-				messages: [],
-				input: "",
-				isLoading: false,
-				error: null,
-				abortController: null,
-			},
-		})),
 });

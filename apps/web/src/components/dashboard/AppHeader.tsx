@@ -6,9 +6,9 @@ import { useState } from "react";
  * Shared app-wide header.
  *
  * Rendered once from the root layout (`__root.tsx`), so every route inherits
- * consistent navigation (My Resumes / Jobs Tracker / My Profile) and the global
- * AI-settings modal. The landing page (`/`) keeps its own marketing hero below
- * this header; the resume editor adds a second `<EditorToolbar />` row.
+ * consistent navigation (My Resumes / Jobs Tracker / My Profile / Settings).
+ * The landing page (`/`) keeps its own marketing hero below this header; the
+ * resume editor adds a second `<EditorToolbar />` row.
  *
  * Uses `sticky top-0` so the header is in normal flow (reserves its own height,
  * no magic padding-top offsets anywhere) while still pinning on scroll.
@@ -67,6 +67,19 @@ export default function AppHeader() {
 								className="font-bold hover:bg-main/10 py-1.5 px-3 rounded-base transition-colors"
 							>
 								My Profile
+							</Link>
+							<Link
+								to="/settings"
+								activeProps={{
+									className:
+										"bg-main text-main-foreground border-2 border-border shadow-light translate-x-none translate-y-none",
+								}}
+								inactiveProps={{
+									className: "border-2 border-transparent",
+								}}
+								className="font-bold hover:bg-main/10 py-1.5 px-3 rounded-base transition-colors"
+							>
+								Settings
 							</Link>
 						</nav>
 					</div>
@@ -127,6 +140,20 @@ export default function AppHeader() {
 						className="font-bold py-2.5 px-4 rounded-base transition-colors text-center text-base"
 					>
 						My Profile
+					</Link>
+					<Link
+						to="/settings"
+						onClick={() => setIsOpen(false)}
+						activeProps={{
+							className:
+								"bg-main text-main-foreground border-2 border-border shadow-light translate-x-none translate-y-none",
+						}}
+						inactiveProps={{
+							className: "border-2 border-transparent hover:bg-main/10",
+						}}
+						className="font-bold py-2.5 px-4 rounded-base transition-colors text-center text-base"
+					>
+						Settings
 					</Link>
 				</nav>
 			)}

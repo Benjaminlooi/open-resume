@@ -22,6 +22,9 @@ export const AIProviderSchema = z.enum([
 	"google",
 	"anthropic",
 	"deepseek",
+	"groq",
+	"ollama",
+	"lmstudio",
 ]);
 export type AIProvider = z.infer<typeof AIProviderSchema>;
 
@@ -77,6 +80,7 @@ export interface AIConfig {
 	provider: AIProvider;
 	apiKey: string;
 	modelName: string;
+	baseUrl?: string;
 }
 
 export interface ResolvedConfig {
@@ -90,6 +94,7 @@ export interface ResolvedConfig {
 	profilePath: string;
 	resumePath: string;
 	screenshotsPath: string;
+	aiConfigPath: string;
 	ai: AIConfig;
 	headless: boolean;
 }
@@ -108,6 +113,12 @@ const EnvSchema = z.object({
 	ANTHROPIC_MODEL: z.string().default("claude-3-5-haiku-latest"),
 	DEEPSEEK_API_KEY: z.string().optional(),
 	DEEPSEEK_MODEL: z.string().default("deepseek-chat"),
+	GROQ_API_KEY: z.string().optional(),
+	GROQ_MODEL: z.string().default("llama-3.3-70b-versatile"),
+	OLLAMA_BASE_URL: z.string().optional(),
+	OLLAMA_MODEL: z.string().default("llama3.2"),
+	LMSTUDIO_BASE_URL: z.string().optional(),
+	LMSTUDIO_MODEL: z.string().default("default"),
 });
 
 function isScrapedDataLoggingEnabled(value: string | undefined): boolean {
@@ -144,6 +155,7 @@ export function resolveConfig(options: CreateServerOptions): ResolvedConfig {
 	const provider = parsedEnv.OPEN_RESUME_BACKEND_AI_PROVIDER;
 	let apiKey: string | undefined;
 	let modelName: string | undefined;
+	let baseUrl: string | undefined;
 
 	switch (provider) {
 		case "openai":
@@ -162,15 +174,35 @@ export function resolveConfig(options: CreateServerOptions): ResolvedConfig {
 			apiKey = parsedEnv.DEEPSEEK_API_KEY;
 			modelName = parsedEnv.DEEPSEEK_MODEL;
 			break;
+		case "groq":
+			apiKey = parsedEnv.GROQ_API_KEY;
+			modelName = parsedEnv.GROQ_MODEL;
+			break;
+		case "ollama":
+			baseUrl = parsedEnv.OLLAMA_BASE_URL;
+			modelName = parsedEnv.OLLAMA_MODEL;
+			break;
+		case "lmstudio":
+			baseUrl = parsedEnv.LMSTUDIO_BASE_URL;
+			modelName = parsedEnv.LMSTUDIO_MODEL;
+			break;
 	}
 
-	if (!apiKey) {
+	// Cloud providers require an API key; local providers require a base URL
+	const isLocalProvider = provider === "ollama" || provider === "lmstudio";
+	if (!isLocalProvider && !apiKey) {
 		throw new Error(
 			`AI Provider "${provider}" is selected, but its required API key environment variable is not defined or empty.`,
 		);
 	}
+	if (isLocalProvider && !baseUrl) {
+		throw new Error(
+			`AI Provider "${provider}" is selected, but its required base URL environment variable is not defined or empty.`,
+		);
+	}
 
 	const screenshotsPath = resolve(dirname(databasePath), "screenshots");
+	const aiConfigPath = resolve(dirname(databasePath), "ai-config.json");
 
 	return {
 		crawlQueue: parsedOptions.crawlQueue,
@@ -184,12 +216,15 @@ export function resolveConfig(options: CreateServerOptions): ResolvedConfig {
 			parsedOptions.profilePath ??
 			resolve(dirname(databasePath), "profile.json"),
 		resumePath:
-			parsedOptions.resumePath ?? resolve(dirname(databasePath), "resume.json"),
+			parsedOptions.resumePath ??
+			resolve(dirname(databasePath), "resume.json"),
 		screenshotsPath,
+		aiConfigPath,
 		ai: {
 			provider,
-			apiKey,
+			apiKey: apiKey ?? "",
 			modelName,
+			baseUrl,
 		},
 		headless,
 	};

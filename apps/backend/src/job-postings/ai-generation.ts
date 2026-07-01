@@ -30,6 +30,19 @@ export function getModel(config: AIConfig): LanguageModel {
 				apiKey,
 				baseURL: "https://api.deepseek.com/v1",
 			})(modelName);
+		case "groq":
+			return createOpenAI({
+				apiKey,
+				baseURL: "https://api.groq.com/openai/v1",
+			})(modelName);
+		case "ollama":
+			return createOpenAI({
+				baseURL: config.baseUrl || "http://localhost:11434/v1",
+			})(modelName);
+		case "lmstudio":
+			return createOpenAI({
+				baseURL: config.baseUrl || "http://localhost:1234/v1",
+			})(modelName);
 		default:
 			throw new Error(`Unsupported provider: ${provider}`);
 	}
