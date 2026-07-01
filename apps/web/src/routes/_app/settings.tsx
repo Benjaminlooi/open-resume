@@ -38,6 +38,7 @@ const PROVIDER_LIST: AIProvider[] = [
 	"groq",
 	"ollama",
 	"lmstudio",
+	"custom",
 ];
 
 function AISettingsPage() {
@@ -94,6 +95,10 @@ function AISettingsPage() {
 			setError("API key is required for cloud providers.");
 			return;
 		}
+		if (provider === "custom" && !baseUrl) {
+			setError("Base URL is required for custom providers.");
+			return;
+		}
 
 		setSaving(true);
 		setError(null);
@@ -108,7 +113,7 @@ function AISettingsPage() {
 			if (apiKey) {
 				update.apiKey = apiKey;
 			}
-			if (!isCloudProvider) {
+			if (!isCloudProvider || provider === "custom") {
 				update.baseUrl = baseUrl;
 			}
 			const result = await updateAIConfig(update);
@@ -179,10 +184,12 @@ function AISettingsPage() {
 								))}
 							</SelectContent>
 						</Select>
-						<p className="text-xs text-muted-foreground">
-							{isCloudProvider
-								? "Cloud provider — requires an API key."
-								: "Local provider — runs on your machine, no API key needed."}
+					<p className="text-xs text-muted-foreground">
+							{provider === "custom"
+								? "OpenAI-compatible — enter the base URL and API key for your provider."
+								: isCloudProvider
+									? "Cloud provider — requires an API key."
+									: "Local provider — runs on your machine, no API key needed."}
 						</p>
 					</div>
 
@@ -215,8 +222,8 @@ function AISettingsPage() {
 						</div>
 					)}
 
-					{/* Base URL (local providers only) */}
-					{!isCloudProvider && (
+					{/* Base URL (local providers + custom) */}
+					{(!isCloudProvider || provider === "custom") && (
 						<div className="grid gap-2">
 							<Label htmlFor="baseUrl" className="font-heading text-sm font-bold">
 								Base URL
@@ -225,9 +232,11 @@ function AISettingsPage() {
 								id="baseUrl"
 								type="text"
 								placeholder={
-									provider === "ollama"
-										? "http://localhost:11434/v1"
-										: "http://localhost:1234/v1"
+									provider === "custom"
+										? "https://openrouter.ai/api/v1"
+										: provider === "ollama"
+											? "http://localhost:11434/v1"
+											: "http://localhost:1234/v1"
 								}
 								value={baseUrl}
 								onChange={(e) => {
@@ -236,8 +245,9 @@ function AISettingsPage() {
 								}}
 							/>
 							<p className="text-xs text-muted-foreground">
-								The local server address for{" "}
-								{providerDisplayNames[provider]}.
+								{provider === "custom"
+									? "The API base URL for your OpenAI-compatible provider."
+									: `The local server address for ${providerDisplayNames[provider]}.`}
 							</p>
 						</div>
 					)}

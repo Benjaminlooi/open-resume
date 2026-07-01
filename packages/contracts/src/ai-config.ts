@@ -8,6 +8,7 @@ export const aiProviderSchema = z.enum([
 	"groq",
 	"ollama",
 	"lmstudio",
+	"custom",
 ]);
 export type AIProvider = z.infer<typeof aiProviderSchema>;
 
@@ -19,6 +20,7 @@ export const providerDisplayNames: Record<AIProvider, string> = {
 	groq: "Groq",
 	ollama: "Ollama (Local)",
 	lmstudio: "LM Studio (Local)",
+	custom: "Custom (OpenAI-Compatible)",
 };
 
 export const providerDefaultModels: Record<AIProvider, string> = {
@@ -29,6 +31,7 @@ export const providerDefaultModels: Record<AIProvider, string> = {
 	groq: "llama-3.3-70b-versatile",
 	ollama: "llama3.2",
 	lmstudio: "default",
+	custom: "",
 };
 
 export const CLOUD_PROVIDERS: AIProvider[] = [
@@ -37,6 +40,7 @@ export const CLOUD_PROVIDERS: AIProvider[] = [
 	"google",
 	"deepseek",
 	"groq",
+	"custom",
 ];
 
 export const LOCAL_PROVIDERS: AIProvider[] = ["ollama", "lmstudio"];

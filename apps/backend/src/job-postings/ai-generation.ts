@@ -43,6 +43,11 @@ export function getModel(config: AIConfig): LanguageModel {
 			return createOpenAI({
 				baseURL: config.baseUrl || "http://localhost:1234/v1",
 			})(modelName);
+		case "custom":
+			return createOpenAI({
+				apiKey,
+				baseURL: config.baseUrl,
+			})(modelName);
 		default:
 			throw new Error(`Unsupported provider: ${provider}`);
 	}
@@ -209,7 +214,7 @@ Return ONLY a valid JSON object. Do not include any other text or markdown wrapp
 
 export async function generateJobFitBrief(config: AIConfig, job: JobApplication, resume: any): Promise<JobFitBrief> {
 	const prompt = buildJobAnalysisPrompt(job, resume);
-	const supportsJson = ["openai", "google", "deepseek"].includes(config.provider);
+	const supportsJson = ["openai", "google", "deepseek", "custom"].includes(config.provider);
 	const { text } = await generateText({
 		model: getModel(config),
 		prompt,
@@ -223,7 +228,7 @@ export async function generateJobFitBrief(config: AIConfig, job: JobApplication,
 
 export async function generateResumeTailoring(config: AIConfig, job: JobApplication, fitBrief: JobFitBrief, resume: any): Promise<ResumeEditProposal[]> {
 	const prompt = buildResumeTailoringPrompt(job, fitBrief, resume);
-	const supportsJson = ["openai", "google", "deepseek"].includes(config.provider);
+	const supportsJson = ["openai", "google", "deepseek", "custom"].includes(config.provider);
 	const { text } = await generateText({
 		model: getModel(config),
 		prompt,
@@ -247,7 +252,7 @@ export async function generateResumeTailoring(config: AIConfig, job: JobApplicat
 
 export async function generateCoverLetter(config: AIConfig, job: JobApplication, fitBrief: JobFitBrief, resume: any): Promise<CoverLetterDraft> {
 	const prompt = buildCoverLetterPrompt(job, fitBrief, resume);
-	const supportsJson = ["openai", "google", "deepseek"].includes(config.provider);
+	const supportsJson = ["openai", "google", "deepseek", "custom"].includes(config.provider);
 	const { text } = await generateText({
 		model: getModel(config),
 		prompt,

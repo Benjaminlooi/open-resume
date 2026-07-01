@@ -121,6 +121,12 @@ export async function analyzeJobPosting(input: {
 			baseURL: baseUrl || "http://localhost:1234/v1",
 		});
 		modelInstance = lmstudio(modelName);
+	} else if (provider === "custom") {
+		const custom = createOpenAI({
+			apiKey,
+			baseURL: baseUrl || "https://api.openai.com/v1",
+		});
+		modelInstance = custom(modelName);
 	} else {
 		throw new Error(`Unsupported AI provider: ${provider}`);
 	}

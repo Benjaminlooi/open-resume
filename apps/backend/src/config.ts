@@ -25,6 +25,7 @@ export const AIProviderSchema = z.enum([
 	"groq",
 	"ollama",
 	"lmstudio",
+	"custom",
 ]);
 export type AIProvider = z.infer<typeof AIProviderSchema>;
 
@@ -119,6 +120,9 @@ const EnvSchema = z.object({
 	OLLAMA_MODEL: z.string().default("llama3.2"),
 	LMSTUDIO_BASE_URL: z.string().optional(),
 	LMSTUDIO_MODEL: z.string().default("default"),
+	CUSTOM_API_KEY: z.string().optional(),
+	CUSTOM_MODEL: z.string().default(""),
+	CUSTOM_BASE_URL: z.string().optional(),
 });
 
 function isScrapedDataLoggingEnabled(value: string | undefined): boolean {
@@ -186,16 +190,22 @@ export function resolveConfig(options: CreateServerOptions): ResolvedConfig {
 			baseUrl = parsedEnv.LMSTUDIO_BASE_URL;
 			modelName = parsedEnv.LMSTUDIO_MODEL;
 			break;
+		case "custom":
+			apiKey = parsedEnv.CUSTOM_API_KEY;
+			modelName = parsedEnv.CUSTOM_MODEL;
+			baseUrl = parsedEnv.CUSTOM_BASE_URL;
+			break;
 	}
 
-	// Cloud providers require an API key; local providers require a base URL
+	// Cloud providers require an API key; local providers require a base URL; custom requires both
 	const isLocalProvider = provider === "ollama" || provider === "lmstudio";
 	if (!isLocalProvider && !apiKey) {
 		throw new Error(
 			`AI Provider "${provider}" is selected, but its required API key environment variable is not defined or empty.`,
 		);
 	}
-	if (isLocalProvider && !baseUrl) {
+	const needsBaseUrl = isLocalProvider || provider === "custom";
+	if (needsBaseUrl && !baseUrl) {
 		throw new Error(
 			`AI Provider "${provider}" is selected, but its required base URL environment variable is not defined or empty.`,
 		);
