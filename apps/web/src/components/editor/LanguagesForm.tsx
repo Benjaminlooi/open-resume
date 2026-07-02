@@ -159,25 +159,38 @@ export default function LanguagesForm() {
 			<p className="text-sm text-muted-foreground">
 				Manage your languages here. Click an item to edit its details.
 			</p>
-			<DndContext
-				sensors={sensors}
-				collisionDetection={closestCenter}
-				onDragEnd={handleDragEnd}
-			>
-				<SortableContext
-					items={langItems.map((e) => e.id)}
-					strategy={verticalListSortingStrategy}
+			{langItems.length === 0 ? (
+				<div className="flex flex-col items-center justify-center py-8 text-center">
+					<p className="text-sm text-muted-foreground mb-4">
+						No languages added yet. Listing languages can be valuable for international roles.
+					</p>
+					<Button variant="neutral" onClick={handleAdd}>
+						+ Add Your First Language
+					</Button>
+				</div>
+			) : (
+				<DndContext
+					sensors={sensors}
+					collisionDetection={closestCenter}
+					onDragEnd={handleDragEnd}
 				>
-					<div className="flex flex-col gap-3">
-						{langItems.map((lang) => (
-							<LanguageItem key={lang.id} id={lang.id} />
-						))}
-					</div>
-				</SortableContext>
-			</DndContext>
-			<Button variant="neutral" className="w-full mt-2" onClick={handleAdd}>
-				+ Add Language
-			</Button>
+					<SortableContext
+						items={langItems.map((e) => e.id)}
+						strategy={verticalListSortingStrategy}
+					>
+						<div className="flex flex-col gap-3">
+							{langItems.map((lang) => (
+								<LanguageItem key={lang.id} id={lang.id} />
+							))}
+						</div>
+					</SortableContext>
+				</DndContext>
+			)}
+			{langItems.length > 0 && (
+				<Button variant="neutral" className="w-full mt-2" onClick={handleAdd}>
+					+ Add Language
+				</Button>
+			)}
 		</div>
 	);
 }

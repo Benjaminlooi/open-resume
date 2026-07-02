@@ -51,7 +51,7 @@ function SkillItem({ id }: { id: string }) {
 		<div
 			ref={setNodeRef}
 			style={style}
-			className="border-2 border-border rounded-base bg-white shadow-sm overflow-hidden flex flex-col"
+			className="group border-2 border-border rounded-base bg-white shadow-sm overflow-hidden flex flex-col"
 		>
 			<div
 				className="flex items-center justify-between p-3 cursor-pointer bg-secondary-background hover:bg-main/5 transition-colors"
@@ -80,7 +80,7 @@ function SkillItem({ id }: { id: string }) {
 					<Button
 						variant="noShadow"
 						size="icon"
-						className="h-8 w-8 bg-white"
+						className="h-8 w-8 bg-white opacity-0 group-hover:opacity-100 transition-opacity"
 						onClick={(e) => {
 							e.stopPropagation();
 							deleteSkillGroup(id);

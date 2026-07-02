@@ -69,6 +69,7 @@ function SortableItem(props: {
 						toggleSectionVisibility(props.id);
 					}}
 					className="text-muted-foreground hover:text-foreground"
+					aria-label={props.visible ? `Hide ${props.name} section` : `Show ${props.name} section`}
 				>
 					{props.visible ? <Eye size={16} /> : <EyeOff size={16} />}
 				</button>
@@ -79,6 +80,7 @@ function SortableItem(props: {
 						removeSection(props.id);
 					}}
 					className="text-muted-foreground hover:text-destructive transition-colors"
+					aria-label={`Remove ${props.name} section`}
 				>
 					<Trash2 size={16} />
 				</button>
@@ -129,7 +131,7 @@ export default function SectionList() {
 				<div
 					onClick={() => setActiveSection("personalInfo")}
 					className={cn(
-						"flex items-center gap-3 p-3 bg-white border border-border rounded-md shadow-sm cursor-pointer transition-colors",
+						"flex items-center gap-3 p-3 bg-white border-2 border-border rounded-md shadow-sm cursor-pointer transition-colors",
 						activeSection === "personalInfo"
 							? "border-black ring-1 ring-black"
 							: "hover:border-black/50",

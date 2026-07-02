@@ -219,19 +219,22 @@ export function InteractiveAIPromptModal({
 					Generate with AI
 				</Button>
 			</DialogTrigger>
-			<DialogContent className="w-7xl max-w-7xl h-[80vh] flex flex-col p-0 overflow-hidden">
+			<DialogContent className="w-5xl max-w-5xl h-[70vh] flex flex-col p-0 overflow-hidden">
 				<DialogHeader className="px-6 py-4 border-b shrink-0">
 					<DialogTitle>Improve with AI</DialogTitle>
 				</DialogHeader>
 
 				<div className="flex flex-1 overflow-hidden">
-					{/* Left Pane: Current State */}
-					<div className="w-1/2 border-r p-6 overflow-y-auto flex flex-col gap-4 bg-muted/20">
-						{children}
+					{/* Left Pane: Current Content (read-only preview) */}
+					<div className="w-2/5 border-r p-6 overflow-y-auto flex flex-col gap-4 bg-muted/20">
+						<h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Current Content</h4>
+						<div className="text-sm leading-relaxed">
+							{children}
+						</div>
 					</div>
 
 					{/* Right Pane: Chat */}
-					<div className="w-1/2 flex flex-col bg-white">
+					<div className="w-3/5 flex flex-col bg-white">
 						<div className="flex-1 overflow-y-auto p-4 space-y-4">
 							{messages.length === 0 && (
 								<div className="flex flex-col items-center justify-center h-full text-center p-8">

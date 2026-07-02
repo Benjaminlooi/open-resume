@@ -174,25 +174,38 @@ export default function CertificationsForm() {
 			<p className="text-sm text-muted-foreground">
 				Manage your certifications here. Click an item to edit its details.
 			</p>
-			<DndContext
-				sensors={sensors}
-				collisionDetection={closestCenter}
-				onDragEnd={handleDragEnd}
-			>
-				<SortableContext
-					items={certifications.map((e) => e.id)}
-					strategy={verticalListSortingStrategy}
+			{certifications.length === 0 ? (
+				<div className="flex flex-col items-center justify-center py-8 text-center">
+					<p className="text-sm text-muted-foreground mb-4">
+						No certifications added yet. Professional certifications can strengthen your resume.
+					</p>
+					<Button variant="neutral" onClick={handleAdd}>
+						+ Add Your First Certification
+					</Button>
+				</div>
+			) : (
+				<DndContext
+					sensors={sensors}
+					collisionDetection={closestCenter}
+					onDragEnd={handleDragEnd}
 				>
-					<div className="flex flex-col gap-3">
-						{certifications.map((cert) => (
-							<CertificationItem key={cert.id} id={cert.id} />
-						))}
-					</div>
-				</SortableContext>
-			</DndContext>
-			<Button variant="neutral" className="w-full mt-2" onClick={handleAdd}>
-				+ Add Certification
-			</Button>
+					<SortableContext
+						items={certifications.map((e) => e.id)}
+						strategy={verticalListSortingStrategy}
+					>
+						<div className="flex flex-col gap-3">
+							{certifications.map((cert) => (
+								<CertificationItem key={cert.id} id={cert.id} />
+							))}
+						</div>
+					</SortableContext>
+				</DndContext>
+			)}
+			{certifications.length > 0 && (
+				<Button variant="neutral" className="w-full mt-2" onClick={handleAdd}>
+					+ Add Certification
+				</Button>
+			)}
 		</div>
 	);
 }

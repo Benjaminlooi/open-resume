@@ -89,6 +89,7 @@ export function RichTextEditor({
 						"p-1.5 rounded hover:bg-main/20 text-black",
 						editor.isActive("bold") && "bg-main/20 font-bold",
 					)}
+					title="Bold (Ctrl+B)"
 				>
 					<Bold size={16} />
 				</button>
@@ -102,6 +103,7 @@ export function RichTextEditor({
 						"p-1.5 rounded hover:bg-main/20 text-black",
 						editor.isActive("italic") && "bg-main/20",
 					)}
+					title="Italic (Ctrl+I)"
 				>
 					<Italic size={16} />
 				</button>
@@ -116,6 +118,7 @@ export function RichTextEditor({
 						"p-1.5 rounded hover:bg-main/20 text-black",
 						editor.isActive("bulletList") && "bg-main/20",
 					)}
+					title="Bullet list"
 				>
 					<List size={16} />
 				</button>
@@ -129,6 +132,7 @@ export function RichTextEditor({
 						"p-1.5 rounded hover:bg-main/20 text-black",
 						editor.isActive("orderedList") && "bg-main/20",
 					)}
+					title="Numbered list"
 				>
 					<ListOrdered size={16} />
 				</button>
@@ -143,6 +147,7 @@ export function RichTextEditor({
 						"p-1.5 rounded hover:bg-main/20 text-black",
 						editor.isActive("link") && "bg-main/20",
 					)}
+					title="Add link"
 				>
 					<LinkIcon size={16} />
 				</button>
@@ -154,6 +159,7 @@ export function RichTextEditor({
 					}}
 					disabled={!editor.isActive("link")}
 					className="p-1.5 rounded hover:bg-main/20 disabled:opacity-50 text-black"
+					title="Remove link"
 				>
 					<Unlink size={16} />
 				</button>

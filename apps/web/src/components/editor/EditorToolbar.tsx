@@ -34,6 +34,17 @@ export default function EditorToolbar() {
 		window.print();
 	};
 
+	const handleTemplateChange = (newTemplateId: string) => {
+		if (templateId !== newTemplateId) {
+			const confirmed = window.confirm(
+				`Switch to ${AVAILABLE_TEMPLATES.find((t) => t.id === newTemplateId)?.name} template? This will change your resume layout.`,
+			);
+			if (confirmed) {
+				setTemplateId(newTemplateId);
+			}
+		}
+	};
+
 	const handleExportMarkdown = () => {
 		const state = useRootStore.getState().resume;
 		const resumeContent = {
@@ -76,12 +87,12 @@ export default function EditorToolbar() {
 				type="text"
 				value={resumeName}
 				onChange={(e) => updateResumeName(e.target.value)}
-				className="max-w-[220px]"
+				className="w-[220px]"
 			/>
-			<div className="flex items-center justify-end gap-3">
+			<div className="flex items-center justify-end gap-2">
 				<select
 					value={templateId}
-					onChange={(e) => setTemplateId(e.target.value)}
+					onChange={(e) => handleTemplateChange(e.target.value)}
 					className="h-9 rounded-base border-2 border-border bg-secondary-background px-3 py-1.5 text-sm font-base ring-offset-background focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 hover:translate-x-boxShadowX hover:translate-y-boxShadowY hover:shadow-none transition-all shadow-light dark:shadow-dark"
 				>
 					{AVAILABLE_TEMPLATES.map((t) => (
@@ -101,22 +112,25 @@ export default function EditorToolbar() {
 					type="button"
 					onClick={() => fileInputRef.current?.click()}
 					className="h-9 gap-2 px-3"
+					title="Import Markdown file"
 				>
 					<FileUp className="size-4" />
-					<span className="hidden sm:inline">Import MD</span>
+					<span className="hidden sm:inline">Import Markdown</span>
 				</Button>
 				<Button
 					type="button"
 					onClick={handleExportMarkdown}
 					className="h-9 gap-2 px-3"
+					title="Export as Markdown file"
 				>
 					<FileDown className="size-4" />
-					<span className="hidden sm:inline">Export MD</span>
+					<span className="hidden sm:inline">Export Markdown</span>
 				</Button>
 				<Button
 					type="button"
 					onClick={handleDownloadPdf}
 					className="h-9 gap-2 px-3"
+					title="Download as PDF"
 				>
 					<Download className="size-4" />
 					<span className="hidden sm:inline">Download PDF</span>

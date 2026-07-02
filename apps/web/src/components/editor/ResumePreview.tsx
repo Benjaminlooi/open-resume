@@ -1,15 +1,20 @@
+import { Minus, Plus, Maximize2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRootStore } from "#/lib/root-store";
+import { Button } from "../ui/button";
 import DemoTemplate from "./DemoTemplate";
 import ModernTemplate from "./ModernTemplate";
 
 export default function ResumePreview() {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const contentRef = useRef<HTMLDivElement>(null);
-	const [scale, setScale] = useState(1);
+	const [autoScale, setAutoScale] = useState(1);
+	const [userScale, setUserScale] = useState<number | null>(null);
 	const [unscaledHeight, setUnscaledHeight] = useState<number | "auto">("auto");
 	const [pageBreaks, setPageBreaks] = useState<number[]>([]);
 	const templateId = useRootStore((state) => state.resume.templateId);
+
+	const scale = userScale ?? autoScale;
 
 	const TemplateComponent =
 		templateId === "modern" ? ModernTemplate : DemoTemplate;
@@ -79,7 +84,9 @@ export default function ResumePreview() {
 					const targetWidth = 794;
 					// We don't want to scale up if there is plenty of room, only scale down
 					const newScale = Math.min(1, containerWidth / targetWidth);
-					setScale(newScale);
+					setAutoScale(newScale);
+					// Reset user scale when container resizes (e.g., panel resize)
+					setUserScale(null);
 				} else if (entry.target === contentRef.current) {
 					// Get the true unscaled height of the resume content
 					setUnscaledHeight(entry.contentRect.height);
@@ -102,43 +109,93 @@ export default function ResumePreview() {
 		return () => observer.disconnect();
 	}, [calculateBreaks]);
 
+	const handleZoomIn = () => {
+		setUserScale((prev) => Math.min(2, (prev ?? autoScale) + 0.1));
+	};
+
+	const handleZoomOut = () => {
+		setUserScale((prev) => Math.max(0.3, (prev ?? autoScale) - 0.1));
+	};
+
+	const handleFitToWidth = () => {
+		setUserScale(null);
+	};
+
 	return (
-		<div
-			ref={containerRef}
-			className="print:p-0 print:overflow-visible w-full flex h-full justify-center items-start overflow-auto p-6"
-		>
+		<div className="flex flex-col h-full print:p-0">
+			{/* Zoom Controls */}
+			<div className="flex items-center justify-end gap-1 px-3 py-2 border-b border-border/50 print:hidden shrink-0">
+				<Button
+					variant="noShadow"
+					size="icon"
+					className="h-7 w-7"
+					onClick={handleZoomOut}
+					title="Zoom out"
+				>
+					<Minus className="size-3" />
+				</Button>
+				<span className="text-xs text-muted-foreground min-w-[3rem] text-center font-mono">
+					{Math.round(scale * 100)}%
+				</span>
+				<Button
+					variant="noShadow"
+					size="icon"
+					className="h-7 w-7"
+					onClick={handleZoomIn}
+					title="Zoom in"
+				>
+					<Plus className="size-3" />
+				</Button>
+				<div className="w-px h-4 bg-border mx-1" />
+				<Button
+					variant="noShadow"
+					size="icon"
+					className="h-7 w-7"
+					onClick={handleFitToWidth}
+					title="Fit to width"
+				>
+					<Maximize2 className="size-3" />
+				</Button>
+			</div>
+
+			{/* Preview Area */}
 			<div
-				className="resume-print-container"
-				style={{
-					width: `${794 * scale}px`,
-					height: unscaledHeight === "auto" ? "auto" : unscaledHeight * scale,
-					position: "relative",
-				}}
+				ref={containerRef}
+				className="print:p-0 print:overflow-visible flex-1 min-h-0 flex justify-center items-start overflow-auto p-6"
 			>
 				<div
-					className="origin-top-left absolute top-0 left-0 resume-print-container"
+					className="resume-print-container"
 					style={{
-						transform: `scale(${scale})`,
-						width: "794px",
+						width: `${794 * scale}px`,
+						height: unscaledHeight === "auto" ? "auto" : unscaledHeight * scale,
+						position: "relative",
 					}}
 				>
 					<div
-						ref={contentRef}
-						className="w-[210mm] min-h-[297mm] shrink-0 rounded-sm bg-white border-2 border-border shadow-shadow text-left resume-print-container relative"
+						className="origin-top-left absolute top-0 left-0 resume-print-container"
+						style={{
+							transform: `scale(${scale})`,
+							width: "794px",
+						}}
 					>
-						<TemplateComponent />
-						{/* Page break indicators */}
-						{pageBreaks.map((y, i) => (
-							<div
-								key={i}
-								className="absolute w-full border-b-2 border-dashed border-indigo-400 opacity-70 z-50 pointer-events-none print:hidden"
-								style={{ top: `${y}px` }}
-							>
-								<span className="absolute -top-3 left-2 text-indigo-500 font-medium text-xs bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200 shadow-sm">
-									Page Break
-								</span>
-							</div>
-						))}
+						<div
+							ref={contentRef}
+							className="w-[210mm] min-h-[297mm] shrink-0 rounded-sm bg-white border-2 border-border shadow-shadow text-left resume-print-container relative"
+						>
+							<TemplateComponent />
+							{/* Page break indicators */}
+							{pageBreaks.map((y, i) => (
+								<div
+									key={i}
+									className="absolute w-full border-b-2 border-dashed border-indigo-400 opacity-70 z-50 pointer-events-none print:hidden"
+									style={{ top: `${y}px` }}
+								>
+									<span className="absolute -top-3 left-2 text-indigo-500 font-medium text-xs bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200 shadow-sm">
+										Page Break
+									</span>
+								</div>
+							))}
+						</div>
 					</div>
 				</div>
 			</div>

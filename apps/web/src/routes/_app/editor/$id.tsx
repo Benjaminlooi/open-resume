@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import CertificationsForm from "#/components/editor/CertificationsForm";
 import DemoTemplate from "#/components/editor/DemoTemplate";
 import EditorToolbar from "#/components/editor/EditorToolbar";
+import ModernTemplate from "#/components/editor/ModernTemplate";
 import EducationForm from "#/components/editor/EducationForm";
 import ExperienceForm from "#/components/editor/ExperienceForm";
 import LanguagesForm from "#/components/editor/LanguagesForm";
@@ -27,6 +28,7 @@ export const Route = createFileRoute("/_app/editor/$id")({
 function RouteComponent() {
 	const { id } = Route.useParams();
 	const activeSection = useRootStore((state) => state.resume.activeSection);
+	const templateId = useRootStore((state) => state.resume.templateId);
 	const loadResume = useRootStore((state) => state.resume.loadResume);
 	const [isLoading, setIsLoading] = useState(true);
 	const [isMobile, setIsMobile] = useState(false);
@@ -111,8 +113,13 @@ function RouteComponent() {
 				return <LanguagesForm />;
 			default:
 				return (
-					<div className="text-center text-muted-foreground mt-10">
-						Select a section to edit
+					<div className="flex flex-col items-center justify-center text-center text-muted-foreground mt-16 gap-3">
+						<div className="size-12 rounded-full bg-muted flex items-center justify-center">
+							<svg className="size-6 text-muted-foreground/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
+							</svg>
+						</div>
+						<p className="text-sm">Select a section from the left to start editing</p>
 					</div>
 				);
 		}
@@ -162,13 +169,13 @@ function RouteComponent() {
 					<button
 						type="button"
 						onClick={() => setActiveTab("fields")}
-						className={`flex-1 py-3 text-center font-heading text-sm border-r-2 border-border transition-all whitespace-nowrap overflow-hidden text-ellipsis px-1 ${
+						className={`flex-1 py-3 text-center font-heading text-sm border-r-2 border-border transition-all ${
 							activeTab === "fields"
 								? "bg-main text-main-foreground font-bold shadow-[inset_0_-2px_0_0_#000]"
 								: "hover:bg-main/10"
 						}`}
 					>
-						{getActiveFormTitle()}
+						Edit
 					</button>
 					<button
 						type="button"
@@ -256,7 +263,7 @@ function RouteComponent() {
 				</div>
 			</main>
 			<div className="hidden print:block w-[210mm] bg-white">
-				<DemoTemplate />
+				{templateId === "modern" ? <ModernTemplate /> : <DemoTemplate />}
 			</div>
 		</div>
 	);

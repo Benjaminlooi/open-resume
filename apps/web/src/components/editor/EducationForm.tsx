@@ -192,7 +192,7 @@ function EducationItem({ id }: { id: string }) {
 		<div
 			ref={setNodeRef}
 			style={style}
-			className="border-2 border-border rounded-base bg-white shadow-sm overflow-hidden flex flex-col"
+			className="group border-2 border-border rounded-base bg-white shadow-sm overflow-hidden flex flex-col"
 		>
 			<div
 				className="flex items-center justify-between p-3 cursor-pointer bg-secondary-background hover:bg-main/5 transition-colors"
@@ -215,13 +215,17 @@ function EducationItem({ id }: { id: string }) {
 						<span className="text-xs text-muted-foreground truncate">
 							{edu.institution || "Institution"}
 						</span>
+						<span className="text-xs text-muted-foreground truncate">
+							{edu.startDate &&
+								` — ${edu.startDate}${edu.endDate ? ` – ${edu.endDate}` : ""}`}
+						</span>
 					</div>
 				</div>
 				<div className="flex items-center gap-2 shrink-0">
 					<Button
 						variant="noShadow"
 						size="icon"
-						className="h-8 w-8 bg-white"
+						className="h-8 w-8 bg-white opacity-0 group-hover:opacity-100 transition-opacity"
 						onClick={(e) => {
 							e.stopPropagation();
 							deleteEducation(id);
@@ -244,7 +248,9 @@ function EducationItem({ id }: { id: string }) {
 
 export default function EducationForm() {
 	const education = useRootStore((state) => state.resume.education);
-	const reorderEducation = useRootStore((state) => state.resume.reorderEducation);
+	const reorderEducation = useRootStore(
+		(state) => state.resume.reorderEducation,
+	);
 	const addEducation = useRootStore((state) => state.resume.addEducation);
 
 	const sensors = useSensors(

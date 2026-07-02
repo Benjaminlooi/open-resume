@@ -128,6 +128,12 @@ export default function PersonalInfoForm() {
 								onChange={(event) =>
 									updateContactLink(link.id, { url: event.target.value })
 								}
+								onBlur={(event) => {
+									const value = event.target.value.trim();
+									if (value && !value.startsWith("http://") && !value.startsWith("https://")) {
+										updateContactLink(link.id, { url: `https://${value}` });
+									}
+								}}
 								placeholder={index === 0 ? "janedoe.com" : "github.com/janedoe"}
 							/>
 						</div>
